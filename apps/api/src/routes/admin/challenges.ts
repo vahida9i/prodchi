@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { prisma } from '../../lib/prisma.ts'
 import { z } from 'zod'
+import type { Prisma, PrismaClient } from '@prisma/client'
 import { validateChallengeImport } from '@baaten/shared-types/validator'
 
 const updateChallengeStatusSchema = z.object({
@@ -14,7 +15,7 @@ const adminChallengeListQuerySchema = z.object({
 export async function adminChallengeRoutes(fastify: FastifyInstance) {
   // POST /api/v1/admin/challenges/import
   fastify.post('/challenges/import', async (request, reply) => {
-    const validation = await validateChallengeImport(request.body)
+    const validation = await validateChallengeImport(request.body, prisma as PrismaClient)
 
     if (!validation.valid) {
       return reply.status(400).send({ errors: validation.errors })
@@ -32,9 +33,10 @@ export async function adminChallengeRoutes(fastify: FastifyInstance) {
         difficulty: metadata.difficulty,
         tier: metadata.tier,
         xpValue: metadata.xpValue,
-        hiddenCase,
-        applicantSteps,
-        answerSheet,
+        // Validated JSON payloads: Zod guarantees they are JSON-serialisable.
+        hiddenCase: hiddenCase as unknown as Prisma.InputJsonValue,
+        applicantSteps: applicantSteps as unknown as Prisma.InputJsonValue,
+        answerSheet: answerSheet as unknown as Prisma.InputJsonValue,
         status: 'draft',
         skills: {
           create: metadata.skillIds.map(skillId => ({ skillId }))

@@ -2,8 +2,11 @@
   "name": "baaten",
   "private": true,
   "scripts": {
-    "dev": "pnpm --filter web dev",
-    "build": "pnpm --filter web build && pnpm --filter api build",
+    "dev": "pnpm --filter @baaten/shared-types build && pnpm --parallel --filter @baaten/api --filter @baaten/web dev",
+    "dev:api": "pnpm --filter @baaten/api dev",
+    "dev:web": "pnpm --filter @baaten/web dev",
+    "build": "pnpm --filter @baaten/shared-types build && pnpm --filter @baaten/api build && pnpm --filter @baaten/web build",
+    "typecheck": "pnpm --filter @baaten/api typecheck && pnpm --filter @baaten/web typecheck",
     "db:generate": "pnpm --filter db db:generate",
     "db:push": "pnpm --filter db db:push",
     "db:migrate": "pnpm --filter db db:migrate",

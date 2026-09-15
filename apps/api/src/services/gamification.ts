@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '../lib/prisma.ts'
 
 interface GamificationResult {
   xpEarned: number
@@ -45,9 +43,13 @@ export async function updateGamification(
   return { xpEarned, leveledUp, newBadges }
 }
 
+/** Start of the given day in UTC, per spec Section 8.1 ("yesterday (UTC date)"). */
+function utcDayStart(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+}
+
 async function updateStreak(userId: string) {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const today = utcDayStart(new Date())
 
   const streak = await prisma.streak.findUnique({ where: { userId } })
 
@@ -58,12 +60,11 @@ async function updateStreak(userId: string) {
     return
   }
 
-  const lastActive = streak.lastActiveDay ? new Date(streak.lastActiveDay) : null
+  const lastActive = streak.lastActiveDay ? utcDayStart(new Date(streak.lastActiveDay)) : null
   let newCurrentStreak = streak.currentStreak
 
   if (lastActive) {
-    lastActive.setHours(0, 0, 0, 0)
-    const diffDays = Math.floor((today.getTime() - lastActive.getTime()) / (1000 * 60 * 60 * 24))
+    const diffDays = Math.round((today.getTime() - lastActive.getTime()) / (1000 * 60 * 60 * 24))
 
     if (diffDays === 1) {
       newCurrentStreak = streak.currentStreak + 1

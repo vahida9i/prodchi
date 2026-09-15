@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+import type { PrismaClient } from '@prisma/client'
 import { ChallengeImportSchema, ChallengeImport, ApplicantStep } from './challenge-schema'
-
-const prisma = new PrismaClient()
 
 export interface ValidationError {
   path: string
@@ -10,7 +8,15 @@ export interface ValidationError {
 
 const STAGE_ORDER = ['FRAME', 'INVESTIGATE', 'DEFINE', 'EXPLORE', 'DECIDE', 'DESIGN', 'VALIDATE']
 
-export async function validateChallengeImport(data: unknown): Promise<{ valid: boolean; errors: ValidationError[]; parsed?: ChallengeImport }> {
+/**
+ * Deterministic structural validation of an imported challenge (spec Section 5.3).
+ * The Prisma client is injected by the caller so this package never owns a
+ * database connection of its own.
+ */
+export async function validateChallengeImport(
+  data: unknown,
+  prisma: PrismaClient
+): Promise<{ valid: boolean; errors: ValidationError[]; parsed?: ChallengeImport }> {
   const errors: ValidationError[] = []
 
   // 1. Zod schema validation

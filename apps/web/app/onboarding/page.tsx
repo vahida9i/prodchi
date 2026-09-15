@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { api } from "@/lib/api-client"
 
+const ROLE_EMOJI: Record<string, string> = {
+  'Product Design': '🎨',
+  'Product Management': '📊'
+}
+
+const roleEmoji = (name: string) => ROLE_EMOJI[name] ?? '🧭'
+
 export default function OnboardingPage() {
   const router = useRouter()
   const [roles, setRoles] = useState<Array<{ id: string; name: string }>>([])
@@ -14,12 +21,12 @@ export default function OnboardingPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    // Roles are fixed seed data exposed by GET /api/v1/roles - never hardcode their
+    // UUIDs on the client (spec Section 4).
     const fetchRoles = async () => {
       try {
-        setRoles([
-          { id: 'product-design', name: 'Product Design' },
-          { id: 'product-management', name: 'Product Management' }
-        ])
+        const data = await api.getRoles()
+        setRoles(data.roles)
       } catch (err) {
         setError('Failed to load roles')
       }
@@ -41,6 +48,12 @@ export default function OnboardingPage() {
       router.push("/home")
       router.refresh()
     } catch (err: any) {
+      // The role track is one-time (spec Section 6.1): 409 means it is already set,
+      // so send the user on rather than blocking them on the onboarding screen.
+      if (err.status === 409) {
+        router.push("/home")
+        return
+      }
       setError(err.message || 'Failed to set role')
     } finally {
       setIsLoading(false)
@@ -68,12 +81,12 @@ export default function OnboardingPage() {
                 className="h-24 w-full justify-start text-left gap-4"
                 onClick={() => setSelectedRole(role.id)}
               >
-                <div className="text-4xl">🎨</div>
+                <div className="text-4xl">{roleEmoji(role.name)}</div>
                 <div>
                   <p className="font-medium">{role.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {role.id === 'product-design' 
-                      ? 'User research, wireframing, visual design, usability testing...' 
+                    {role.name === 'Product Design'
+                      ? 'User research, wireframing, visual design, usability testing...'
                       : 'Product strategy, roadmapping, metrics, experimentation...'}
                   </p>
                 </div>

@@ -99,7 +99,19 @@ class ApiClient {
   }
 
   getAttempt(attemptId: string) {
-    return this.get<{ id: string; challengeId: string; startedAt: string; completedAt: string | null; path: any[]; assessment: any; xpEarned: number | null }>(`/attempts/${attemptId}`)
+    return this.get<{
+      id: string
+      challengeId: string
+      startedAt: string
+      completedAt: string | null
+      path: any[]
+      assessment: any
+      xpEarned: number | null
+      /** Client-safe challenge context (never includes hiddenCase/answerSheet). */
+      challenge: { id: string; title: string; applicantSteps: any[] }
+      /** The step the candidate should answer next, or null when the path is terminal. */
+      step: any | null
+    }>(`/attempts/${attemptId}`)
   }
 
   // Profile
@@ -121,7 +133,50 @@ class ApiClient {
     return this.get<{ badges: Array<{ id: string; name: string; description: string; iconRef: string; unlockCondition: any; earned: boolean; earnedAt: string | null }> }>('/profile/badges')
   }
 
+  // Roles + skill tree
+  getRoles() {
+    return this.get<{ roles: Array<{ id: string; name: string }> }>('/roles')
+  }
+
+  getSkills() {
+    return this.get<{
+      categories: Array<{
+        id: string
+        name: string
+        order: number
+        skills: Array<{
+          id: string
+          name: string
+          order: number
+          unlockThreshold: number | null
+          gatedBySkillId: string | null
+          score: number | null
+          locked: boolean
+        }>
+      }>
+    }>('/skills')
+  }
+
   // Admin
+  getAdminSkillCategories(roleId?: string) {
+    const params = roleId ? `?roleId=${roleId}` : ''
+    return this.get<{ categories: Array<{ id: string; name: string; order: number; roleId: string; skills: any[] }> }>(`/admin/skill-categories${params}`)
+  }
+
+  getAdminSkills(skillCategoryId?: string) {
+    const params = skillCategoryId ? `?skillCategoryId=${skillCategoryId}` : ''
+    return this.get<{
+      skills: Array<{
+        id: string
+        name: string
+        order: number
+        unlockThreshold: number | null
+        skillCategoryId: string
+        skillCategory: { id: string; name: string; roleId: string }
+      }>
+    }>(`/admin/skills${params}`)
+  }
+
   createSkillCategory(data: { name: string; roleId: string; order?: number }) {
     return this.post<any>('/admin/skill-categories', data)
   }

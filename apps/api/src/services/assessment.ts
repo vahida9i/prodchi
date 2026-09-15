@@ -1,13 +1,16 @@
-import { PrismaClient } from '@prisma/client'
+import type { Prisma } from '@prisma/client'
 import Anthropic from '@anthropic-ai/sdk'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import { fileURLToPath } from 'url'
+import { prisma } from '../lib/prisma.ts'
 
-const prisma = new PrismaClient()
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-const __dirname = join(fileURLToPath(import.meta.url), '..', '..', '..', '..', 'packages', 'shared-types', 'rubrics')
+// Rubrics are authored alongside challenge content (spec Section 7). The depth is
+// identical from src/services/ and dist/services/, so this resolves in dev and in
+// the built output.
+const RUBRICS_DIR = fileURLToPath(new URL('../../../../packages/shared-types/rubrics/', import.meta.url))
 
 interface Rubric {
   skillId: string
@@ -23,13 +26,15 @@ interface AssessmentResult {
 async function loadRubrics(skillIds: string[]): Promise<Rubric[]> {
   const rubrics: Rubric[] = []
   for (const skillId of skillIds) {
+    const filePath = join(RUBRICS_DIR, `${skillId}.json`)
     try {
-      const filePath = join(__dirname, `${skillId}.json`)
       const fileContent = readFileSync(filePath, 'utf-8')
       const rubric = JSON.parse(fileContent)
       rubrics.push(rubric)
     } catch {
-      // Default rubric if file not found
+      // Never fail an assessment over a missing rubric, but make it visible: a
+      // silent fallback would hide an authoring mistake behind scoreable output.
+      console.warn(`[assessment] No rubric found at ${filePath}; scoring skill ${skillId} with the generic rubric.`)
       rubrics.push({
         skillId,
         criteria: [
@@ -162,7 +167,7 @@ export async function assessAttempt(attempt: any): Promise<AssessmentResult> {
       // Save assessment to attempt
       await prisma.attempt.update({
         where: { id: attempt.id },
-        data: { assessment }
+        data: { assessment: assessment as unknown as Prisma.InputJsonValue }
       })
 
       return assessment

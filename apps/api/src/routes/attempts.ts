@@ -90,15 +90,28 @@ export async function attemptRoutes(fastify: FastifyInstance) {
       return reply.status(409).send({ error: 'Attempt already completed' })
     }
 
-    // Verify stepIndex matches current position
-    const path = attempt.path as any[]
-    if (path.length !== stepIndex) {
-      return reply.status(400).send({ error: 'Step index does not match current attempt position' })
-    }
-
     const challenge = attempt.challenge
     const applicantSteps = challenge.applicantSteps as any[]
     const answerSheet = challenge.answerSheet as any[]
+    const path = attempt.path as any[]
+
+    // Challenges branch through answerSheet[*].options[*].nextStepIndex, so the
+    // answered steps form a path of jumps rather than a dense 0..n range: comparing
+    // stepIndex against path.length rejects every branch (spec Section 5.2). The
+    // expected step is derived from the tail of the path instead.
+    const expectedStepIndex: number | null = path.length === 0
+      ? applicantSteps[0]?.stepIndex ?? 0
+      : path[path.length - 1]?.nextStepIndex ?? null
+
+    if (expectedStepIndex === null) {
+      return reply.status(409).send({ error: 'Attempt has already reached the final step' })
+    }
+
+    if (stepIndex !== expectedStepIndex) {
+      return reply.status(400).send({
+        error: `Step index does not match current attempt position (expected ${expectedStepIndex})`
+      })
+    }
 
     const currentStep = applicantSteps.find(s => s.stepIndex === stepIndex)
     if (!currentStep) {
@@ -115,15 +128,14 @@ export async function attemptRoutes(fastify: FastifyInstance) {
     let nextStepIndex: number | null = null
 
     if (currentStep.inputType === 'freeText') {
-      // For freeText, we'll use a special handling - just record the response
-      // The assessment service will handle scoring
+      // Free-text answers are scored against the skill rubric directly (spec
+      // Section 5.2). They carry no optionId, so branching uses the answer sheet's
+      // single entry for that step.
       chosenOption = { freeTextResponse: freeText }
-      // For freeText, we need to determine next step from answerSheet
-      // Since there's no optionId, we'll use the first option's nextStepIndex as default
-      const firstOption = Object.values(answerStep.options)[0] as any
-      if (firstOption) {
-        revealedInfo = firstOption.reveal || []
-        nextStepIndex = firstOption.nextStepIndex
+      const freeTextEntry = Object.values(answerStep.options)[0] as any
+      if (freeTextEntry) {
+        revealedInfo = freeTextEntry.reveal || []
+        nextStepIndex = freeTextEntry.nextStepIndex
       }
     } else {
       if (!optionId) {
@@ -140,14 +152,17 @@ export async function attemptRoutes(fastify: FastifyInstance) {
       nextStepIndex = option.nextStepIndex
     }
 
-    const newPathEntry = {
+    const pathEntry = {
       stepIndex,
       ...chosenOption,
       revealedInfoSnapshot: revealedInfo,
+      // Persisted so the next request (and GET /attempts/:id) can resolve the
+      // current position without re-reading the answer sheet.
+      nextStepIndex,
       timestamp: new Date().toISOString()
     }
 
-    const updatedPath = [...path, newPathEntry]
+    const updatedPath = [...path, pathEntry]
 
     await prisma.attempt.update({
       where: { id },
@@ -185,35 +200,15 @@ export async function attemptRoutes(fastify: FastifyInstance) {
     }
 
     const path = attempt.path as any[]
-    const applicantSteps = attempt.challenge.applicantSteps as any[]
-    const answerSheet = attempt.challenge.answerSheet as any[]
 
-    // Verify all steps have been answered
-    const answeredStepIndices = new Set(path.map(p => p.stepIndex))
-    const requiredStepIndices = new Set(applicantSteps.map(s => s.stepIndex))
-
-    // Check if we've reached a terminal step (nextStepIndex === null)
+    // The path ends on a terminal step when the last answered step's nextStepIndex
+    // is null, meaning "this ends the challenge" (spec Section 5.2).
     const lastPathEntry = path[path.length - 1]
     if (!lastPathEntry) {
       return reply.status(409).send({ error: 'No steps answered' })
     }
 
-    const lastAnswerStep = answerSheet.find(s => s.stepIndex === lastPathEntry.stepIndex)
-    if (!lastAnswerStep) {
-      return reply.status(500).send({ error: 'Answer sheet missing for last step' })
-    }
-
-    let isTerminal = false
-    if (lastPathEntry.optionChosen) {
-      const option = lastAnswerStep.options[lastPathEntry.optionChosen]
-      isTerminal = option?.nextStepIndex === null
-    } else if (lastPathEntry.freeTextResponse) {
-      // For freeText, check the first option's nextStepIndex
-      const firstOption = Object.values(lastAnswerStep.options)[0] as any
-      isTerminal = firstOption?.nextStepIndex === null
-    }
-
-    if (!isTerminal) {
+    if (lastPathEntry.nextStepIndex !== null) {
       return reply.status(409).send({ error: 'Not all steps answered' })
     }
 
@@ -260,6 +255,20 @@ export async function attemptRoutes(fastify: FastifyInstance) {
       return reply.status(404).send({ error: 'Attempt not found' })
     }
 
+    const applicantSteps = attempt.challenge.applicantSteps as any[]
+    const path = attempt.path as any[]
+
+    // Resume support: the client needs the client-safe steps plus the step that
+    // comes next, derived from the persisted path. `hiddenCase` and `answerSheet`
+    // are never exposed here (spec Section 6.3).
+    const expectedStepIndex: number | null = path.length === 0
+      ? applicantSteps[0]?.stepIndex ?? 0
+      : path[path.length - 1]?.nextStepIndex ?? null
+
+    const step = attempt.completedAt || expectedStepIndex === null
+      ? null
+      : applicantSteps.find(s => s.stepIndex === expectedStepIndex) ?? null
+
     return reply.send({
       id: attempt.id,
       challengeId: attempt.challengeId,
@@ -267,7 +276,13 @@ export async function attemptRoutes(fastify: FastifyInstance) {
       completedAt: attempt.completedAt,
       path: attempt.path,
       assessment: attempt.assessment,
-      xpEarned: attempt.xpEarned
+      xpEarned: attempt.xpEarned,
+      challenge: {
+        id: attempt.challenge.id,
+        title: attempt.challenge.title,
+        applicantSteps
+      },
+      step
     })
   })
 }

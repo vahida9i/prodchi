@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,28 +13,29 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 export default function AdminSkillsPage() {
   const [categories, setCategories] = useState<any[]>([])
   const [skills, setSkills] = useState<any[]>([])
-  const [roles, setRoles] = useState<any[]>([])
+  const [roles, setRoles] = useState<Array<{ id: string; name: string }>>([])
   const [loading, setLoading] = useState(true)
   const [showCategoryDialog, setShowCategoryDialog] = useState(false)
   const [editingCategory, setEditingCategory] = useState<any | null>(null)
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // We'll need to add API endpoints for these
-        // For now, hardcode roles
-        setRoles([
-          { id: 'product-design', name: 'Product Design' },
-          { id: 'product-management', name: 'Product Management' }
-        ])
-      } catch (err) {
-        console.error('Failed to load admin data:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchData()
+  const fetchData = useCallback(async () => {
+    // Taxonomy lists come from the admin API - the page no longer hardcodes roles or
+    // pretends to have no endpoints for categories/skills (spec Section 6.5).
+    const [rolesRes, categoriesRes, skillsRes] = await Promise.all([
+      api.getRoles(),
+      api.getAdminSkillCategories(),
+      api.getAdminSkills()
+    ])
+    setRoles(rolesRes.roles)
+    setCategories(categoriesRes.categories)
+    setSkills(skillsRes.skills)
   }, [])
+
+  useEffect(() => {
+    fetchData()
+      .catch((err) => console.error('Failed to load admin data:', err))
+      .finally(() => setLoading(false))
+  }, [fetchData])
 
   const handleCategorySubmit = async (data: any) => {
     try {
@@ -45,9 +46,29 @@ export default function AdminSkillsPage() {
       }
       setShowCategoryDialog(false)
       setEditingCategory(null)
-      // Would refresh list here
+      await fetchData()
     } catch (err: any) {
       alert(err.message || 'Failed to save category')
+    }
+  }
+
+  const handleDeleteCategory = async (category: any) => {
+    if (!confirm(`Delete skill category "${category.name}"?`)) return
+    try {
+      await api.deleteSkillCategory(category.id)
+      await fetchData()
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete category')
+    }
+  }
+
+  const handleDeleteSkill = async (skill: any) => {
+    if (!confirm(`Delete skill "${skill.name}"?`)) return
+    try {
+      await api.deleteSkill(skill.id)
+      await fetchData()
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete skill')
     }
   }
 
@@ -113,7 +134,7 @@ export default function AdminSkillsPage() {
                         }}>
                           Edit
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-destructive">
+                        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDeleteCategory(category)}>
                           Delete
                         </Button>
                       </TableCell>
@@ -155,7 +176,7 @@ export default function AdminSkillsPage() {
                       </TableCell>
                       <TableCell>
                         <Button variant="ghost" size="sm">Edit</Button>
-                        <Button variant="ghost" size="sm" className="text-destructive">Delete</Button>
+                        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDeleteSkill(skill)}>Delete</Button>
                       </TableCell>
                     </TableRow>
                   ))}

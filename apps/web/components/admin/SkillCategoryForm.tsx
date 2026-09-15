@@ -63,7 +63,7 @@ export function SkillCategoryForm({ onSubmit, initialData, roles, isLoading }: S
             <Label htmlFor="roleId">Role</Label>
             <Select
               value={form.watch('roleId')}
-              onValueChange={form.setValue('roleId')}
+              onValueChange={(value) => form.setValue('roleId', value, { shouldValidate: true })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select role" />

@@ -1,5 +1,21 @@
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { existsSync } from 'node:fs'
+import { resolve } from 'node:path'
+
+// The seed script is run by tsx, which does not read .env files. Load the repo
+// root .env (or the copy next to this package) before Prisma reads DATABASE_URL.
+for (const path of [resolve(process.cwd(), '.env'), resolve(process.cwd(), '../.env')]) {
+  if (existsSync(path)) {
+    process.loadEnvFile(path)
+    break
+  }
+}
+
+if (!process.env.DATABASE_URL) {
+  console.error('[seed] DATABASE_URL is not set. Add it to .env at the repo root or to packages/db/.env.')
+  process.exit(1)
+}
 
 const prisma = new PrismaClient()
 
@@ -24,17 +40,20 @@ async function main() {
   // Create admin user from env vars
   const adminEmail = process.env.ADMIN_SEED_EMAIL || 'admin@baaten.local'
   const adminPassword = process.env.ADMIN_SEED_PASSWORD || 'admin123'
+  // MVP runs a single cohort; the leaderboard scopes to User.cohortId (spec 6.4).
+  const defaultCohortId = process.env.DEFAULT_COHORT_ID || 'default'
 
   const passwordHash = await bcrypt.hash(adminPassword, 12)
 
   const admin = await prisma.user.upsert({
     where: { email: adminEmail },
-    update: { passwordHash, role: 'admin', roleTrackId: productDesign.id },
+    update: { passwordHash, role: 'admin', roleTrackId: productDesign.id, cohortId: defaultCohortId },
     create: {
       email: adminEmail,
       passwordHash,
       role: 'admin',
-      roleTrackId: productDesign.id
+      roleTrackId: productDesign.id,
+      cohortId: defaultCohortId
     }
   })
 
@@ -113,7 +132,7 @@ async function main() {
   for (const skill of skills) {
     await prisma.skill.upsert({
       where: { id: skill.id },
-      update: { name: skill.name, order: skill.order, skillCategoryId: skill.categoryId, unlockThreshold: skill.unlockThreshold },
+      update: { name: skill.name, order: skill.order, skillCategoryId: skill.skillCategoryId, unlockThreshold: skill.unlockThreshold },
       create: skill
     })
   }

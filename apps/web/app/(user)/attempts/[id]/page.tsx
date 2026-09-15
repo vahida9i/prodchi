@@ -12,11 +12,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 const STAGES = ['FRAME', 'INVESTIGATE', 'DEFINE', 'EXPLORE', 'DECIDE', 'DESIGN', 'VALIDATE']
 
+type AttemptState = Awaited<ReturnType<typeof api.getAttempt>>
+
 export default function AttemptPage() {
   const params = useParams()
   const router = useRouter()
   const attemptId = params.id as string
-  const [attempt, setAttempt] = useState<any>(null)
+  const [attempt, setAttempt] = useState<AttemptState | null>(null)
   const [currentStep, setCurrentStep] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [answering, setAnswering] = useState(false)
@@ -30,13 +32,22 @@ export default function AttemptPage() {
       try {
         const data = await api.getAttempt(attemptId)
         setAttempt(data)
-        if (data.path && data.path.length > 0) {
-          const lastStep = data.path[data.path.length - 1]
-        } else if (data.challenge) {
-          const steps = data.challenge.applicantSteps
-          if (steps.length > 0) {
-            setCurrentStep(steps[0])
-          }
+
+        if (data.completedAt) {
+          // Already assessed - show the stored assessment instead of re-running it.
+          setResults({
+            assessment: data.assessment,
+            xpEarned: data.xpEarned ?? 0,
+            leveledUp: false,
+            newBadges: []
+          })
+          setShowResults(true)
+          return
+        }
+
+        // Resume mid-attempt: the API tells us which step comes next.
+        if (data.step) {
+          setCurrentStep(data.step)
         }
       } catch (err) {
         console.error('Failed to load attempt:', err)

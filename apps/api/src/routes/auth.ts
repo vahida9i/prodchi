@@ -2,8 +2,10 @@ import { FastifyInstance } from 'fastify'
 import { prisma } from '../lib/prisma.ts'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
-import jwt from 'jsonwebtoken'
-import { createSessionToken, AuthUser, JWT_SECRET } from '../middleware/requireAuth.ts'
+import { createSessionToken, resolveSessionUser, toAuthUser } from '../middleware/requireAuth.ts'
+
+// MVP runs a single cohort; the weekly leaderboard scopes to User.cohortId (spec 6.4).
+const DEFAULT_COHORT_ID = process.env.DEFAULT_COHORT_ID || 'default'
 
 const signupSchema = z.object({
   email: z.string().email(),
@@ -36,11 +38,11 @@ export async function authRoutes(fastify: FastifyInstance) {
 
     const passwordHash = await bcrypt.hash(password, 12)
     const user = await prisma.user.create({
-      data: { email, passwordHash },
+      data: { email, passwordHash, cohortId: DEFAULT_COHORT_ID },
       select: { id: true, email: true, role: true, roleTrackId: true, cohortId: true }
     })
 
-    const token = createSessionToken(user)
+    const token = createSessionToken(toAuthUser(user))
     reply.setCookie('session', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -71,13 +73,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       return reply.status(401).send({ error: 'Invalid credentials' })
     }
 
-    const token = createSessionToken({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-      roleTrackId: user.roleTrackId,
-      cohortId: user.cohortId
-    })
+    const token = createSessionToken(toAuthUser(user))
 
     reply.setCookie('session', token, {
       httpOnly: true,
@@ -98,22 +94,18 @@ export async function authRoutes(fastify: FastifyInstance) {
 
   // POST /api/v1/auth/onboarding/role
   fastify.post('/onboarding/role', async (request, reply) => {
-    const token = request.cookies?.session
-    console.log('DEBUG onboarding/role - cookies:', request.cookies)
-    console.log('DEBUG onboarding/role - token:', token)
-    console.log('DEBUG onboarding/role - JWT_SECRET:', JWT_SECRET)
-    if (!token) {
+    if (!request.cookies?.session) {
       return reply.status(401).send({ error: 'Unauthorized' })
     }
 
-    // Verify token manually since this is under public auth routes
-    let userId: string
-    try {
-      const payload = jwt.verify(token, JWT_SECRET) as AuthUser
-      userId = payload.userId
-    } catch {
+    // This route sits in the public /auth/* scope, so resolve the session with the
+    // same helper the requireAuth hook uses - one verification path, no duplication.
+    const sessionUser = await resolveSessionUser(request)
+    if (!sessionUser) {
       return reply.status(401).send({ error: 'Invalid session' })
     }
+
+    const userId = sessionUser.userId
 
     const parseResult = onboardingSchema.safeParse(request.body)
     if (!parseResult.success) {
@@ -146,7 +138,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       select: { id: true, email: true, role: true, roleTrackId: true, cohortId: true }
     })
 
-    const newToken = createSessionToken(updatedUser)
+    const newToken = createSessionToken(toAuthUser(updatedUser))
     reply.setCookie('session', newToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -158,32 +150,20 @@ export async function authRoutes(fastify: FastifyInstance) {
     return reply.send({ success: true })
   })
 
-  // GET /api/v1/auth/me - for checking current session
+  // GET /api/v1/auth/me - current session (used by the web app for role gating)
   fastify.get('/me', async (request, reply) => {
-    const token = request.cookies?.session
-    if (!token) {
+    if (!request.cookies?.session) {
       return reply.status(401).send({ error: 'Unauthorized' })
     }
 
-    // Verify token manually since this is under public auth routes
-    let user: { id: string; email: string; role: string; roleTrackId: string | null; cohortId: string | null }
-    try {
-      const payload = jwt.verify(token, JWT_SECRET) as AuthUser
-      const dbUser = await prisma.user.findUnique({
-        where: { id: payload.userId },
-        select: { id: true, email: true, role: true, roleTrackId: true, cohortId: true }
-      })
-      if (!dbUser) {
-        return reply.status(401).send({ error: 'User not found' })
-      }
-      user = dbUser
-    } catch {
+    const user = await resolveSessionUser(request)
+    if (!user) {
       return reply.status(401).send({ error: 'Invalid session' })
     }
 
     return reply.send({
       user: {
-        id: user.id,
+        id: user.userId,
         email: user.email,
         role: user.role,
         roleTrackId: user.roleTrackId,

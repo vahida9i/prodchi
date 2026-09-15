@@ -10,15 +10,20 @@ interface StreakCalendarProps {
 }
 
 export function StreakCalendar({ currentStreak, longestStreak, lastActiveDay, className }: StreakCalendarProps) {
+  // Streaks are tracked on UTC day boundaries by the API (spec Section 8.1), so the
+  // calendar compares UTC days too - otherwise a UTC-midnight timestamp paints the
+  // wrong day for viewers in negative-offset timezones.
+  const toUtcDay = (date: Date) => date.toISOString().slice(0, 10)
+
   const today = new Date()
   const days = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date(today)
-    date.setDate(date.getDate() - (6 - i))
+    const date = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()))
+    date.setUTCDate(date.getUTCDate() - (6 - i))
     return date
   })
 
   const lastActive = lastActiveDay ? new Date(lastActiveDay) : null
-  if (lastActive) lastActive.setHours(0, 0, 0, 0)
+  const todayKey = toUtcDay(today)
 
   return (
     <div className={cn("space-y-3", className)}>
@@ -34,9 +39,10 @@ export function StreakCalendar({ currentStreak, longestStreak, lastActiveDay, cl
       </div>
       <div className="flex items-center justify-between">
         {days.map((day) => {
-          const isToday = day.toDateString() === today.toDateString()
-          const isActive = lastActive && day.toDateString() === lastActive.toDateString()
-          const isPast = day < today && (!lastActive || day.toDateString() !== lastActive.toDateString())
+          const dayKey = toUtcDay(day)
+          const isToday = dayKey === todayKey
+          const isActive = lastActive ? dayKey === toUtcDay(lastActive) : false
+          const isPast = dayKey < todayKey && !isActive
 
           return (
             <div key={day.toISOString()} className="flex flex-col items-center gap-1">

@@ -56,7 +56,9 @@ export const MetadataSchema = z.object({
   difficulty: z.number().int().min(1).max(5),
   tier: z.enum(['free', 'pro']),
   xpValue: z.number().int().positive(),
-  skillIds: z.array(z.string().uuid()).min(1)
+  // Skill IDs are seeded slugs (e.g. 'user-research'), not UUIDs; referential
+  // integrity is enforced against the database in validateChallengeImport.
+  skillIds: z.array(z.string().min(1)).min(1)
 })
 
 export const ChallengeImportSchema = z.object({

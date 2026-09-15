@@ -27,6 +27,34 @@ const updateSkillSchema = z.object({
 })
 
 export async function adminSkillRoutes(fastify: FastifyInstance) {
+  // GET /api/v1/admin/skill-categories?roleId=
+  fastify.get('/skill-categories', async (request, reply) => {
+    const { roleId } = request.query as { roleId?: string }
+
+    const categories = await prisma.skillCategory.findMany({
+      where: roleId ? { roleId } : undefined,
+      orderBy: [{ roleId: 'asc' }, { order: 'asc' }],
+      include: {
+        skills: { orderBy: { order: 'asc' } }
+      }
+    })
+
+    return reply.send({ categories })
+  })
+
+  // GET /api/v1/admin/skills?skillCategoryId=
+  fastify.get('/skills', async (request, reply) => {
+    const { skillCategoryId } = request.query as { skillCategoryId?: string }
+
+    const skills = await prisma.skill.findMany({
+      where: skillCategoryId ? { skillCategoryId } : undefined,
+      orderBy: [{ skillCategoryId: 'asc' }, { order: 'asc' }],
+      include: { skillCategory: { select: { id: true, name: true, roleId: true } } }
+    })
+
+    return reply.send({ skills })
+  })
+
   // Skill Categories
   fastify.post('/skill-categories', async (request, reply) => {
     const parseResult = createSkillCategorySchema.safeParse(request.body)
