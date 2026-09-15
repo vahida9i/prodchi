@@ -38,7 +38,8 @@ coverage
 *.sqlite
 
 # Prisma
-prisma/migrations/
+# migration history is versioned; only generated client output is ignored
+prisma/generated/
 
 # Turbo
 .turbo
