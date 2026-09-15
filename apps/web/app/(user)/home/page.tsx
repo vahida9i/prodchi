@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,6 +12,7 @@ import { ChallengeCard } from "@/components/challenge/ChallengeCard"
 import { StreakCalendar } from "@/components/challenge/StreakCalendar"
 
 export default function HomePage() {
+  const router = useRouter()
   const [challenges, setChallenges] = useState<any[]>([])
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -92,7 +94,11 @@ export default function HomePage() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {challenges.map((challenge) => (
-                <ChallengeCard key={challenge.id} challenge={challenge} onClick={() => {}} />
+                <ChallengeCard
+                  key={challenge.id}
+                  challenge={challenge}
+                  onClick={() => router.push(`/challenges/${challenge.id}`)}
+                />
               ))}
             </div>
           )}

@@ -9,6 +9,7 @@ import { api } from "@/lib/api-client"
 
 export default function ChallengeIntroPage() {
   const params = useParams()
+  const router = useRouter()
   const challengeId = params.id as string
   const [challenge, setChallenge] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -32,8 +33,13 @@ export default function ChallengeIntroPage() {
     setStarting(true)
     try {
       const attempt = await api.createAttempt(challengeId)
-      window.location.href = `/attempts/${attempt.attemptId}`
+      router.push(`/attempts/${attempt.attemptId}`)
     } catch (err: any) {
+      // Session expired/missing: send the user to login instead of dead-ending.
+      if (err?.status === 401) {
+        router.push('/login')
+        return
+      }
       alert(err.message || 'Failed to start challenge')
     } finally {
       setStarting(false)
