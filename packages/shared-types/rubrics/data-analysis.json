@@ -1,0 +1,9 @@
+{
+  "skillId": "data-analysis",
+  "criteria": [
+    { "description": "Selects appropriate metrics and data sources", "weight": 0.3 },
+    { "description": "Interprets quantitative data accurately", "weight": 0.3 },
+    { "description": "Identifies meaningful patterns and trends", "weight": 0.2 },
+    { "description": "Connects data insights to product decisions", "weight": 0.2 }
+  ]
+}

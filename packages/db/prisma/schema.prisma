@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(uuid())
+  email          String   @unique
+  passwordHash   String?
+  role           String   @default("user") // "user" | "admin"
+  cohortId       String?
+  roleTrackId    String?  // FK to Role (Product Design / Product Management), set at onboarding
+  createdAt      DateTime @default(now())
+  roleTrack      Role?    @relation(fields: [roleTrackId], references: [id])
+  skillScores    SkillScore[]
+  attempts       Attempt[]
+  streak         Streak?
+  badges         UserBadge[]
+  capabilityProfile CapabilityProfile?
+
+  @@index([cohortId])
+}
+
+model Role {
+  id              String          @id @default(uuid())
+  name            String          @unique // "Product Design" | "Product Management" — fixed seed data
+  skillCategories SkillCategory[]
+  challenges      Challenge[]
+  users           User[]
+}
+
+model SkillCategory {
+  id     String  @id @default(uuid())
+  name   String
+  order  Int     @default(0)
+  roleId String
+  role   Role    @relation(fields: [roleId], references: [id])
+  skills Skill[]
+
+  @@index([roleId])
+}
+
+model Skill {
+  id              String  @id @default(uuid())
+  name            String
+  order           Int     @default(0)
+  skillCategoryId String
+  unlockThreshold Int?    // score needed in the prior skill (by `order`) to unlock; null = always unlocked
+  skillCategory   SkillCategory @relation(fields: [skillCategoryId], references: [id])
+  challengeLinks  ChallengeSkill[]
+  scores          SkillScore[]
+
+  @@index([skillCategoryId])
+}
+
+model SkillScore {
+  id            String @id @default(uuid())
+  userId        String
+  skillId       String
+  score         Float  // rolling weighted average, 0-100
+  evidenceCount Int    @default(0)
+  updatedAt     DateTime @updatedAt
+  user          User   @relation(fields: [userId], references: [id])
+  skill         Skill  @relation(fields: [skillId], references: [id])
+
+  @@unique([userId, skillId])
+}
+
+model Challenge {
+  id               String   @id @default(uuid())
+  title            String
+  description      String
+  estimatedMinutes Int
+  roleId           String
+  difficulty       Int      // 1-5
+  tier             String   // "free" | "pro"
+  xpValue          Int
+  hiddenCase       Json     // server-only
+  applicantSteps   Json     // client-facing when read via GET /challenges/:id/attempt-safe view
+  answerSheet      Json     // server-only
+  status           String   @default("draft") // "draft" | "published"
+  createdAt        DateTime @default(now())
+  role             Role     @relation(fields: [roleId], references: [id])
+  skills           ChallengeSkill[]
+  attempts         Attempt[]
+
+  @@index([roleId, status, tier])
+}
+
+model ChallengeSkill {
+  challengeId String
+  skillId     String
+  challenge   Challenge @relation(fields: [challengeId], references: [id])
+  skill       Skill     @relation(fields: [skillId], references: [id])
+
+  @@id([challengeId, skillId])
+}
+
+model Attempt {
+  id          String    @id @default(uuid())
+  userId      String
+  challengeId String
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  path        Json      // [{stepIndex, optionChosen | freeTextResponse, revealedInfoSnapshot, timestamp}]
+  assessment  Json?     // {perSkillDeltas: [{skillId, delta}], feedbackText: {positives[], negatives[]}, confidence}
+  xpEarned    Int?
+  user        User      @relation(fields: [userId], references: [id])
+  challenge   Challenge @relation(fields: [challengeId], references: [id])
+
+  @@index([userId, challengeId])
+}
+
+model Streak {
+  userId        String    @id
+  currentStreak Int       @default(0)
+  longestStreak Int       @default(0)
+  lastActiveDay DateTime?
+  user          User      @relation(fields: [userId], references: [id])
+}
+
+model Badge {
+  id              String @id @default(uuid())
+  name            String
+  description     String
+  iconRef         String
+  unlockCondition Json   // {"type":"skillScoreAbove","skillId":"...","threshold":80}
+                        // {"type":"streakAbove","threshold":30}
+                        // {"type":"attemptsCompletedAbove","threshold":1}
+  users           UserBadge[]
+}
+
+model UserBadge {
+  userId   String
+  badgeId  String
+  earnedAt DateTime @default(now())
+  user     User  @relation(fields: [userId], references: [id])
+  badge    Badge @relation(fields: [badgeId], references: [id])
+
+  @@id([userId, badgeId])
+}
+
+// Persisted, recomputed on every attempt completion. SkillScore rows remain
+// the underlying source of truth for individual skill numbers; this table is
+// the durable, queryable snapshot the Profile screen and any future export/
+// share feature reads from, so that screen doesn't have to assemble an
+// aggregate from five different tables on every page load.
+model CapabilityProfile {
+  userId          String   @id
+  overallScore    Float    // mean of the user's SkillScore.score at last recompute
+  skillBreakdown  Json     // [{skillId, skillName, score}] snapshot at last recompute
+  challengesCompleted Int
+  caseStudiesCompleted Int  // challenges with difficulty >= 4, count
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id])
+}

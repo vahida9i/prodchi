@@ -1,0 +1,9 @@
+{
+  "skillId": "problem-framing",
+  "criteria": [
+    { "description": "Defines the problem clearly and precisely", "weight": 0.3 },
+    { "description": "Identifies root causes vs. symptoms", "weight": 0.3 },
+    { "description": "Frames problem in terms of user and business value", "weight": 0.2 },
+    { "description": "Sets appropriate scope and constraints", "weight": 0.2 }
+  ]
+}

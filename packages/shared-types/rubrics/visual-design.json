@@ -1,0 +1,9 @@
+{
+  "skillId": "visual-design",
+  "criteria": [
+    { "description": "Applies design system consistently", "weight": 0.3 },
+    { "description": "Creates visual hierarchy and emphasis", "weight": 0.2 },
+    { "description": "Ensures accessibility and readability", "weight": 0.2 },
+    { "description": "Produces polished, production-ready designs", "weight": 0.3 }
+  ]
+}

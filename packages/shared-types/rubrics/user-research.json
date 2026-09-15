@@ -1,0 +1,9 @@
+{
+  "skillId": "user-research",
+  "criteria": [
+    { "description": "Identifies appropriate research methods for the problem", "weight": 0.3 },
+    { "description": "Demonstrates understanding of user needs and pain points", "weight": 0.3 },
+    { "description": "Synthesizes findings into actionable insights", "weight": 0.2 },
+    { "description": "Communicates research rationale clearly", "weight": 0.2 }
+  ]
+}

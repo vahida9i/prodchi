@@ -1,0 +1,9 @@
+{
+  "skillId": "usability-testing",
+  "criteria": [
+    { "description": "Designs effective test scenarios and tasks", "weight": 0.3 },
+    { "description": "Recruits representative participants", "weight": 0.2 },
+    { "description": "Observes and records findings objectively", "weight": 0.2 },
+    { "description": "Synthesizes findings into prioritized recommendations", "weight": 0.3 }
+  ]
+}

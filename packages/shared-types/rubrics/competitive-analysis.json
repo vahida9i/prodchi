@@ -1,0 +1,9 @@
+{
+  "skillId": "competitive-analysis",
+  "criteria": [
+    { "description": "Identifies relevant competitors and alternatives", "weight": 0.3 },
+    { "description": "Analyzes strengths, weaknesses, and positioning", "weight": 0.3 },
+    { "description": "Derives strategic implications for own product", "weight": 0.2 },
+    { "description": "Presents analysis in clear, structured format", "weight": 0.2 }
+  ]
+}
