@@ -13,8 +13,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": ".",
-    "baseUrl": "."
+    "rootDir": "."
   },
   "include": ["*.ts", "prisma/**/*"],
   "exclude": ["node_modules", "dist"]

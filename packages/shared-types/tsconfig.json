@@ -13,9 +13,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": ".",
-    "baseUrl": ".",
-    "paths": {}
+    "rootDir": "."
   },
   "include": ["*.ts", "rubrics/*.json"],
   "exclude": ["node_modules", "dist"]
