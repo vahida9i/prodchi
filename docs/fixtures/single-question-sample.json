@@ -1,0 +1,33 @@
+{
+  "id": "permission_copy_single",
+  "title": "Rewriting the permission prompt",
+  "role": "Product Design",
+  "difficulty": "easy",
+  "start": "Q1",
+  "questions": {
+    "Q1": {
+      "text": "Users consistently decline the location permission. The screen asks for it before explaining anything. What is the strongest next move?",
+      "choices": [
+        {
+          "text": "Add a short line explaining the permission at the top of the screen",
+          "stage": "DEFINE",
+          "reveal": "The added line helps slightly, but users still tap decline when the prompt appears before they reach the feature that needs it.",
+          "next": "END"
+        },
+        {
+          "text": "Move the permission request to the moment the location feature is first used, with a one-line benefit statement",
+          "stage": "DESIGN",
+          "reveal": "Requests made in context are accepted far more often, because the reason for the permission is self-evident at that moment.",
+          "next": "END"
+        },
+        {
+          "text": "Escalate the permission screen to the design-system team for a redesign",
+          "stage": "VALIDATE",
+          "reveal": "The design-system team confirms the pattern is fine; the problem is where in the flow the prompt appears, not how it looks.",
+          "next": "END"
+        }
+      ],
+      "bestChoice": 1
+    }
+  }
+}

@@ -1,0 +1,278 @@
+{
+  "id": "clinic_booking_no_shows",
+  "title": "The No-Show Clinic",
+  "role": "Product Design",
+  "difficulty": "easy",
+  "summary": "Brookside Clinic is a community health centre offering same-day and booked GP appointments plus basic diagnostics from one neighborhood location. Its customers are local residents who book when they fall ill, and the clinic earns per completed visit while paying a fixed rota of salaried clinicians.",
+  "start": "Q1",
+  "questions": {
+    "Q1": {
+      "text": "A community clinic moved bookings online. 30% of booked appointments are now no-shows, and staff call them 'ghost hours.' What do you do first?",
+      "choices": [
+        {
+          "text": "Look at what patients receive between booking and the appointment",
+          "stage": "INVESTIGATE",
+          "reveal": "Patients get a single confirmation email at booking and nothing else — no reminder, no way to change or cancel.",
+          "next": "Q2",
+          "quality": "best",
+          "criteria": [
+            "intent-gap"
+          ],
+          "because": "It starts by seeing what the patient actually receives between booking and the visit, which is where intent can slip away."
+        },
+        {
+          "text": "Interview patients who no-showed",
+          "stage": "INVESTIGATE",
+          "reveal": "Several no-shows say they forgot; a few admit they felt too guilty to cancel and just didn't come.",
+          "next": "Q3",
+          "quality": "reasonable",
+          "criteria": [
+            "human-barrier"
+          ]
+        },
+        {
+          "text": "Check whether no-shows cluster by appointment type, day, or time",
+          "stage": "INVESTIGATE",
+          "reveal": "No-shows are flat across appointment types but spike on early-morning slots.",
+          "next": "Q4",
+          "quality": "reasonable",
+          "criteria": [
+            "intent-gap"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q2": {
+      "text": "Patients receive one email at booking and nothing after. What's the strongest next step?",
+      "choices": [
+        {
+          "text": "Add an SMS reminder 24 hours before the appointment",
+          "stage": "DESIGN",
+          "reveal": "The reminder helps the forgetters, but without understanding why the rest miss, it only patches part of the problem.",
+          "next": "Q5",
+          "quality": "reasonable",
+          "criteria": [
+            "human-barrier"
+          ]
+        },
+        {
+          "text": "Map the journey from symptom to appointment day to see where intent is made or lost",
+          "stage": "INVESTIGATE",
+          "reveal": "The map shows booking happens days before the visit, with no touchpoint in between to carry the patient's intent.",
+          "next": "Q5",
+          "quality": "best",
+          "criteria": [
+            "intent-gap"
+          ],
+          "because": "It maps the trip from symptom to appointment day to find where intent is made or lost, rather than zooming in on one touchpoint."
+        },
+        {
+          "text": "Compare no-show rates before and after the online launch",
+          "stage": "INVESTIGATE",
+          "reveal": {
+            "text": "No-shows were 12% with phone bookings — the jump to 30% began with online booking, not with the clinic.",
+            "table": {
+              "caption": "No-show rate by booking channel",
+              "columns": [
+                "Booking channel",
+                "No-show rate"
+              ],
+              "rows": [
+                [
+                  "Phone bookings",
+                  "12%"
+                ],
+                [
+                  "Online booking",
+                  "30%"
+                ]
+              ]
+            }
+          },
+          "next": "Q4",
+          "quality": "reasonable",
+          "criteria": [
+            "intent-gap"
+          ]
+        }
+      ],
+      "bestChoice": 1
+    },
+    "Q3": {
+      "text": "Patients say they forgot, or felt too guilty to cancel. What do you do?",
+      "choices": [
+        {
+          "text": "Map the gap between booking and appointment to find where the commitment fades",
+          "stage": "INVESTIGATE",
+          "reveal": "The map shows a 3–10 day silence after booking — nothing carries the patient's intent to appointment day.",
+          "next": "Q5",
+          "quality": "best",
+          "criteria": [
+            "intent-gap"
+          ],
+          "because": "It treats forgetting and guilt as two different problems and designs for both, instead of patching only the forgetters."
+        },
+        {
+          "text": "Design a one-tap cancel with no fee, reachable from a reminder",
+          "stage": "DESIGN",
+          "reveal": "Easy cancellation is promising, but there is no reminder yet — there is nothing to cancel from.",
+          "next": "Q5",
+          "quality": "poor",
+          "criteria": [
+            "human-barrier"
+          ]
+        },
+        {
+          "text": "Charge a small deposit for online bookings",
+          "stage": "DEFINE",
+          "reveal": "Deposits cut no-shows in published studies, but they punish exactly the patients this clinic serves.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q4": {
+      "text": "No-shows spike on early-morning slots and began with the online launch. What now?",
+      "choices": [
+        {
+          "text": "Follow a handful of patients from booking to the morning of an early visit",
+          "stage": "INVESTIGATE",
+          "reveal": "Booking is effortless; the morning itself — transit, work, childcare — is where plans break, and the booking screen never sees it.",
+          "next": "Q5",
+          "quality": "best",
+          "criteria": [
+            "human-barrier"
+          ],
+          "because": "It keeps the human barrier in view while easing the forgetters, so the sequence serves both reasons people miss."
+        },
+        {
+          "text": "Stop offering early-morning slots online",
+          "stage": "EXPLORE",
+          "reveal": "Removing the slots punishes punctual patients for a problem the flow created.",
+          "next": "END",
+          "quality": "poor"
+        },
+        {
+          "text": "Have staff call everyone who books an early slot",
+          "stage": "EXPLORE",
+          "reveal": "Calls don't scale, and they pile onto a front desk that is already short-staffed.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q5": {
+      "text": "The pattern is clear: a multi-day silence with no touchpoint, and real life getting in the way. What do you design?",
+      "choices": [
+        {
+          "text": "A single 24-hour SMS reminder, nothing else",
+          "stage": "DESIGN",
+          "reveal": "The reminder alone recovers the forgetters but leaves the guilt-driven no-shows stranded.",
+          "next": "Q6",
+          "quality": "reasonable",
+          "criteria": [
+            "human-barrier"
+          ]
+        },
+        {
+          "text": "A light sequence — confirmation at booking, then a 24-hour reminder with one-tap reschedule or cancel",
+          "stage": "DESIGN",
+          "reveal": "The sequence tests well: patients say it feels like care, not nagging, and one-tap reschedule gives the guilty a way out.",
+          "next": "Q6",
+          "quality": "best",
+          "criteria": [
+            "intent-gap",
+            "human-barrier"
+          ],
+          "because": "Confirmation at booking plus a 24-hour reminder with one-tap reschedule carries intent across the silence and gives guilty patients a way out."
+        },
+        {
+          "text": "Overbook early-morning slots by 10% to absorb no-shows",
+          "stage": "EXPLORE",
+          "reveal": "Overbooking risks queues when everyone shows — it treats the symptom, not the cause.",
+          "next": "Q6",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 1
+    },
+    "Q6": {
+      "text": "The reminder-and-reschedule sequence is designed. How do you validate it?",
+      "choices": [
+        {
+          "text": "Roll it out to all patients and survey the staff",
+          "stage": "VALIDATE",
+          "reveal": "Staff like it, but without a comparison window the effect on no-shows is guesswork.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "attribution"
+          ]
+        },
+        {
+          "text": "Ask patients in the waiting room whether they would use it",
+          "stage": "VALIDATE",
+          "reveal": "Stated intent overpromises — behavior in the weeks after booking is the real test.",
+          "next": "END",
+          "quality": "poor",
+          "criteria": [
+            "attribution"
+          ]
+        },
+        {
+          "text": "Pilot with two weeks of early-morning bookers and compare no-shows to the same window before",
+          "stage": "VALIDATE",
+          "reveal": {
+            "text": "Early-morning no-shows fall from 38% to 19% in the pilot; guilt-driven absences now show up as reschedules the clinic can refill.",
+            "table": {
+              "caption": "Early-morning no-shows",
+              "columns": [
+                "Period",
+                "No-show rate"
+              ],
+              "rows": [
+                [
+                  "Before the pilot",
+                  "38%"
+                ],
+                [
+                  "During the pilot",
+                  "19%"
+                ]
+              ]
+            }
+          },
+          "next": "END",
+          "quality": "best",
+          "criteria": [
+            "attribution"
+          ],
+          "because": "Piloting on the failing population and comparing before to after attributes the no-show drop to the sequence, not to season or staff opinion."
+        }
+      ],
+      "bestChoice": 2
+    }
+  },
+  "assessment": {
+    "criteria": [
+      {
+        "id": "intent-gap",
+        "label": "Finding where intent is lost",
+        "guidance": "Booking and visit are days apart — map what carries intent across the silence."
+      },
+      {
+        "id": "human-barrier",
+        "label": "Seeing the human barrier",
+        "guidance": "Forgetting and guilt are different problems; design for both."
+      },
+      {
+        "id": "attribution",
+        "label": "Proving the fix worked",
+        "guidance": "Pilot on the failing population and compare before against after."
+      }
+    ]
+  }
+}

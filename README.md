@@ -1,26 +1,28 @@
-# Baaten - Product Design Skill Practice App
+# Baaten — Challenge Import, Session & Progression App
 
-A skill-practice application for Product Designers with AI-powered assessment.
+A product-design skill-practice app: admins import branching scenario challenges as JSON, candidates play them one question at a time along a numbered level path, and the finished reasoning path is viewable as a recap with the run's score. The app **consumes, runs, and tracks** challenge content — it never generates or edits it, and scoring is fully deterministic (no LLM, no per-content judgments beyond the authored answer key).
 
 ## Architecture
 
 - **Web App**: Next.js 14+ (App Router), TypeScript, React, Tailwind CSS, shadcn/ui
 - **API Server**: Node.js, TypeScript, Fastify
 - **Database**: PostgreSQL 15+, Prisma ORM
-- **Assessment**: Anthropic API (Claude)
 
 ## Project Structure
 
 ```
 baaten/
 ├── apps/
-│   ├── web/          # Next.js frontend
-│   └── api/          # Fastify API server
+│   ├── web/          # Next.js frontend (level path, candidate sessions, progress + admin panel)
+│   └── api/          # Fastify API server (import validation, session engine, progression)
 ├── packages/
-│   ├── db/           # Prisma schema, migrations, seed
-│   └── shared-types/ # Zod schemas, validators, rubrics
-└── docs/
-    └── challenge-generator-prompt.md
+│   ├── db/           # Prisma schema, migrations, seed (roles, industries, badges)
+│   └── shared-types/ # Challenge JSON schema (Zod), graph validator, scoring, tests
+├── docs/
+│   └── fixtures/     # onboarding-drop-off.json + single-question-sample.json
+└── scripts/
+    ├── e2e-import-session.mjs  # end-to-end: import → play → resume → concurrency (API only)
+    └── e2e-level-path.mjs      # end-to-end: levels → gating → scoring → XP → badges
 ```
 
 ## Getting Started
@@ -47,7 +49,7 @@ pnpm db:generate
 # Run migrations
 pnpm db:migrate
 
-# Seed the database
+# Seed the database (roles + admin user)
 pnpm db:seed
 ```
 
@@ -58,8 +60,31 @@ pnpm db:seed
 pnpm dev
 
 # Or start individually:
-# API: pnpm --filter api dev
-# Web: pnpm --filter web dev
+# API: pnpm dev:api   (http://localhost:4000)
+# Web: pnpm dev:web   (http://localhost:3000)
+```
+
+### Rebuilding path content
+
+The seed creates roles, the admin, industries and badges — challenge content and the
+level path are built through the admin UI. To lay the authored scenarios out as a clean
+path in one command:
+
+```bash
+pnpm db:reset-content
+```
+
+Every fixture in `docs/fixtures` is imported through the real import endpoint (so the
+graph validator judges it exactly as the admin panel would) and assigned to one level,
+easiest first, one scenario per industry. Re-running it refreshes content in place and
+never overwrites a level slot it cannot claim. `single-question-sample.json` is left out
+deliberately: it is the quick-call sample the e2e suites import, not path content.
+
+For a clean slate first, wipe and re-seed:
+
+```bash
+cd packages/db && DATABASE_URL=postgresql://postgres@localhost:5432/baaten pnpm exec prisma migrate reset --force
+pnpm db:seed && pnpm db:reset-content
 ```
 
 ## Environment Variables
@@ -68,87 +93,210 @@ pnpm dev
 |----------|-------------|
 | `DATABASE_URL` | PostgreSQL connection string |
 | `SESSION_SECRET` | Secret for session cookies |
-| `ANTHROPIC_API_KEY` | Anthropic API key for assessments |
 | `ADMIN_SEED_EMAIL` | Initial admin email |
 | `ADMIN_SEED_PASSWORD` | Initial admin password |
 | `NEXT_PUBLIC_API_URL` | API URL for frontend |
 | `WEB_URL` | Frontend URL for CORS |
 | `PORT` | API server port (default: 4000) |
+| `NEXT_PUBLIC_ASHKAR_DSN` | AshkarHQ monitoring DSN (optional — monitoring is disabled when empty) |
+| `NEXT_PUBLIC_ASHKAR_PROJECT_KEY` | AshkarHQ project key (optional) |
+
+## Challenge JSON Format
+
+Challenges are authored externally (by the Challenge Generator) and imported as JSON:
+
+```json
+{
+  "id": "onboarding_drop_off",
+  "title": "The Onboarding Drop-Off",
+  "role": "Product Design",
+  "difficulty": "medium",
+  "summary": "Shopwell is an online store with its own mobile app — first-party retail, no marketplace or third-party sellers. …",
+  "start": "Q1",
+  "questions": {
+    "Q1": {
+      "text": "...",
+      "bestChoice": 1,
+      "choices": [
+        { "text": "...", "stage": "INVESTIGATE", "reveal": "...", "next": "Q2" },
+        { "text": "...", "stage": "DEFINE", "reveal": "...", "next": "END" }
+      ]
+    }
+  }
+}
+```
+
+- `next` is either `"END"` or another question key
+- every question has 3–4 choices
+- `bestChoice` is the **0-based index** of the strongest choice at that question — it must satisfy `0 ≤ bestChoice < choices.length` (the import rejects `"D"`-style habits on 3-choice questions). It is server-only: candidates never see it; it solely drives XP when a level session reaches END
+- `stage` is internal scaffolding — never shown to candidates
+- `summary` is optional — a short brief on the business, shown on the path-map node before the run starts (see below)
+
+### The challenge summary
+
+`summary` is an optional short brief on the **business**: what the company does and who its customers are. It is the one piece of prose a candidate sees *before* they start — on the level's node in the path map, above its status line.
+
+Keep it about the company, not the incident. What went wrong, the numbers, and the decision in front of the candidate belong in `Q1`'s text, which is where the scenario opens; a summary that repeats them tells the candidate nothing new. Also not the candidate's role ("you're the designer") — the question text already speaks to them.
+
+```json
+"summary": "Shopwell is an online store with its own mobile app — first-party retail, no marketplace or third-party sellers. Its customers are shoppers who install the app from ads and app-store features, and the company earns when they browse and buy."
+```
+
+- Applies to every scenario fixture in `docs/fixtures/`; keep them in sync with the content on the path
+- Max 400 characters (the import rejects longer); the node clamps display to three lines
+- Optional, so content imported without one keeps importing — its node simply renders without a brief
+
+
+### Reveals: a sentence or a table
+
+A `reveal` is what the candidate learns after committing a choice. It is authored content, never generated. The original form is a plain sentence, still accepted as-is:
+
+```json
+"reveal": "Conversion is flat across all four variants."
+```
+
+When the evidence is tabular, author it as a table instead — `text` stays optional, so a caption, a sentence, or both can sit above it:
+
+```json
+"reveal": {
+  "text": "Conversion is flat across all four variants:",
+  "table": {
+    "caption": "Variant results, week 2",
+    "columns": ["Variant", "Visitors", "Signups", "Conversion"],
+    "rows": [
+      ["Control",    "12,480", "374", "3.0%"],
+      ["Short copy", "12,511", "381", "3.0%"]
+    ]
+  }
+}
+```
+
+- one of `text` / `table` is required; unknown fields inside `reveal` are rejected
+- every row must have exactly as many cells as `columns` — a ragged table fails validation and names the offending row
+- limits: 6 columns, 50 rows, 200 characters per cell (reveals are copied into every session path entry)
+- cells are plain strings: the author decides the formatting (`"3.0%"` vs `"3%"`) — nothing is reformatted or recomputed
+- the table is display-only: it never affects pass/fail, XP, or stars
+
+See `packages/shared-types/challenge-schema.ts` for the full Zod schema and `docs/fixtures/onboarding-drop-off.json` for a complete valid example.
+
+### Validation (import is all-or-nothing)
+
+1. **Structural** — the JSON matches the schema exactly (unknown fields rejected)
+2. **Flow** — `start` exists; every `next` is `END` or an existing question; no self-loops; no cycles; no unreachable questions; every path reaches `END`
+3. **Answer key** — every `bestChoice` addresses one of that question's own choices
+
+Failures are rejected with itemized reasons (e.g. *"Question Q11 loops back to Q6"*) and logged to the failed-imports history. Nothing is auto-repaired.
+
+## Progression & Scoring
+
+- **The path**: numbered levels, unlocked in order. An admin assigns an imported challenge to a level number + industry; a level's `type` (`challenge` | `single_question`) is derived from the question graph, never authored.
+- **Pass condition**: reach `END` — identical for a 9-question scenario and a single-question "quick call". A level cannot be failed.
+- **XP**: `10 × best calls` (`XP_PER_BEST_CHOICE = 10`) — the count of questions on the player's recorded path where they picked that question's `bestChoice`. No ceiling, no longest-path bonus.
+- **XP is credited once**, on the first pass. Replays can improve `bestXp`/`bestStars` for display, but never add XP — replay-farming is impossible.
+- **Stars** (display-only): 3★ = 100% best calls, 2★ ≥ 80%, 1★ ≥ 60% — never gate progression.
+- **Player level**: `floor(√(totalXp / 100))` from total credited XP.
+- **Streaks**: UTC-day streak incremented when a level is passed. **Badges**: condition-based (`levelsPassedAbove`, `perfectLevelsAbove`, `starsAbove`, `streakAbove`, `industryCompleted`). **Leaderboard**: weekly XP within the player's cohort.
 
 ## API Endpoints
 
 ### Auth
-- `POST /api/v1/auth/signup` - Register new user
-- `POST /api/v1/auth/login` - Login
-- `POST /api/v1/auth/logout` - Logout
-- `POST /api/v1/auth/onboarding/role` - Select role (one-time)
+- `POST /api/v1/auth/signup` — Register new user
+- `POST /api/v1/auth/login` — Login
+- `POST /api/v1/auth/logout` — Logout
+- `POST /api/v1/auth/onboarding/role` — Select role (one-time)
 
-### Challenges (User)
-- `GET /api/v1/challenges` - List published challenges
-- `GET /api/v1/challenges/:id` - Get challenge details
+### Sessions (guided candidate session)
+- `POST /api/v1/sessions` — Start (or resume) a session for a challenge. A challenge assigned to a level is only playable through that level: the session is always tagged with it and the progression gate is enforced (403 when locked). Unassigned challenges play unscored. Returns the first question.
+- `POST /api/v1/sessions/:id/answer` — Submit the current choice; returns that choice's reveal + next question, auto-completes at `END` (a level-tagged session scores and credits there)
+- `GET /api/v1/sessions/:id` — Session state; current question + path so far (resume support)
+- `GET /api/v1/sessions/:id/summary` — Finished path as a readable recap; when the session belongs to a level, also the run's score (hits/answered/XP/stars)
 
-### Attempts
-- `POST /api/v1/attempts` - Start new attempt
-- `POST /api/v1/attempts/:id/answer` - Submit answer
-- `POST /api/v1/attempts/:id/complete` - Complete & assess
-- `GET /api/v1/attempts/:id` - Get attempt state
+**Field visibility rule**: candidates receive question text and choice texts only. `stage`, `next`, and `bestChoice` never leave the server. A `reveal` (prose or table) is the single exception: it is returned exactly once, for the choice that was just submitted — never with the question, and never for a choice that was not made. Everything the candidate sees in a recap is their own path. The challenge `summary` is authored for pre-run display by design: it describes the business and is not derived from any question.
 
-### Profile
-- `GET /api/v1/profile` - Get capability profile, streak, badges
-- `GET /api/v1/profile/leaderboard` - Weekly leaderboard
-- `GET /api/v1/profile/badges` - All badges with earned status
+**Score is frozen at completion**: a level run's score is stored on the session when it reaches END, so re-importing a challenge (which is allowed at any time) can never make an old recap contradict the XP that run earned.
 
-### Admin: Skills
-- `POST /api/v1/admin/skill-categories` - Create category
-- `PATCH /api/v1/admin/skill-categories/:id` - Update category
-- `DELETE /api/v1/admin/skill-categories/:id` - Delete category
-- `POST /api/v1/admin/skills` - Create skill
-- `PATCH /api/v1/admin/skills/:id` - Update skill
-- `DELETE /api/v1/admin/skills/:id` - Delete skill
+### Level path (candidate)
+- `GET /api/v1/levels` — The numbered path map: lock state, stars, XP info, and the challenge's authored business brief per level
+- `POST /api/v1/levels/:id/start` — Start (or resume) a level's session; 403 when the level is locked
+
+### Progress (candidate)
+- `GET /api/v1/progress` — Totals: XP, player level, levels passed, stars, accuracy, streak, per-industry rollups
+- `GET /api/v1/progress/badges` — Every badge with earned state
+- `GET /api/v1/progress/leaderboard` — Weekly XP within the caller's cohort + the caller's rank
 
 ### Admin: Challenges
-- `POST /api/v1/admin/challenges/import` - Import challenge JSON
-- `GET /api/v1/admin/challenges` - List challenges (filter by status)
-- `GET /api/v1/admin/challenges/:id` - Full challenge view
-- `PATCH /api/v1/admin/challenges/:id/status` - Publish/unpublish
-- `DELETE /api/v1/admin/challenges/:id` - Delete (if no attempts)
+- `POST /api/v1/admin/challenges/import` — Paste challenge JSON. Idempotent on `id`: the first import creates the challenge (live immediately), and re-importing the same `id` **updates it in place** — the update workflow is simply pasting the generator's output again. The same validator gates both. Never touches `status`
+- `GET /api/v1/admin/challenges` — List (filter by `status=active|retired`)
+- `GET /api/v1/admin/challenges/:id` — Full internal view (stages, reveals, next pointers; reveals normalized, role name included so the view can be edited and re-imported as-is)
+- `PATCH /api/v1/admin/challenges/:id/status` — Retire / restore
+- `DELETE /api/v1/admin/challenges/:id` — Delete (blocked when sessions exist — update instead)
+- `GET /api/v1/admin/imports` — Failed-import history with reasons
 
-## Challenge Import Format
+### Admin: Level path
+- `GET /api/v1/admin/levels` — All levels (number, industry, type, status, player count)
+- `GET /api/v1/admin/levels/unassigned` — Imported, active challenges with no level yet
+- `POST /api/v1/admin/levels` — Assign a challenge to a level number + industry (+ derived `type`)
+- `PATCH /api/v1/admin/levels/:id` — Reorder / re-tag / retire / restore
+- `DELETE /api/v1/admin/levels/:id` — Delete (blocked when players have progress)
+- `GET|POST /api/v1/admin/industries` — List / create industries
+- `PATCH|DELETE /api/v1/admin/industries/:id` — Update / delete (blocked when levels reference it)
 
-See `packages/shared-types/challenge-schema.ts` for the full Zod schema.
+## Web Routes
 
-Key requirements:
-- `metadata`: title, description, estimatedMinutes, roleId, difficulty (1-5), tier (free/pro), xpValue, skillIds[]
-- `hiddenCase`: Server-only context (company, product, problem, etc.)
-- `applicantSteps[]`: Client-facing steps with stage, inputType, context, question, options
-- `answerSheet[]`: Server-only scoring with reasoningSignal, consequence, reveal, nextStepIndex
-
-## Phases
-
-1. **Phase 0**: Repo, DB, seed
-2. **Phase 1**: Auth + role gating
-3. **Phase 2**: Admin API: skills + import
-4. **Phase 3**: Admin UI
-5. **Phase 4**: User-facing challenge/attempt API
-6. **Phase 5**: Assessment Service (Anthropic)
-7. **Phase 6**: Gamification + CapabilityProfile
-8. **Phase 7**: User-facing frontend
-9. **Phase 8**: Leaderboard + badge list
+- `/` `/login` `/signup` `/onboarding` — entry, auth, role selection
+- `/home` — the level path map (play/replay levels, each node showing the challenge's business brief; locked levels unlock in order)
+- `/sessions/[id]` — guided session player (reveal waits for Continue; level result card on completion)
+- `/sessions/[id]/summary` — session recap + score
+- `/progress` — XP, player level, streak, industries, weekly leaderboard, badges
+- `/admin/challenges` — import + library management (retire/restore/delete)
+- `/admin/challenges/[id]` — internal view + **Update content** (edit the JSON and save; re-imports in place)
+- `/admin/levels` — level path management (assign/retire/delete, industries)
+- `/admin/imports` — failed import history
 
 ## Testing
 
 ```bash
-# Run tests (when implemented)
-pnpm test
+# Schema + graph + scoring unit tests
+pnpm --filter @baaten/shared-types test
+
+# Typecheck everything
+pnpm typecheck
+
+# Full API flow verification (requires the API running on :4000)
+node scripts/e2e-import-session.mjs   # import → play → resume → concurrency
+node scripts/e2e-level-path.mjs       # levels → gating → scoring → XP → badges
 ```
 
-## Deployment
-
-Build the API and web apps separately:
+Both suites mutate the database they run against: they import fixtures, build levels as
+they go (`e2e-level-path.mjs` claims a level 2 with `single-question-sample.json` when
+that slot is free) and leave their throwaway candidates behind. They also *reuse*
+whatever already occupies the level numbers they need, so a database that already carries
+the authored path makes them play someone else's content and fail their own assertions.
+Give them a scratch database:
 
 ```bash
-pnpm build
+createdb baaten_e2e
+
+# Point the seed at the scratch database by editing packages/db/.env (gitignored):
+# seed.ts loads it with process.loadEnvFile, which OVERRIDES the environment, so this
+# URL cannot be supplied on the command line. Prisma's CLI reads the same file.
+cd packages/db && pnpm exec prisma migrate deploy && pnpm db:seed
+
+# The API keeps a real environment variable over .env, so it can be pointed per run:
+cd ../.. && DATABASE_URL=postgresql://postgres@localhost:5432/baaten_e2e pnpm dev:api
+node scripts/e2e-import-session.mjs
+node scripts/e2e-level-path.mjs
 ```
+
+Then restore `packages/db/.env` and drop the scratch database. The authored scenarios
+come back on the dev database with `pnpm db:reset-content`.
+
+## What the app deliberately does NOT do
+
+- Does not generate, edit, or auto-fix challenge content (the answer key is authored, not inferred) — reveal tables included
+- Does not use LLM or heuristic scoring — the score is a deterministic count against the authored `bestChoice`
+- Does not expose internal authoring structure (`stage`, `next`, `bestChoice`) to candidates; only the reveal for a choice they actually made
+- No partial credit, difficulty multipliers, or per-question scoring — one score per finished level
 
 ## License
 

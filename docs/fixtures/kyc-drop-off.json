@@ -1,0 +1,291 @@
+{
+  "id": "kyc_drop_off",
+  "title": "The KYC Wall",
+  "role": "Product Design",
+  "difficulty": "medium",
+  "summary": "Brightbank is a digital-only banking app — customers open an account, verify their identity, and manage their money without ever visiting a branch. Its customers are everyday consumers acquired through paid ads, and the bank earns on deposits, card spend, and upgrades, but only once an account is verified and live.",
+  "start": "Q1",
+  "questions": {
+    "Q1": {
+      "text": "KYC completion dropped to 60% this month; nearly all of the loss is at the document-upload step of identity verification. What do you do first?",
+      "choices": [
+        {
+          "text": "Compare drop-off across document types (passport, licence, ID card)",
+          "stage": "INVESTIGATE",
+          "reveal": "Passport, licence and ID-card uploads complete at nearly identical rates — the type of document isn't the problem.",
+          "next": "Q2",
+          "quality": "reasonable",
+          "criteria": [
+            "timing-evidence"
+          ]
+        },
+        {
+          "text": "Pull the timing: how long after upload do users abandon, and what are they shown during the wait?",
+          "stage": "INVESTIGATE",
+          "reveal": "Most users who abandon do so 30–90 seconds after a successful upload, while the 'verifying…' screen is up.",
+          "next": "Q3",
+          "quality": "best",
+          "criteria": [
+            "timing-evidence"
+          ],
+          "because": "It looks at the delay between a successful upload and the result, which is where the loss actually happens before jumping to a fix."
+        },
+        {
+          "text": "Interview users who abandoned during verification",
+          "stage": "INVESTIGATE",
+          "reveal": "Interviews confirm the wait is the pain: 'I didn't know if it was working or if it ate my document.'",
+          "next": "Q3",
+          "quality": "reasonable",
+          "criteria": [
+            "timing-evidence"
+          ]
+        },
+        {
+          "text": "Add a progress animation to the verifying screen right away",
+          "stage": "DESIGN",
+          "reveal": "The animation ships quickly, but abandonment barely moves — the fix assumed the problem was boredom, not uncertainty.",
+          "next": "Q5",
+          "quality": "poor",
+          "criteria": [
+            "wait-experience"
+          ]
+        }
+      ],
+      "bestChoice": 1
+    },
+    "Q2": {
+      "text": "Document type isn't the problem: users complete upload at similar rates regardless of document. Where do you look next?",
+      "choices": [
+        {
+          "text": "Review the upload error states with engineering",
+          "stage": "INVESTIGATE",
+          "reveal": {
+            "text": "Upload error rates are under 2% — errors are not driving a 40% loss.",
+            "table": {
+              "caption": "Upload errors vs. abandonment",
+              "columns": [
+                "Metric",
+                "Value"
+              ],
+              "rows": [
+                [
+                  "Upload error rate",
+                  "under 2%"
+                ],
+                [
+                  "Overall abandonment",
+                  "40%"
+                ]
+              ]
+            }
+          },
+          "next": "Q3",
+          "quality": "reasonable",
+          "criteria": [
+            "timing-evidence"
+          ]
+        },
+        {
+          "text": "Segment abandonment by device and user age",
+          "stage": "INVESTIGATE",
+          "reveal": "Abandonment is flat across segments — this is not a niche-device problem.",
+          "next": "Q3",
+          "quality": "reasonable",
+          "criteria": [
+            "timing-evidence"
+          ]
+        },
+        {
+          "text": "Check what happens between upload and the verification result",
+          "stage": "INVESTIGATE",
+          "reveal": "After upload, users see a bare 'verifying…' screen with no estimate, no reassurance, and no way to leave safely.",
+          "next": "Q3",
+          "quality": "best",
+          "criteria": [
+            "timing-evidence",
+            "wait-experience"
+          ],
+          "because": "It follows the evidence to the silent gap between upload and verification, rather than studying a problem that is not there."
+        }
+      ],
+      "bestChoice": 2
+    },
+    "Q3": {
+      "text": "Users abandon 30–90 seconds after a successful upload, during the verification wait. What's the strongest next step?",
+      "choices": [
+        {
+          "text": "Define the requirement: users must know the wait is normal, how long it takes, and that leaving is safe",
+          "stage": "DEFINE",
+          "reveal": "Defining the requirement sharpens the design work that follows — every option is now judged against those three needs.",
+          "next": "Q4",
+          "quality": "best",
+          "criteria": [
+            "wait-experience"
+          ],
+          "because": "The wait data pins the loss to a 30-90 second uncertainty window, so the fix can address the right moment."
+        },
+        {
+          "text": "Move KYC to a later point in the journey so fewer users hit it",
+          "stage": "EXPLORE",
+          "reveal": "Deferring KYC is viable for some features, but regulation means core money movement can't start before verification — so for the core journey the wait experience is the work.",
+          "next": "Q4",
+          "quality": "poor"
+        },
+        {
+          "text": "Reduce verification time by switching providers",
+          "stage": "EXPLORE",
+          "reveal": "Provider benchmarks show a possible 20-second improvement, but that is a procurement project measured in quarters, not this month.",
+          "next": "Q4",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q4": {
+      "text": "The problem is framed: users don't know if the wait is normal or if leaving is safe. What do you design?",
+      "choices": [
+        {
+          "text": "A completion notification by email or push, so users can leave freely",
+          "stage": "DESIGN",
+          "reveal": "Notifications help, but tests show they don't calm the first 90 seconds — the on-screen story still needs to carry it.",
+          "next": "Q6",
+          "quality": "reasonable",
+          "criteria": [
+            "wait-experience"
+          ]
+        },
+        {
+          "text": "A status screen with a time estimate, what happens next, and explicit 'you can close this and return' copy",
+          "stage": "DESIGN",
+          "reveal": "The design pairs the estimate with a reassurance line; usability tests show users stop treating the wait as a failure state.",
+          "next": "Q6",
+          "quality": "best",
+          "criteria": [
+            "wait-experience"
+          ],
+          "because": "It names the real failure - uncertainty during the wait - before shipping anything, which is what lets the fix land."
+        },
+        {
+          "text": "A live-chat option in case verification fails",
+          "stage": "EXPLORE",
+          "reveal": "Chat adds confidence for a few, but the dominant fear is 'is this stuck?', which chat doesn't answer.",
+          "next": "Q6",
+          "quality": "poor",
+          "criteria": [
+            "wait-experience"
+          ]
+        }
+      ],
+      "bestChoice": 1
+    },
+    "Q5": {
+      "text": "The animation shipped and abandonment is unchanged. What now?",
+      "choices": [
+        {
+          "text": "Instrument the exact abandon moment and re-run the timing analysis",
+          "stage": "INVESTIGATE",
+          "reveal": "Timing data shows abandonment clusters 30–90 seconds after upload — the animation never addressed the uncertainty.",
+          "next": "Q3",
+          "quality": "best",
+          "criteria": [
+            "timing-evidence"
+          ],
+          "because": "The timing evidence clears both fixes from the list, so the work goes to the wait experience itself."
+        },
+        {
+          "text": "Keep the harmless animation and restart from evidence",
+          "stage": "INVESTIGATE",
+          "reveal": "The animation stays, but the real work is the wait experience — back to the data.",
+          "next": "Q3",
+          "quality": "reasonable",
+          "criteria": [
+            "timing-evidence"
+          ]
+        },
+        {
+          "text": "Accept the flat result and move on to the next roadmap item",
+          "stage": "EXPLORE",
+          "reveal": "The metric stays at 60% — the KYC wall remains for every new user.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q6": {
+      "text": "The new verifying screen passed usability tests — users understand the wait and that leaving is safe. Before rollout, what do you do?",
+      "choices": [
+        {
+          "text": "Roll it out to everyone and monitor support tickets",
+          "stage": "VALIDATE",
+          "reveal": "Ticket volume about verification drops, but without a comparison group you can't attribute the change cleanly.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "attribution"
+          ]
+        },
+        {
+          "text": "A/B the new screen against the old on the next 10% of new users, watching KYC completion",
+          "stage": "VALIDATE",
+          "reveal": {
+            "text": "Completion on the new screen climbs from 60% to 71% in the first week of the test.",
+            "table": {
+              "caption": "KYC screen completion, first week of the test",
+              "columns": [
+                "Screen",
+                "Completion"
+              ],
+              "rows": [
+                [
+                  "Old screen",
+                  "60%"
+                ],
+                [
+                  "New screen",
+                  "71%"
+                ]
+              ]
+            }
+          },
+          "next": "END",
+          "quality": "best",
+          "criteria": [
+            "attribution"
+          ],
+          "because": "An A/B test on the next 10% of users turns the completed-screen gain into proof instead of a good story."
+        },
+        {
+          "text": "Document the 'honest wait' pattern for the design system",
+          "stage": "DEFINE",
+          "reveal": "The pattern is documented for reuse, but the KYC completion effect is still unverified.",
+          "next": "END",
+          "quality": "poor",
+          "criteria": [
+            "attribution"
+          ]
+        }
+      ],
+      "bestChoice": 1
+    }
+  },
+  "assessment": {
+    "criteria": [
+      {
+        "id": "timing-evidence",
+        "label": "Following the timing evidence",
+        "guidance": "Abandon clusters at a delay, not a tap — measure where the loss happens before fixing anything."
+      },
+      {
+        "id": "wait-experience",
+        "label": "Designing the wait experience",
+        "guidance": "State the wait plainly: normal, how long, and safe to leave."
+      },
+      {
+        "id": "attribution",
+        "label": "Proving the fix worked",
+        "guidance": "A comparison group turns \"it got better\" into evidence."
+      }
+    ]
+  }
+}

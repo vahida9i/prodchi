@@ -1,0 +1,282 @@
+{
+  "id": "saas_pricing_rework",
+  "title": "The Pricing Page Rework",
+  "role": "Product Design",
+  "difficulty": "hard",
+  "summary": "Signalboard is a self-serve analytics platform where teams connect their own data and build dashboards without an engineer. Its customers are small and mid-size business teams who try it free for 14 days and subscribe monthly if it sticks — no sales team, the trial does the selling.",
+  "start": "Q1",
+  "questions": {
+    "Q1": {
+      "text": "Trial-to-paid conversion is 4%, and lost-deal notes say 'too expensive.' The CEO wants a cheaper Starter tier. Where do you start?",
+      "choices": [
+        {
+          "text": "Redesign the pricing page with a cheaper tier front and center",
+          "stage": "DESIGN",
+          "reveal": "The new page ships fast, but conversion doesn't move — 'too expensive' was a proxy for 'unclear value,' not a price objection.",
+          "next": "Q5",
+          "quality": "poor"
+        },
+        {
+          "text": "Interview trial users who churned and users who converted about how they actually decided",
+          "stage": "INVESTIGATE",
+          "reveal": "Churned users rarely mention price itself; they say they 'couldn't tell if it fits our workflow' — value never became visible during the trial.",
+          "next": "Q2",
+          "quality": "best",
+          "criteria": [
+            "decision-truth"
+          ],
+          "because": "It asks the real deciders - churned and converted trial users - how they actually decided, which is the only way to tell price from value clarity."
+        },
+        {
+          "text": "Analyze which pricing-page sections trial users actually visit",
+          "stage": "INVESTIGATE",
+          "reveal": "Most trial users never open the pricing page at all — the decision is being made inside the product, not on the page.",
+          "next": "Q3",
+          "quality": "reasonable",
+          "criteria": [
+            "decision-truth"
+          ]
+        },
+        {
+          "text": "Benchmark prices against three competitors",
+          "stage": "INVESTIGATE",
+          "reveal": "Prices sit mid-market — undercutting would cut revenue without touching the real drop-off.",
+          "next": "Q2",
+          "quality": "reasonable",
+          "criteria": [
+            "decision-truth"
+          ]
+        }
+      ],
+      "bestChoice": 1
+    },
+    "Q2": {
+      "text": "Churned users say they couldn't tell if the product fits their workflow; converted users all mention the same 'aha' dashboard. What do you do?",
+      "choices": [
+        {
+          "text": "Rewrite the pricing page to lead with the dashboard value",
+          "stage": "DESIGN",
+          "reveal": "The copy improves, but words alone don't get users to the moment the value becomes visible.",
+          "next": "Q4",
+          "quality": "poor"
+        },
+        {
+          "text": "Ask the CEO to hold the cheaper tier and present the findings first",
+          "stage": "DEFINE",
+          "reveal": "The findings reframe the problem: a cheaper tier would attract users who never reach value, adding support load at lower revenue.",
+          "next": "Q4",
+          "quality": "reasonable",
+          "criteria": [
+            "decision-truth"
+          ]
+        },
+        {
+          "text": "Find what converted users did differently in their first week",
+          "stage": "INVESTIGATE",
+          "reveal": "Converted users connected real data in the first three days and built a dashboard; churned users never got past the demo dataset.",
+          "next": "Q4",
+          "quality": "best",
+          "criteria": [
+            "decision-truth",
+            "value-moment"
+          ],
+          "because": "It finds what converted users did in their first week to reach the dashboard moment, which is the behavior worth designing for."
+        }
+      ],
+      "bestChoice": 2
+    },
+    "Q3": {
+      "text": "Most trial users never visit the pricing page. What does that tell you?",
+      "choices": [
+        {
+          "text": "Treat onboarding, not the pricing page, as the conversion surface",
+          "stage": "DEFINE",
+          "reveal": "The problem is redefined: conversion happens when value becomes visible in-product, so the work moves to the trial experience.",
+          "next": "Q4",
+          "quality": "best",
+          "criteria": [
+            "value-moment"
+          ],
+          "because": "It infers that trial value never becomes visible on the pricing page, so the page itself is the wrong place to start."
+        },
+        {
+          "text": "Add an in-app banner linking to the pricing page",
+          "stage": "EXPLORE",
+          "reveal": "Clicks on the banner rise; conversion doesn't — traffic to the page was never the constraint.",
+          "next": "Q4",
+          "quality": "poor"
+        },
+        {
+          "text": "Email trial users a direct link to the pricing page",
+          "stage": "EXPLORE",
+          "reveal": "Open rates are fine, conversion flat — the page explains price but doesn't create the 'fits our workflow' moment.",
+          "next": "Q4",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q4": {
+      "text": "Converted users connect real data and build a dashboard in the first three days; churned users stall on the demo dataset. What do you design?",
+      "choices": [
+        {
+          "text": "A cheaper Starter tier, so reaching value costs less",
+          "stage": "DESIGN",
+          "reveal": "The tier converts a few price-sensitive users, but most churned users never reached value — discounting doesn't shorten their path.",
+          "next": "Q6",
+          "quality": "reasonable",
+          "criteria": [
+            "value-moment"
+          ]
+        },
+        {
+          "text": "A comparison page: the product versus the spreadsheet teams use today",
+          "stage": "DESIGN",
+          "reveal": "The comparison clarifies the pitch but still asks users to imagine the fit instead of experiencing it.",
+          "next": "Q6",
+          "quality": "poor",
+          "criteria": [
+            "value-moment"
+          ]
+        },
+        {
+          "text": "A guided first-run that connects a real dataset and builds one meaningful dashboard in session one",
+          "stage": "DESIGN",
+          "reveal": {
+            "text": "The guided first-run lifts day-3 dashboard creation from 22% to 58% in the internal pilot.",
+            "table": {
+              "caption": "Day-3 dashboard creation, internal pilot",
+              "columns": [
+                "Cohort",
+                "Day-3 dashboard creation"
+              ],
+              "rows": [
+                [
+                  "Current trial",
+                  "22%"
+                ],
+                [
+                  "Guided first-run",
+                  "58%"
+                ]
+              ]
+            }
+          },
+          "next": "Q6",
+          "quality": "best",
+          "criteria": [
+            "value-moment"
+          ],
+          "because": "A guided first run that gets users to the dashboard moment solves the value-clarity problem a cheaper tier cannot reach."
+        }
+      ],
+      "bestChoice": 2
+    },
+    "Q5": {
+      "text": "The redesigned page with the cheaper tier shipped; conversion is unchanged. What now?",
+      "choices": [
+        {
+          "text": "Take the evidence back: interview churned and converted users about how they decided",
+          "stage": "INVESTIGATE",
+          "reveal": "The interviews show churned users 'couldn't tell if it fits our workflow' — value never became visible; the tier was never the issue.",
+          "next": "Q2",
+          "quality": "best",
+          "criteria": [
+            "decision-truth"
+          ],
+          "because": "Interviewing churned users tests whether too expensive was really a price objection or a value-clarity failure."
+        },
+        {
+          "text": "Keep the new tier and re-test with different headline copy",
+          "stage": "EXPLORE",
+          "reveal": "Copy variants barely move conversion — the message is fine; the trial never shows the value.",
+          "next": "Q2",
+          "quality": "poor"
+        },
+        {
+          "text": "Accept the flat result and keep the new page as is",
+          "stage": "EXPLORE",
+          "reveal": "The cheaper tier stays live, attracting users who never reach value — support load rises while revenue doesn't.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q6": {
+      "text": "The guided first-run is designed and the pilot shows more users reaching the dashboard moment. Before full rollout, what do you do?",
+      "choices": [
+        {
+          "text": "Ship to all new trials and monitor conversion",
+          "stage": "VALIDATE",
+          "reveal": "Conversion improves, but without a holdout group finance can't tell onboarding gains from market seasonality.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "attribution"
+          ]
+        },
+        {
+          "text": "A/B the guided first-run against the current trial for two weeks, watching trial-to-paid",
+          "stage": "VALIDATE",
+          "reveal": {
+            "text": "Conversion moves from 4% to 6.5%; with the evidence in hand, the cheaper tier is quietly retired.",
+            "table": {
+              "caption": "Trial-to-paid conversion",
+              "columns": [
+                "Period",
+                "Conversion"
+              ],
+              "rows": [
+                [
+                  "Before the rework",
+                  "4%"
+                ],
+                [
+                  "After the rework",
+                  "6.5%"
+                ]
+              ]
+            }
+          },
+          "next": "END",
+          "quality": "best",
+          "criteria": [
+            "attribution"
+          ],
+          "because": "A two-week holdout against the current trial attributes the conversion lift cleanly, which is what makes the cheaper tier removable."
+        },
+        {
+          "text": "Present the funnel evidence and the A/B plan to the CEO before shipping anything",
+          "stage": "DEFINE",
+          "reveal": "The CEO drops the cheaper-tier push — the decision now rests on behavioral evidence instead of lost-deal anecdotes.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "attribution"
+          ]
+        }
+      ],
+      "bestChoice": 1
+    }
+  },
+  "assessment": {
+    "criteria": [
+      {
+        "id": "decision-truth",
+        "label": "Learning how decisions are really made",
+        "guidance": "Anecdotes say price; decide only after hearing the deciders."
+      },
+      {
+        "id": "value-moment",
+        "label": "Designing the value moment",
+        "guidance": "Value must be experienced in session one, not explained on a page."
+      },
+      {
+        "id": "attribution",
+        "label": "Proving the fix worked",
+        "guidance": "A holdout against the current trial attributes the gain cleanly."
+      }
+    ]
+  }
+}

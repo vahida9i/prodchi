@@ -1,0 +1,537 @@
+{
+  "id": "onboarding_drop_off",
+  "title": "The Onboarding Drop-Off",
+  "role": "Product Design",
+  "difficulty": "medium",
+  "summary": "Shopwell is an online store with its own mobile app — first-party retail, no marketplace or third-party sellers. Its customers are shoppers who install the app from ads and app-store features, and the company earns when they browse and buy.",
+  "start": "Q1",
+  "questions": {
+    "Q1": {
+      "text": "Onboarding completion has dropped from 78% to 65% over the last month. What do you do?",
+      "choices": [
+        {
+          "text": "Review usability session recordings from the last month",
+          "stage": "INVESTIGATE",
+          "reveal": "Most users who drop off pause noticeably on the permissions screen before leaving.",
+          "next": "Q2",
+          "quality": "reasonable",
+          "criteria": [
+            "root-cause"
+          ]
+        },
+        {
+          "text": "Talk to users who recently abandoned onboarding",
+          "stage": "INVESTIGATE",
+          "reveal": "Several users say they weren't sure why the app needed the permissions it asked for.",
+          "next": "Q3",
+          "quality": "best",
+          "because": "The people who left can say why; their reasons are the fastest route to the cause.",
+          "criteria": [
+            "root-cause"
+          ]
+        },
+        {
+          "text": "Check what changed in the onboarding flow recently",
+          "stage": "INVESTIGATE",
+          "reveal": "A new permissions screen was added three weeks ago to support a location-based feature.",
+          "next": "Q4",
+          "quality": "reasonable",
+          "criteria": [
+            "measure"
+          ]
+        },
+        {
+          "text": "Define what 'successful onboarding' should mean before investigating further",
+          "stage": "DEFINE",
+          "reveal": "Success was previously defined purely as 'reached the home screen,' with no measure of user understanding.",
+          "next": "Q5",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 1
+    },
+    "Q2": {
+      "text": "Users pause noticeably on the permissions screen before many of them leave. What do you investigate next?",
+      "choices": [
+        {
+          "text": "Break down drop-off by device type",
+          "stage": "INVESTIGATE",
+          "reveal": {
+            "text": "On mobile, most drop-off happens on the permissions screen. On desktop, drop-off is spread evenly across all steps.",
+            "table": {
+              "caption": "Where drop-off concentrates",
+              "columns": [
+                "Platform",
+                "Drop-off pattern"
+              ],
+              "rows": [
+                [
+                  "Mobile",
+                  "Concentrated on the permissions screen"
+                ],
+                [
+                  "Desktop",
+                  "Spread evenly across all steps"
+                ]
+              ]
+            }
+          },
+          "next": "Q6",
+          "quality": "best",
+          "because": "The pause-then-leave pattern may not be uniform; splitting by device isolates where the failure actually lives.",
+          "criteria": [
+            "root-cause",
+            "measure"
+          ]
+        },
+        {
+          "text": "Review what the permissions screen currently communicates",
+          "stage": "INVESTIGATE",
+          "reveal": "The screen lists the permissions requested but doesn't explain why they're needed or what happens if a user declines.",
+          "next": "Q7",
+          "quality": "reasonable",
+          "criteria": [
+            "human-need"
+          ]
+        },
+        {
+          "text": "Check whether declining a permission blocks onboarding entirely",
+          "stage": "INVESTIGATE",
+          "reveal": "Declining any permission currently stops onboarding, with no way to continue.",
+          "next": "Q8",
+          "quality": "reasonable",
+          "criteria": [
+            "human-need"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q3": {
+      "text": "Several users say they weren't sure why the app needed the permissions it asked for. What do you do next?",
+      "choices": [
+        {
+          "text": "Review what the permissions screen currently communicates",
+          "stage": "INVESTIGATE",
+          "reveal": "The screen lists the permissions requested but doesn't explain why they're needed or what happens if a user declines.",
+          "next": "Q7",
+          "quality": "poor",
+          "criteria": [
+            "human-need"
+          ]
+        },
+        {
+          "text": "Check whether this is a new problem or a longstanding one",
+          "stage": "INVESTIGATE",
+          "reveal": "The permissions screen was added three weeks ago; before that, onboarding didn't request these permissions at all.",
+          "next": "Q4",
+          "quality": "best",
+          "because": "If the confusion started with the new screen, the cause is the screen — not the users.",
+          "criteria": [
+            "root-cause"
+          ]
+        },
+        {
+          "text": "Define what information users need before granting a permission",
+          "stage": "DEFINE",
+          "reveal": "Users need to understand what the permission enables, what happens if they decline, and whether they can change their mind later.",
+          "next": "Q9",
+          "quality": "reasonable",
+          "criteria": [
+            "human-need"
+          ]
+        }
+      ],
+      "bestChoice": 1
+    },
+    "Q4": {
+      "text": "A new permissions screen was added three weeks ago to support a location-based feature. What do you do next?",
+      "choices": [
+        {
+          "text": "Compare onboarding completion before and after the screen was added",
+          "stage": "INVESTIGATE",
+          "reveal": "Completion was stable at 78% before the screen was added and has declined steadily since.",
+          "next": "Q6",
+          "quality": "best",
+          "because": "Before/after data turns a coincidence into a cause.",
+          "criteria": [
+            "measure"
+          ]
+        },
+        {
+          "text": "Check whether the permission is required or optional for core app use",
+          "stage": "INVESTIGATE",
+          "reveal": "The location permission is only needed for one optional feature, not for the app's core functionality.",
+          "next": "Q8",
+          "quality": "reasonable"
+        },
+        {
+          "text": "Explore whether this permission request could happen later, in context",
+          "stage": "EXPLORE",
+          "reveal": "Other permissions in the app are currently requested contextually, at the moment they're needed, except this one.",
+          "next": "Q10",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q5": {
+      "text": "Success was previously defined only as 'reached the home screen,' with no measure of understanding. What do you do next?",
+      "choices": [
+        {
+          "text": "Investigate what users understand about the app right after onboarding",
+          "stage": "INVESTIGATE",
+          "reveal": "In short follow-up surveys, many users who completed onboarding can't clearly explain what the location permission was for.",
+          "next": "Q9",
+          "quality": "reasonable",
+          "criteria": [
+            "human-need"
+          ]
+        },
+        {
+          "text": "Investigate where users hesitate during onboarding",
+          "stage": "INVESTIGATE",
+          "reveal": "Most users who drop off pause noticeably on the permissions screen before leaving.",
+          "next": "Q2",
+          "quality": "best",
+          "because": "Hesitation points at the exact step where the experience breaks down.",
+          "criteria": [
+            "root-cause"
+          ]
+        },
+        {
+          "text": "Define what onboarding needs to achieve beyond completion",
+          "stage": "DEFINE",
+          "reveal": "Onboarding should leave users understanding what they agreed to and confident they can proceed.",
+          "next": "Q9",
+          "quality": "reasonable"
+        }
+      ],
+      "bestChoice": 1
+    },
+    "Q6": {
+      "text": "Drop-off on the permissions screen is concentrated on mobile, while desktop drop-off is spread across all steps. What do you investigate next?",
+      "choices": [
+        {
+          "text": "Review how the permissions screen renders on mobile specifically",
+          "stage": "INVESTIGATE",
+          "reveal": "On smaller screens, the explanation text is truncated, leaving only the permission name and two buttons visible.",
+          "next": "Q7",
+          "quality": "best",
+          "because": "The mobile-specific failure deserves a mobile-specific look; that is where the concentration is.",
+          "criteria": [
+            "root-cause"
+          ]
+        },
+        {
+          "text": "Investigate the general desktop drop-off separately",
+          "stage": "INVESTIGATE",
+          "reveal": "Desktop drop-off appears linked to overall onboarding length, not any single screen.",
+          "next": "Q11",
+          "quality": "reasonable"
+        },
+        {
+          "text": "Check whether the permissions screen is mandatory on both platforms",
+          "stage": "INVESTIGATE",
+          "reveal": "The permissions screen is mandatory on both platforms, with no option to skip and return later.",
+          "next": "Q8",
+          "quality": "reasonable"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q7": {
+      "text": "The permissions screen lists what's requested but doesn't explain why it's needed or what happens if declined. What do you do?",
+      "choices": [
+        {
+          "text": "Define the information users actually need at this step",
+          "stage": "DEFINE",
+          "reveal": "Users need to understand the purpose of the permission, the consequence of declining, and that the choice can be changed later.",
+          "next": "Q9",
+          "quality": "best",
+          "because": "Naming what users must understand turns a vague complaint into a design requirement.",
+          "criteria": [
+            "human-need"
+          ]
+        },
+        {
+          "text": "Explore alternative ways to present this screen",
+          "stage": "EXPLORE",
+          "reveal": "Options include an inline explanation, a contextual request tied to the relevant feature, or a benefit-led framing before the system prompt.",
+          "next": "Q10",
+          "quality": "poor"
+        },
+        {
+          "text": "Check how similar permission requests are handled elsewhere in the app",
+          "stage": "INVESTIGATE",
+          "reveal": "Other permissions in the app are requested contextually, with a short explanation shown just before the system prompt.",
+          "next": "Q10",
+          "quality": "reasonable"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q8": {
+      "text": "Declining the permission currently blocks onboarding entirely, even though the permission is only needed for one optional feature. What do you do next?",
+      "choices": [
+        {
+          "text": "Define what should happen if a user declines",
+          "stage": "DEFINE",
+          "reveal": "If declined, users should be able to continue onboarding and enable the feature later from settings.",
+          "next": "Q9",
+          "quality": "best",
+          "because": "Deciding the decline behavior is the product decision everything else serves.",
+          "criteria": [
+            "human-need"
+          ]
+        },
+        {
+          "text": "Explore letting users skip and continue onboarding",
+          "stage": "EXPLORE",
+          "reveal": "Removing the hard block would require a way to re-prompt for the permission later, in context.",
+          "next": "Q10",
+          "quality": "reasonable"
+        },
+        {
+          "text": "Check with engineering whether the feature can degrade gracefully without the permission",
+          "stage": "INVESTIGATE",
+          "reveal": "Engineering confirms the feature can be fully disabled without the permission, with no impact on the rest of the app.",
+          "next": "Q10",
+          "quality": "reasonable"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q9": {
+      "text": "You've defined what users need to understand before granting this permission. What do you do next?",
+      "choices": [
+        {
+          "text": "Explore how to communicate this at the right moment",
+          "stage": "EXPLORE",
+          "reveal": "Two directions emerge: explain everything upfront in onboarding, or move the request to the moment the feature is first used.",
+          "next": "Q10",
+          "quality": "best",
+          "because": "Where the request happens matters as much as what it says; explore timing first.",
+          "criteria": [
+            "human-need"
+          ]
+        },
+        {
+          "text": "Design a revised permissions screen with clearer explanation",
+          "stage": "DESIGN",
+          "reveal": "A revised screen adds a short explanation and a visible 'you can change this later' note.",
+          "next": "Q12",
+          "quality": "reasonable",
+          "criteria": [
+            "human-need"
+          ]
+        },
+        {
+          "text": "Investigate whether moving the request later is technically feasible",
+          "stage": "INVESTIGATE",
+          "reveal": "Engineering confirms the permission can be requested contextually rather than during onboarding.",
+          "next": "Q10",
+          "quality": "reasonable"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q10": {
+      "text": "Two directions are on the table: keep the request in onboarding with better explanation, or move it to when the feature is first used. What do you do?",
+      "choices": [
+        {
+          "text": "Design both directions as low-fidelity concepts to compare",
+          "stage": "DESIGN",
+          "reveal": "The contextual version removes one full step from onboarding but requires a new prompt inside the feature itself.",
+          "next": "Q13",
+          "quality": "best",
+          "because": "Comparing concepts side by side beats arguing in the abstract.",
+          "criteria": [
+            "human-need"
+          ]
+        },
+        {
+          "text": "Explore the trade-offs of each direction with stakeholders",
+          "stage": "EXPLORE",
+          "reveal": "Engineering notes the contextual version is straightforward to build; analytics notes it will be harder to track permission grant rate against onboarding.",
+          "next": "Q13",
+          "quality": "reasonable"
+        },
+        {
+          "text": "Design the contextual version as the primary direction",
+          "stage": "DESIGN",
+          "reveal": "The contextual prompt appears the first time a user taps the location-based feature, with a short explanation and a system prompt.",
+          "next": "Q12",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q11": {
+      "text": "Desktop drop-off appears tied to overall onboarding length rather than a single screen. What do you do next?",
+      "choices": [
+        {
+          "text": "Investigate which steps users spend the most time on",
+          "stage": "INVESTIGATE",
+          "reveal": "Two steps account for most of the time spent: the permissions screen and a preferences-setup step.",
+          "next": "Q13",
+          "quality": "best",
+          "because": "Two steps eat most of the time; measure before cutting.",
+          "criteria": [
+            "measure"
+          ]
+        },
+        {
+          "text": "Explore reducing the number of required onboarding steps",
+          "stage": "EXPLORE",
+          "reveal": "The preferences-setup step could be deferred to a later moment without blocking core app use.",
+          "next": "Q13",
+          "quality": "reasonable"
+        },
+        {
+          "text": "Define what must happen during onboarding versus what can happen later",
+          "stage": "DEFINE",
+          "reveal": "Only account creation and the location permission decision are strictly required upfront; everything else can be deferred.",
+          "next": "Q13",
+          "quality": "reasonable"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q12": {
+      "text": "You have a concrete design direction for the permissions request. What do you do before releasing it?",
+      "choices": [
+        {
+          "text": "Run a usability test comparing it to the current version",
+          "stage": "VALIDATE",
+          "reveal": "Users understand the purpose of the permission significantly more often with the new version, and fewer hesitate before deciding.",
+          "next": "Q14",
+          "quality": "best",
+          "because": "Only users can tell you whether the explanation actually lands.",
+          "criteria": [
+            "attribution"
+          ]
+        },
+        {
+          "text": "Review the direction with engineering and accessibility",
+          "stage": "VALIDATE",
+          "reveal": "The design is technically feasible and passes an accessibility review, with one note about contrast on the explanation text.",
+          "next": "Q14",
+          "quality": "reasonable",
+          "criteria": [
+            "attribution"
+          ]
+        },
+        {
+          "text": "Test it with users who previously declined the permission",
+          "stage": "VALIDATE",
+          "reveal": "Several previously-declining users say they would grant the permission now that they understand what it's for.",
+          "next": "Q14",
+          "quality": "reasonable",
+          "criteria": [
+            "attribution"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q13": {
+      "text": "You're deciding between deferring parts of onboarding versus keeping the flow as-is with better explanations. What do you do?",
+      "choices": [
+        {
+          "text": "Prototype a shortened onboarding flow and test it",
+          "stage": "VALIDATE",
+          "reveal": "A shortened flow tests well for completion, but a few users express uncertainty about whether onboarding is 'finished.'",
+          "next": "Q14",
+          "quality": "best",
+          "because": "Test the shortened flow before committing to what gets cut.",
+          "criteria": [
+            "attribution"
+          ]
+        },
+        {
+          "text": "Design a version that clearly signals deferred steps can be completed later",
+          "stage": "DESIGN",
+          "reveal": "Adding a lightweight 'finish setup later' indicator addresses the completion-uncertainty concern from testing.",
+          "next": "Q14",
+          "quality": "reasonable",
+          "criteria": [
+            "attribution"
+          ]
+        },
+        {
+          "text": "Review the shortened flow with the design-system team",
+          "stage": "VALIDATE",
+          "reveal": "The design-system team confirms the deferred-step pattern already exists elsewhere in the app and can be reused here.",
+          "next": "Q14",
+          "quality": "reasonable",
+          "criteria": [
+            "attribution"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q14": {
+      "text": "The revised onboarding direction has been validated with users, engineering, and accessibility review. What do you do next?",
+      "choices": [
+        {
+          "text": "Release it gradually and monitor onboarding completion",
+          "stage": "VALIDATE",
+          "reveal": "Onboarding completion recovers to 76% within two weeks of the gradual rollout.",
+          "next": "END",
+          "quality": "best",
+          "because": "A gradual rollout with the metric you set out to fix closes the loop.",
+          "criteria": [
+            "attribution"
+          ]
+        },
+        {
+          "text": "Expand the rollout while monitoring post-onboarding understanding",
+          "stage": "VALIDATE",
+          "reveal": "Follow-up surveys show a significant increase in users who can correctly explain what the permission is used for.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "attribution"
+          ]
+        },
+        {
+          "text": "Document the new pattern for reuse in future permission requests",
+          "stage": "DEFINE",
+          "reveal": "The pattern is added to the design system as the standard approach for contextual permission requests.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "attribution"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    }
+  },
+  "assessment": {
+    "criteria": [
+      {
+        "id": "root-cause",
+        "label": "Finding the root cause",
+        "guidance": "The drop has one trigger — name it before fixing anything."
+      },
+      {
+        "id": "measure",
+        "label": "Measuring before cutting",
+        "guidance": "Before/after data turns a coincidence into a cause."
+      },
+      {
+        "id": "human-need",
+        "label": "Designing for the human need",
+        "guidance": "Understanding and the decline path are the product decision."
+      },
+      {
+        "id": "attribution",
+        "label": "Proving the fix worked",
+        "guidance": "Roll out against the metric you set out to fix."
+      }
+    ]
+  }
+}
