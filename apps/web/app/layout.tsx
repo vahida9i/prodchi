@@ -1,14 +1,19 @@
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
+import { MonitoringProvider } from "@/components/monitoring-provider"
 import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Baaten - Product Design Skill Practice",
-  description: "Practice product design skills with AI-assessed challenges",
+  description: "Work through product design scenarios, one decision at a time",
 }
 
+/**
+ * Server component: metadata and fonts stay server-side; the monitoring SDK is
+ * isolated in a client provider so browser-only code never runs during SSR.
+ */
 export default function RootLayout({
   children,
 }: {
@@ -16,7 +21,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.className}>
-      <body className="min-h-screen bg-background font-sans antialiased">{children}</body>
+      <body className="min-h-screen bg-background font-sans antialiased">
+        <MonitoringProvider>{children}</MonitoringProvider>
+      </body>
     </html>
   )
 }
