@@ -1,195 +1,314 @@
 import { prisma } from '../lib/prisma.ts'
+import { levelFromXp } from '@baaten/shared-types/scoring'
+import type { LevelScore } from '@baaten/shared-types/scoring'
 
-interface GamificationResult {
+/**
+ * Gamification + level crediting.
+ *
+ * This module is the ONLY writer of `LevelProgress`. It is called from exactly
+ * one place — the session engine, when an answer's `next` is END — so a level's
+ * pass state can never be set by a route handler directly.
+ *
+ * Pass condition: reaching END. That is the session engine's existing
+ * behaviour, so nothing here decides pass/fail; it records the score that came
+ * with it.
+ *
+ * XP rule (plan): xp = 10 x best hits. XP is credited ONCE, on the first pass,
+ * and never recomputed. Replays improve `bestXp`/`bestStars` for display only,
+ * so a level's score cannot be farmed by replaying it.
+ */
+
+export interface BadgeAward {
+  id: string
+  name: string
+  description: string
+  iconRef: string
+}
+
+export interface LevelCompletion {
+  /** The recorded run for this level. */
+  hits: number
+  answered: number
+  accuracy: number
+  stars: number
+  /** XP credited to the level (the first-pass value; unchanged by replays). */
   xpEarned: number
+  /** XP added to the account by this attempt — 0 when replaying a passed level. */
+  xpGained: number
+  bestXp: number
+  bestStars: number
+  attempts: number
+  firstPass: boolean
+  levelNumber: number
+  nextLevelNumber: number | null
+  totalXp: number
+  playerLevel: number
   leveledUp: boolean
-  newBadges: Array<{ id: string; name: string; description: string; iconRef: string }>
+  streak: { currentStreak: number; longestStreak: number }
+  newBadges: BadgeAward[]
 }
 
-export async function updateGamification(
-  userId: string,
-  attempt: any,
-  assessment: any
-): Promise<GamificationResult> {
-  const challenge = attempt.challenge
-
-  // 1. Streak update
-  await updateStreak(userId)
-
-  // 2. XP and Level
-  const xpEarned = challenge.xpValue
-  await prisma.attempt.update({
-    where: { id: attempt.id },
-    data: { xpEarned }
-  })
-
-  // Calculate level before and after
-  const totalXpBefore = await prisma.attempt.aggregate({
-    where: { userId, completedAt: { not: null }, id: { not: attempt.id } },
-    _sum: { xpEarned: true }
-  })
-
-  const totalXpAfter = (totalXpBefore._sum.xpEarned || 0) + xpEarned
-  const levelBefore = Math.floor(Math.sqrt((totalXpBefore._sum.xpEarned || 0) / 100))
-  const levelAfter = Math.floor(Math.sqrt(totalXpAfter / 100))
-  const leveledUp = levelAfter > levelBefore
-
-  // 3. Badges
-  const newBadges = await evaluateBadges(userId)
-
-  // 4. CapabilityProfile recompute
-  await recomputeCapabilityProfile(userId)
-
-  return { xpEarned, leveledUp, newBadges }
-}
-
-/** Start of the given day in UTC, per spec Section 8.1 ("yesterday (UTC date)"). */
+/** Start of the given day in UTC — streak days are UTC dates. */
 function utcDayStart(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
 }
 
+async function sumXp(userId: string): Promise<number> {
+  const aggregate = await prisma.levelProgress.aggregate({
+    where: { userId },
+    _sum: { xpEarned: true }
+  })
+  return aggregate._sum.xpEarned ?? 0
+}
+
+/** Yesterday extends the streak, today is a no-op, anything older restarts at 1. */
 async function updateStreak(userId: string) {
   const today = utcDayStart(new Date())
+  const existing = await prisma.streak.findUnique({ where: { userId } })
 
-  const streak = await prisma.streak.findUnique({ where: { userId } })
-
-  if (!streak) {
-    await prisma.streak.create({
+  if (!existing) {
+    return prisma.streak.create({
       data: { userId, currentStreak: 1, longestStreak: 1, lastActiveDay: today }
     })
-    return
   }
 
-  const lastActive = streak.lastActiveDay ? utcDayStart(new Date(streak.lastActiveDay)) : null
-  let newCurrentStreak = streak.currentStreak
+  const lastActive = existing.lastActiveDay ? utcDayStart(existing.lastActiveDay) : null
+  let currentStreak = existing.currentStreak
 
   if (lastActive) {
     const diffDays = Math.round((today.getTime() - lastActive.getTime()) / (1000 * 60 * 60 * 24))
-
-    if (diffDays === 1) {
-      newCurrentStreak = streak.currentStreak + 1
-    } else if (diffDays > 1) {
-      newCurrentStreak = 1
-    }
-    // diffDays === 0 means already active today, no change
+    if (diffDays === 1) currentStreak = existing.currentStreak + 1
+    else if (diffDays > 1) currentStreak = 1
+    // diffDays === 0 means already active today: unchanged
   } else {
-    newCurrentStreak = 1
+    currentStreak = 1
   }
 
-  const newLongestStreak = Math.max(streak.longestStreak, newCurrentStreak)
-
-  await prisma.streak.update({
+  return prisma.streak.update({
     where: { userId },
     data: {
-      currentStreak: newCurrentStreak,
-      longestStreak: newLongestStreak,
+      currentStreak,
+      longestStreak: Math.max(existing.longestStreak, currentStreak),
       lastActiveDay: today
     }
   })
 }
 
-async function evaluateBadges(userId: string) {
-  const allBadges = await prisma.badge.findMany()
-  const userBadges = await prisma.userBadge.findMany({ where: { userId } })
-  const earnedBadgeIds = new Set(userBadges.map(ub => ub.badgeId))
+/**
+ * Evaluate every badge the user has not earned yet against current path state.
+ * An unknown `unlockCondition.type` is skipped rather than unlocked, so a typo
+ * in seed data can never hand out a badge for free.
+ */
+export async function evaluateBadges(userId: string): Promise<BadgeAward[]> {
+  const [allBadges, earned, progress, streak] = await Promise.all([
+    prisma.badge.findMany(),
+    prisma.userBadge.findMany({ where: { userId } }),
+    prisma.levelProgress.findMany({ where: { userId } }),
+    prisma.streak.findUnique({ where: { userId } })
+  ])
 
-  const skillScores = await prisma.skillScore.findMany({ where: { userId } })
-  const streak = await prisma.streak.findUnique({ where: { userId } })
-  const attemptsCompleted = await prisma.attempt.count({ where: { userId, completedAt: { not: null } } })
+  const earnedIds = new Set(earned.map(row => row.badgeId))
+  const passed = progress.filter(row => row.status === 'passed')
+  const levelsPassed = passed.length
+  const perfectLevels = passed.filter(row => row.answered > 0 && row.hits === row.answered).length
+  const totalStars = progress.reduce((sum, row) => sum + row.bestStars, 0)
 
-  const newBadges: Array<{ id: string; name: string; description: string; iconRef: string }> = []
+  const newBadges: BadgeAward[] = []
 
   for (const badge of allBadges) {
-    if (earnedBadgeIds.has(badge.id)) continue
+    if (earnedIds.has(badge.id)) continue
 
-    const condition = badge.unlockCondition as any
-    let unlocked = false
-
-    switch (condition.type) {
-      case 'skillScoreAbove': {
-        const skillScore = skillScores.find(s => s.skillId === condition.skillId)
-        if (skillScore && skillScore.score >= condition.threshold) {
-          unlocked = true
-        }
-        break
-      }
-      case 'streakAbove': {
-        if (streak && streak.currentStreak >= condition.threshold) {
-          unlocked = true
-        }
-        break
-      }
-      case 'attemptsCompletedAbove': {
-        if (attemptsCompleted >= condition.threshold) {
-          unlocked = true
-        }
-        break
-      }
+    const condition = badge.unlockCondition as {
+      type?: string
+      threshold?: number
+      industryId?: string
     }
 
-    if (unlocked) {
-      await prisma.userBadge.create({
-        data: { userId, badgeId: badge.id }
-      })
+    let unlocked = false
+    switch (condition.type) {
+      case 'levelsPassedAbove':
+        unlocked = levelsPassed >= (condition.threshold ?? 0)
+        break
+      case 'perfectLevelsAbove':
+        unlocked = perfectLevels >= (condition.threshold ?? 0)
+        break
+      case 'starsAbove':
+        unlocked = totalStars >= (condition.threshold ?? 0)
+        break
+      case 'streakAbove':
+        unlocked = (streak?.currentStreak ?? 0) >= (condition.threshold ?? 0)
+        break
+      case 'industryCompleted': {
+        if (!condition.industryId) break
+        const industryLevels = await prisma.level.findMany({
+          where: { industryId: condition.industryId, status: 'active' },
+          select: { id: true }
+        })
+        const passedIds = new Set(passed.map(row => row.levelId))
+        unlocked = industryLevels.length > 0 && industryLevels.every(level => passedIds.has(level.id))
+        break
+      }
+      default:
+        continue
+    }
+
+    if (!unlocked) continue
+
+    try {
+      await prisma.userBadge.create({ data: { userId, badgeId: badge.id } })
       newBadges.push({
         id: badge.id,
         name: badge.name,
         description: badge.description,
         iconRef: badge.iconRef
       })
+    } catch (err: any) {
+      // Lost a race against a parallel completion: the badge is already earned.
+      if (err?.code !== 'P2002') throw err
     }
   }
 
   return newBadges
 }
 
-export async function recomputeCapabilityProfile(userId: string) {
-  const skillScores = await prisma.skillScore.findMany({
-    where: { userId },
-    include: { skill: true }
+/**
+ * Whether the caller may play this level. The gate is DERIVED from passed
+ * rows, never from stored `unlocked` rows: a level is playable when it is
+ * already passed, when no active level precedes it (the start of the path is
+ * always open, so a brand-new player is never stuck), or when the active
+ * level right before it is passed. Deriving means retiring, restoring or
+ * renumbering a level re-routes the path instead of stranding players on a
+ * stale unlock row.
+ */
+export async function isLevelPlayable(
+  userId: string,
+  level: { id: string; number: number }
+): Promise<boolean> {
+  const [precedingLevels, ownProgress] = await Promise.all([
+    prisma.level.findMany({
+      where: { status: 'active', number: { lt: level.number } },
+      orderBy: { number: 'asc' },
+      select: { id: true }
+    }),
+    prisma.levelProgress.findUnique({
+      where: { userId_levelId: { userId, levelId: level.id } }
+    })
+  ])
+
+  // Replays of a passed level are always allowed (they can never add XP).
+  if (ownProgress?.status === 'passed') {
+    return true
+  }
+
+  // No earlier active level: this is the head of the path.
+  if (precedingLevels.length === 0) {
+    return true
+  }
+
+  // The active level immediately before this one must be passed.
+  const previous = precedingLevels[precedingLevels.length - 1]
+  const passed = await prisma.levelProgress.findFirst({
+    where: { userId, levelId: previous.id, status: 'passed' },
+    select: { levelId: true }
   })
-
-  const overallScore = skillScores.length > 0
-    ? skillScores.reduce((sum, s) => sum + s.score, 0) / skillScores.length
-    : 0
-
-  const skillBreakdown = skillScores.map(s => ({
-    skillId: s.skillId,
-    skillName: s.skill.name,
-    score: s.score
-  }))
-
-  const challengesCompleted = await prisma.attempt.count({
-    where: { userId, completedAt: { not: null } }
-  })
-
-  const caseStudiesCompleted = await prisma.attempt.count({
-    where: {
-      userId,
-      completedAt: { not: null },
-      challenge: { difficulty: { gte: 4 } }
-    }
-  })
-
-  await prisma.capabilityProfile.upsert({
-    where: { userId },
-    create: {
-      userId,
-      overallScore,
-      skillBreakdown,
-      challengesCompleted,
-      caseStudiesCompleted
-    },
-    update: {
-      overallScore,
-      skillBreakdown,
-      challengesCompleted,
-      caseStudiesCompleted
-    }
-  })
+  return passed !== null
 }
 
-// Pure function for level calculation (no DB access)
-export function calculateLevel(totalXp: number): number {
-  return Math.floor(Math.sqrt(totalXp / 100))
+/**
+ * Record a finished level, credit XP once, unlock the next level and refresh
+ * streak/badges. `score` comes straight from the session engine's scoring pass.
+ */
+export async function creditLevelResult(
+  userId: string,
+  levelId: string,
+  score: LevelScore
+): Promise<LevelCompletion> {
+  const levelRow = await prisma.level.findUnique({ where: { id: levelId } })
+  if (!levelRow) {
+    throw new Error('Level not found')
+  }
+
+  const totalXpBefore = await sumXp(userId)
+
+  // The two writes (record the run, unlock the next active level) and the
+  // pre-read happen in one transaction, so a parallel completion can never
+  // interleave between the read and the write. True parallel completions of
+  // the same level are already impossible (one in-progress session per
+  // challenge, optimistic-concurrency guarded) — this closes the last seam.
+  const { progress, previous, nextLevelNumber } = await prisma.$transaction(async tx => {
+    const previous = await tx.levelProgress.findUnique({
+      where: { userId_levelId: { userId, levelId } }
+    })
+    const previousBestXp = previous?.bestXp ?? -1
+
+    const progress = await tx.levelProgress.upsert({
+      where: { userId_levelId: { userId, levelId } },
+      create: {
+        userId,
+        levelId,
+        status: 'passed',
+        hits: score.hits,
+        answered: score.answered,
+        bestStars: score.stars,
+        xpEarned: score.xp,
+        bestXp: score.xp,
+        attempts: 1,
+        passedAt: new Date()
+      },
+      update: {
+        status: 'passed',
+        passedAt: previous?.passedAt ?? new Date(),
+        attempts: { increment: 1 },
+        bestXp: Math.max(previousBestXp, score.xp),
+        bestStars: Math.max(previous?.bestStars ?? 0, score.stars),
+        // Keep the details of the best run; xpEarned is never touched here.
+        ...(score.xp > previousBestXp ? { hits: score.hits, answered: score.answered } : {})
+      }
+    })
+
+    // Unlock the next active level (retired levels are skipped by number order).
+    const nextLevel = await tx.level.findFirst({
+      where: { status: 'active', number: { gt: levelRow.number } },
+      orderBy: { number: 'asc' },
+      select: { id: true, number: true }
+    })
+    if (nextLevel) {
+      await tx.levelProgress.upsert({
+        where: { userId_levelId: { userId, levelId: nextLevel.id } },
+        create: { userId, levelId: nextLevel.id, status: 'unlocked' },
+        // Never demote a level the user has already passed.
+        update: {}
+      })
+    }
+
+    return { progress, previous, nextLevelNumber: nextLevel?.number ?? null }
+  })
+
+  const firstPass = previous?.status !== 'passed'
+  const streak = await updateStreak(userId)
+  const newBadges = await evaluateBadges(userId)
+  const totalXp = await sumXp(userId)
+  const playerLevel = levelFromXp(totalXp)
+
+  return {
+    hits: progress.hits,
+    answered: progress.answered,
+    accuracy: score.accuracy,
+    stars: progress.bestStars,
+    xpEarned: progress.xpEarned,
+    // DB truth: what this run actually added to the account. A parallel
+    // completion can at worst make this 0 for a duplicate report.
+    xpGained: totalXp - totalXpBefore,
+    bestXp: progress.bestXp,
+    bestStars: progress.bestStars,
+    attempts: progress.attempts,
+    firstPass,
+    levelNumber: levelRow.number,
+    nextLevelNumber,
+    totalXp,
+    playerLevel,
+    leveledUp: playerLevel > levelFromXp(totalXpBefore),
+    streak: { currentStreak: streak.currentStreak, longestStreak: streak.longestStreak },
+    newBadges
+  }
 }

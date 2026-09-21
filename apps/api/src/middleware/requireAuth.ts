@@ -4,7 +4,8 @@ import { prisma } from '../lib/prisma.ts'
 
 import jwt from 'jsonwebtoken'
 
-export const JWT_SECRET = process.env.SESSION_SECRET || 'dev-secret-change-in-production'
+// Not exported on purpose: only this module signs and verifies session tokens.
+const JWT_SECRET = process.env.SESSION_SECRET || 'dev-secret-change-in-production'
 
 export interface AuthUser {
   userId: string
@@ -81,25 +82,6 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply) 
   request.user = user
 }
 
-export async function requireAdmin(request: FastifyRequest, reply: FastifyReply) {
-  if (!request.user) {
-    await requireAuth(request, reply)
-    if (!request.user) return
-  }
-
-  if (request.user.role !== 'admin') {
-    return reply.status(403).send({ error: 'Forbidden: Admin access required' })
-  }
-}
-
 export function createSessionToken(user: AuthUser): string {
   return jwt.sign(user, JWT_SECRET, { expiresIn: '30d' })
-}
-
-export function parseSessionToken(token: string): AuthUser | null {
-  try {
-    return jwt.verify(token, JWT_SECRET) as AuthUser
-  } catch {
-    return null
-  }
 }

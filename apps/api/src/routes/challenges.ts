@@ -1,68 +1,46 @@
 import { FastifyInstance } from 'fastify'
 import { prisma } from '../lib/prisma.ts'
-import { z } from 'zod'
-
-const challengeListQuerySchema = z.object({
-  tier: z.enum(['free', 'pro']).optional()
-})
 
 export async function challengeRoutes(fastify: FastifyInstance) {
-  // GET /api/v1/challenges
+  // GET /api/v1/challenges — the active library for the candidate's role track
   fastify.get('/', async (request, reply) => {
-    const parseResult = challengeListQuerySchema.safeParse(request.query)
-    if (!parseResult.success) {
-      return reply.status(400).send({ error: 'Invalid query', details: parseResult.error.flatten() })
-    }
-
-    const { tier } = parseResult.data
     const user = request.user!
 
     if (!user.roleTrackId) {
       return reply.status(400).send({ error: 'Role not selected. Complete onboarding first.' })
     }
 
-    const where: any = {
-      roleId: user.roleTrackId,
-      status: 'published'
-    }
-
-    if (tier) {
-      where.tier = tier
-    } else {
-      // Default to free tier for non-pro users
-      where.tier = 'free'
-    }
-
     const challenges = await prisma.challenge.findMany({
-      where,
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        difficulty: true,
-        estimatedMinutes: true,
-        xpValue: true,
-        skills: {
-          select: { skillId: true }
-        }
-      },
+      where: { roleId: user.roleTrackId, status: 'active' },
+      select: { id: true, title: true, difficulty: true },
       orderBy: { createdAt: 'asc' }
     })
+
+    // Resume capability: surface any in-progress session so the library can
+    // offer "Resume" instead of starting a second path.
+    const inProgress = await prisma.session.findMany({
+      where: {
+        userId: user.userId,
+        status: 'in_progress',
+        challengeId: { in: challenges.map(c => c.id) }
+      },
+      select: { id: true, challengeId: true }
+    })
+    const sessionIdByChallenge = new Map(inProgress.map(s => [s.challengeId, s.id]))
 
     return reply.send({
       challenges: challenges.map(c => ({
         id: c.id,
         title: c.title,
-        description: c.description,
         difficulty: c.difficulty,
-        estimatedMinutes: c.estimatedMinutes,
-        xpValue: c.xpValue,
-        skillIds: c.skills.map(s => s.skillId)
+        inProgressSessionId: sessionIdByChallenge.get(c.id) ?? null
       }))
     })
   })
 
-  // GET /api/v1/challenges/:id
+  // GET /api/v1/challenges/:id — metadata only. Question content is served
+  // exclusively by the session engine, one question at a time (field
+  // visibility rule, plan Section 7).
   fastify.get('/:id', async (request, reply) => {
     const { id } = request.params as { id: string }
     const user = request.user!
@@ -72,39 +50,22 @@ export async function challengeRoutes(fastify: FastifyInstance) {
     }
 
     const challenge = await prisma.challenge.findFirst({
-      where: {
-        id,
-        roleId: user.roleTrackId,
-        status: 'published',
-        tier: 'free' // MVP: only free tier
-      },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        difficulty: true,
-        estimatedMinutes: true,
-        xpValue: true,
-        applicantSteps: true,
-        skills: {
-          select: { skillId: true }
-        }
-      }
+      where: { id, roleId: user.roleTrackId, status: 'active' },
+      select: { id: true, title: true, difficulty: true }
     })
 
     if (!challenge) {
       return reply.status(404).send({ error: 'Challenge not found' })
     }
 
+    const inProgress = await prisma.session.findFirst({
+      where: { userId: user.userId, challengeId: challenge.id, status: 'in_progress' },
+      select: { id: true }
+    })
+
     return reply.send({
-      id: challenge.id,
-      title: challenge.title,
-      description: challenge.description,
-      difficulty: challenge.difficulty,
-      estimatedMinutes: challenge.estimatedMinutes,
-      xpValue: challenge.xpValue,
-      applicantSteps: challenge.applicantSteps,
-      skillIds: challenge.skills.map(s => s.skillId)
+      ...challenge,
+      inProgressSessionId: inProgress?.id ?? null
     })
   })
 }

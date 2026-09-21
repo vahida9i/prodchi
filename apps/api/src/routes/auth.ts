@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { createSessionToken, resolveSessionUser, toAuthUser } from '../middleware/requireAuth.ts'
 
-// MVP runs a single cohort; the weekly leaderboard scopes to User.cohortId (spec 6.4).
+// The default cohort is fixed seed data (MVP runs a single cohort).
 const DEFAULT_COHORT_ID = process.env.DEFAULT_COHORT_ID || 'default'
 
 const signupSchema = z.object({

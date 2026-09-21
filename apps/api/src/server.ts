@@ -4,12 +4,13 @@ import fastifyCookie from '@fastify/cookie'
 import fastifyCors from '@fastify/cors'
 import { authRoutes } from './routes/auth.ts'
 import { challengeRoutes } from './routes/challenges.ts'
-import { attemptRoutes } from './routes/attempts.ts'
-import { profileRoutes } from './routes/profile.ts'
+import { sessionRoutes } from './routes/sessions.ts'
+import { levelRoutes } from './routes/levels.ts'
+import { progressRoutes } from './routes/progress.ts'
 import { roleRoutes } from './routes/roles.ts'
-import { skillRoutes } from './routes/skills.ts'
-import { adminSkillRoutes } from './routes/admin/skills.ts'
 import { adminChallengeRoutes } from './routes/admin/challenges.ts'
+import { adminImportRoutes } from './routes/admin/imports.ts'
+import { adminLevelRoutes } from './routes/admin/levels.ts'
 import { requireAuth } from './middleware/requireAuth.ts'
 import { requireAdmin } from './middleware/requireAdmin.ts'
 
@@ -17,9 +18,9 @@ const app = fastify({
   logger: true
 })
 
-// The web client posts some bodyless endpoints (logout, attempt completion) with
-// a JSON content type, which the default parser rejects with an empty-body 400.
-// Treat an empty JSON body as an empty object so these endpoints stay callable.
+// The web client posts some bodyless endpoints (logout) with a JSON content
+// type, which the default parser rejects with an empty-body 400. Treat an
+// empty JSON body as an empty object so these endpoints stay callable.
 app.addContentTypeParser('application/json', { parseAs: 'string' }, (_request, body, done) => {
   // parseAs: 'string' guarantees a string payload at runtime; the union type in
   // the callback signature is only there for binary parsers.
@@ -55,20 +56,20 @@ app.register(authRoutes, { prefix: '/api/v1/auth' })
 app.register(async function (fastify) {
   fastify.addHook('preHandler', requireAuth)
   fastify.register(challengeRoutes, { prefix: '/api/v1/challenges' })
-  fastify.register(attemptRoutes, { prefix: '/api/v1/attempts' })
-  fastify.register(profileRoutes, { prefix: '/api/v1/profile' })
+  fastify.register(sessionRoutes, { prefix: '/api/v1/sessions' })
+  fastify.register(levelRoutes, { prefix: '/api/v1/levels' })
+  fastify.register(progressRoutes, { prefix: '/api/v1/progress' })
   fastify.register(roleRoutes, { prefix: '/api/v1/roles' })
-  fastify.register(skillRoutes, { prefix: '/api/v1/skills' })
 })
 
 // Admin routes
 app.register(async function (fastify) {
-  // requireAdmin performs the authentication step itself (spec Section 6:
-  // requireAuth on everything except /auth/*, requireAdmin additionally on
-  // /admin/*), so it must not be chained after requireAuth here.
+  // requireAdmin performs the authentication step itself, so it must not be
+  // chained after requireAuth here.
   fastify.addHook('preHandler', requireAdmin)
-  fastify.register(adminSkillRoutes, { prefix: '/api/v1/admin' })
   fastify.register(adminChallengeRoutes, { prefix: '/api/v1/admin' })
+  fastify.register(adminImportRoutes, { prefix: '/api/v1/admin' })
+  fastify.register(adminLevelRoutes, { prefix: '/api/v1/admin' })
 })
 
 const start = async () => {

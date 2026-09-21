@@ -1,5 +1,7 @@
 import { existsSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { parseEnv } from 'node:util'
 
 /**
  * Loads environment variables for the API process.
@@ -9,6 +11,10 @@ import { fileURLToPath } from 'node:url'
  * nor `node` read those files for us, so this module loads the first one that
  * exists. Depth is identical from `src/lib/env.ts` and `dist/lib/env.js`, so the
  * same candidates work for `pnpm dev` and `node dist/server.js`.
+ *
+ * Values already present in the real environment win: the file only FILLS
+ * missing keys (a plain `process.loadEnvFile` would override them, which would
+ * let a checked-in .env shadow production configuration).
  *
  * Must be imported before anything that reads configuration (e.g. `lib/prisma.ts`).
  */
@@ -21,8 +27,12 @@ const candidates = [
 for (const candidate of candidates) {
   const path = fileURLToPath(candidate)
   if (existsSync(path)) {
-    // Values already present in the environment take precedence.
-    process.loadEnvFile(path)
+    const parsed = parseEnv(readFileSync(path, 'utf8'))
+    for (const [key, value] of Object.entries(parsed)) {
+      if (process.env[key] === undefined) {
+        process.env[key] = value
+      }
+    }
     break
   }
 }
