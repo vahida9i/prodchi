@@ -8,113 +8,168 @@ datasource db {
 }
 
 model User {
-  id             String   @id @default(uuid())
-  email          String   @unique
-  passwordHash   String?
-  role           String   @default("user") // "user" | "admin"
-  cohortId       String?
-  roleTrackId    String?  // FK to Role (Product Design / Product Management), set at onboarding
-  createdAt      DateTime @default(now())
-  roleTrack      Role?    @relation(fields: [roleTrackId], references: [id])
-  skillScores    SkillScore[]
-  attempts       Attempt[]
-  streak         Streak?
-  badges         UserBadge[]
-  capabilityProfile CapabilityProfile?
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String?
+  role          String    @default("user") // "user" | "admin"
+  cohortId      String?
+  roleTrackId   String?   // FK to Role; set once during onboarding
+  createdAt     DateTime  @default(now())
+  roleTrack     Role?     @relation(fields: [roleTrackId], references: [id])
+  sessions      Session[]
+  levelProgress LevelProgress[]
+  badges        UserBadge[]
+  streak        Streak?
 
   @@index([cohortId])
 }
 
 model Role {
-  id              String          @id @default(uuid())
-  name            String          @unique // "Product Design" | "Product Management" — fixed seed data
-  skillCategories SkillCategory[]
-  challenges      Challenge[]
-  users           User[]
-}
-
-model SkillCategory {
-  id     String  @id @default(uuid())
-  name   String
-  order  Int     @default(0)
-  roleId String
-  role   Role    @relation(fields: [roleId], references: [id])
-  skills Skill[]
-
-  @@index([roleId])
-}
-
-model Skill {
-  id              String  @id @default(uuid())
-  name            String
-  order           Int     @default(0)
-  skillCategoryId String
-  unlockThreshold Int?    // score needed in the prior skill (by `order`) to unlock; null = always unlocked
-  skillCategory   SkillCategory @relation(fields: [skillCategoryId], references: [id])
-  challengeLinks  ChallengeSkill[]
-  scores          SkillScore[]
-
-  @@index([skillCategoryId])
-}
-
-model SkillScore {
-  id            String @id @default(uuid())
-  userId        String
-  skillId       String
-  score         Float  // rolling weighted average, 0-100
-  evidenceCount Int    @default(0)
-  updatedAt     DateTime @updatedAt
-  user          User   @relation(fields: [userId], references: [id])
-  skill         Skill  @relation(fields: [skillId], references: [id])
-
-  @@unique([userId, skillId])
+  id         String      @id @default(uuid())
+  name       String      @unique // "Product Design" — imported challenges validate against this name
+  challenges Challenge[]
+  users      User[]
 }
 
 model Challenge {
-  id               String   @id @default(uuid())
-  title            String
-  description      String
-  estimatedMinutes Int
-  roleId           String
-  difficulty       Int      // 1-5
-  tier             String   // "free" | "pro"
-  xpValue          Int
-  hiddenCase       Json     // server-only
-  applicantSteps   Json     // client-facing when read via GET /challenges/:id/attempt-safe view
-  answerSheet      Json     // server-only
-  status           String   @default("draft") // "draft" | "published"
-  createdAt        DateTime @default(now())
-  role             Role     @relation(fields: [roleId], references: [id])
-  skills           ChallengeSkill[]
-  attempts         Attempt[]
+  id         String    @id @default(uuid())
+  importKey  String    @unique // the challenge JSON "id", e.g. "onboarding_drop_off"
+  title      String
+  roleId     String
+  role       Role      @relation(fields: [roleId], references: [id])
+  difficulty String // "easy" | "medium" | "hard"
+  startKey   String // key of the first question inside `questions`
+  // Full question graph: { key -> { text, choices: [{ text, stage, reveal, next }] } }.
+  // Server-only: `stage`, `reveal`, and `next` never reach the candidate until
+  // the choice is made, and only then via the session engine.
+  questions  Json
+  // Short authored brief on the business and who its customers are ("summary"
+  // in the import JSON). Candidate-safe: it is the only prose shown *before* a
+  // run starts, on the path map. Null for content imported before summaries
+  // existed — the node then renders without one.
+  summary    String?
+  // Unit-layer rubric as authored in the import JSON ("assessment.criteria"):
+  // copied out so report reads never crawl every question looking for it.
+  // Server-only like the graph — labels/guidance only reach the candidate in
+  // their own finished report. Null for content imported before rubrics existed.
+  assessment Json?
+  status     String    @default("active") // "active" | "retired"
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  sessions   Session[]
+  level      Level?
 
-  @@index([roleId, status, tier])
+  @@index([roleId, status])
 }
 
-model ChallengeSkill {
-  challengeId String
-  skillId     String
-  challenge   Challenge @relation(fields: [challengeId], references: [id])
-  skill       Skill     @relation(fields: [skillId], references: [id])
-
-  @@id([challengeId, skillId])
-}
-
-model Attempt {
+model Session {
   id          String    @id @default(uuid())
   userId      String
   challengeId String
+  // Set when the session was started from a level on the path. Scoring and
+  // gamification are credited against this level when the session reaches END.
+  levelId     String?
+  status      String    @default("in_progress") // "in_progress" | "completed"
+  currentKey  String? // question key the candidate is on; null once completed
+  // [{ key, questionText, choiceIndex, choiceText, reveal, at }] — `reveal` is
+  // the authored block ({ text, table? }), snapshotted when the choice is made.
+  path        Json      @default("[]")
+  // The run's score as computed when it reached END. Frozen so that re-importing
+  // the challenge later cannot make an old recap contradict the XP it earned.
+  score       Json?
+  // The run's deterministic feedback report (shared-types evaluateRun), frozen
+  // at completion for the same reason: a content re-import must never rewrite
+  // what a finished run's "how you traversed it" said. Null for runs recorded
+  // before this column existed — those compute from the live graph on read.
+  feedback    Json?
   startedAt   DateTime  @default(now())
   completedAt DateTime?
-  path        Json      // [{stepIndex, optionChosen | freeTextResponse, revealedInfoSnapshot, timestamp}]
-  assessment  Json?     // {perSkillDeltas: [{skillId, delta}], feedbackText: {positives[], negatives[]}, confidence}
-  xpEarned    Int?
   user        User      @relation(fields: [userId], references: [id])
   challenge   Challenge @relation(fields: [challengeId], references: [id])
+  level       Level?    @relation(fields: [levelId], references: [id])
 
+  // NOTE: one in-progress session per user per challenge is enforced by the
+  // partial unique index `sessions_one_in_progress` (migration
+  // 20260916020000) — partial indexes cannot be expressed in the Prisma schema.
+  @@index([userId, status])
   @@index([userId, challengeId])
+  @@index([levelId])
 }
 
+// Rejected imports are retained so admins can review what failed and why
+// (plan Feature 5). Nothing is auto-repaired; the source is fixed and re-imported.
+model FailedImport {
+  id        String   @id @default(uuid())
+  payload   Json // raw submitted body
+  errors    Json // [{ path, message }]
+  createdAt DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Level path (Candy-Crush style progression)
+//
+// Progression is the numbered path below; there is no skill tree. A level
+// wraps one imported Challenge, so the import validator and the session engine
+// are unchanged. Passing a level means reaching END.
+// ---------------------------------------------------------------------------
+
+model Industry {
+  id     String  @id @default(uuid())
+  name   String  @unique // "E-commerce" | "Fintech" | ...
+  order  Int     @default(0)
+  levels Level[]
+}
+
+model Level {
+  id          String   @id @default(uuid())
+  number      Int // 1, 2, 3 … the node label on the path map
+  industryId  String
+  difficulty  String // "easy" | "medium" | "hard" — presentation/placement
+  // "challenge" | "single_question" — derived from the question graph at import
+  // (one question whose every choice ends the session = single_question).
+  type        String
+  // One content challenge backs exactly one level: this keeps the
+  // `sessions_one_in_progress` partial unique index on (userId, challengeId)
+  // meaningful and stops two levels fighting over one in-progress session.
+  challengeId String   @unique
+  status      String   @default("active") // "active" | "retired"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  industry    Industry @relation(fields: [industryId], references: [id])
+  challenge   Challenge @relation(fields: [challengeId], references: [id])
+  progress    LevelProgress[]
+  sessions    Session[]
+
+  @@unique([number])
+  @@index([industryId, status])
+}
+
+// One row per user per level. Written by exactly one code path
+// (services/gamification.ts -> creditLevelResult) when the session reaches END.
+model LevelProgress {
+  userId     String
+  levelId    String
+  status     String    @default("locked") // "locked" | "unlocked" | "passed"
+  hits       Int       @default(0) // best choices picked on the recorded run
+  answered   Int       @default(0)
+  bestStars  Int       @default(0)
+  // XP is credited once, on the first passing attempt, and never recomputed:
+  // replaying can improve bestXp/bestStars for display, but cannot farm XP.
+  xpEarned   Int       @default(0)
+  bestXp     Int       @default(0)
+  attempts   Int       @default(0)
+  passedAt   DateTime?
+  updatedAt  DateTime  @updatedAt
+  user       User      @relation(fields: [userId], references: [id])
+  level      Level     @relation(fields: [levelId], references: [id])
+
+  @@id([userId, levelId])
+  @@index([userId, status])
+}
+
+// Streak and badges are the gamification layer that survives the removal of the
+// skill tree: XP/levels/badges/leaderboard stay, SkillCategory/Skill/SkillScore
+// and the rubrics do not.
 model Streak {
   userId        String    @id
   currentStreak Int       @default(0)
@@ -128,9 +183,12 @@ model Badge {
   name            String
   description     String
   iconRef         String
-  unlockCondition Json   // {"type":"skillScoreAbove","skillId":"...","threshold":80}
-                        // {"type":"streakAbove","threshold":30}
-                        // {"type":"attemptsCompletedAbove","threshold":1}
+  // {"type":"levelsPassedAbove","threshold":1}
+  // {"type":"perfectLevelsAbove","threshold":3}
+  // {"type":"starsAbove","threshold":15}
+  // {"type":"streakAbove","threshold":7}
+  // {"type":"industryCompleted","industryId":"..."}
+  unlockCondition Json
   users           UserBadge[]
 }
 
@@ -142,19 +200,4 @@ model UserBadge {
   badge    Badge @relation(fields: [badgeId], references: [id])
 
   @@id([userId, badgeId])
-}
-
-// Persisted, recomputed on every attempt completion. SkillScore rows remain
-// the underlying source of truth for individual skill numbers; this table is
-// the durable, queryable snapshot the Profile screen and any future export/
-// share feature reads from, so that screen doesn't have to assemble an
-// aggregate from five different tables on every page load.
-model CapabilityProfile {
-  userId          String   @id
-  overallScore    Float    // mean of the user's SkillScore.score at last recompute
-  skillBreakdown  Json     // [{skillId, skillName, score}] snapshot at last recompute
-  challengesCompleted Int
-  caseStudiesCompleted Int  // challenges with difficulty >= 4, count
-  updatedAt       DateTime @updatedAt
-  user            User     @relation(fields: [userId], references: [id])
 }
