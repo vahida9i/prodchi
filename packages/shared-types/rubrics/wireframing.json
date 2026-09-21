@@ -1,9 +1,0 @@
-{
-  "skillId": "wireframing",
-  "criteria": [
-    { "description": "Creates clear, low-fidelity wireframes", "weight": 0.3 },
-    { "description": "Explores multiple design directions", "weight": 0.2 },
-    { "description": "Demonstrates user flow understanding", "weight": 0.3 },
-    { "description": "Annotates key interactions and decisions", "weight": 0.2 }
-  ]
-}

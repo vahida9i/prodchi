@@ -1,9 +1,0 @@
-{
-  "skillId": "iteration",
-  "criteria": [
-    { "description": "Incorporates feedback into design improvements", "weight": 0.3 },
-    { "description": "Measures impact of changes against success metrics", "weight": 0.2 },
-    { "description": "Identifies when to pivot vs. persevere", "weight": 0.2 },
-    { "description": "Documents learnings for future reference", "weight": 0.3 }
-  ]
-}

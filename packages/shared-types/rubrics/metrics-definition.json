@@ -1,9 +1,0 @@
-{
-  "skillId": "metrics-definition",
-  "criteria": [
-    { "description": "Selects metrics that align with product goals", "weight": 0.3 },
-    { "description": "Defines leading and lagging indicators", "weight": 0.2 },
-    { "description": "Sets realistic targets and baselines", "weight": 0.2 },
-    { "description": "Plans for measurement and reporting", "weight": 0.3 }
-  ]
-}

@@ -1,9 +1,0 @@
-{
-  "skillId": "roadmapping",
-  "criteria": [
-    { "description": "Prioritizes initiatives using clear criteria", "weight": 0.3 },
-    { "description": "Balances short-term wins with long-term strategy", "weight": 0.2 },
-    { "description": "Accounts for dependencies and constraints", "weight": 0.2 },
-    { "description": "Communicates roadmap rationale to stakeholders", "weight": 0.3 }
-  ]
-}

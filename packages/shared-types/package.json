@@ -13,6 +13,18 @@
       "types": "./dist/challenge-schema.d.ts",
       "default": "./dist/challenge-schema.js"
     },
+    "./graph-validator": {
+      "types": "./dist/graph-validator.d.ts",
+      "default": "./dist/graph-validator.js"
+    },
+    "./scoring": {
+      "types": "./dist/scoring.d.ts",
+      "default": "./dist/scoring.js"
+    },
+    "./feedback": {
+      "types": "./dist/feedback.d.ts",
+      "default": "./dist/feedback.js"
+    },
     "./validator": {
       "types": "./dist/validator.d.ts",
       "default": "./dist/validator.js"
@@ -23,13 +35,15 @@
   ],
   "scripts": {
     "build": "tsc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test validator.test.ts scoring.test.ts feedback.test.ts"
   },
   "dependencies": {
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@prisma/client": "^5.12.0",
+    "@types/node": "^20.11.0",
+    "tsx": "^4.7.0",
     "typescript": "^5.4.0"
   }
 }

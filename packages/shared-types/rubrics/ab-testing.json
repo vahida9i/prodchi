@@ -1,9 +1,0 @@
-{
-  "skillId": "ab-testing",
-  "criteria": [
-    { "description": "Forms testable hypotheses with clear success criteria", "weight": 0.3 },
-    { "description": "Designs experiments with proper statistical rigor", "weight": 0.3 },
-    { "description": "Analyzes results accounting for statistical significance", "weight": 0.2 },
-    { "description": "Makes clear go/no-go decisions based on evidence", "weight": 0.2 }
-  ]
-}

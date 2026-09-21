@@ -1,2 +1,5 @@
 export * from './challenge-schema'
+export * from './feedback'
+export * from './graph-validator'
+export * from './scoring'
 export * from './validator'

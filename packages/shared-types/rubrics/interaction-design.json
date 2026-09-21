@@ -1,9 +1,0 @@
-{
-  "skillId": "interaction-design",
-  "criteria": [
-    { "description": "Designs intuitive, responsive interactions", "weight": 0.3 },
-    { "description": "Considers edge cases and error states", "weight": 0.2 },
-    { "description": "Specifies motion and transitions appropriately", "weight": 0.2 },
-    { "description": "Documents interaction specs for developers", "weight": 0.3 }
-  ]
-}
