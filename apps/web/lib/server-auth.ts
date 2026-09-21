@@ -25,7 +25,10 @@ export async function getServerSessionUser(): Promise<SessionUser | null> {
   try {
     const response = await fetch(`${API_BASE}/auth/me`, {
       headers: { cookie: cookieHeader },
-      cache: 'no-store'
+      cache: 'no-store',
+      // A down API must not hang every layout gate; fall through to null
+      // (which routes the visitor to /login) after 3s.
+      signal: AbortSignal.timeout(3000)
     })
 
     if (!response.ok) {

@@ -1,23 +1,31 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
 import { useState } from "react"
 import { api } from "@/lib/api-client"
+import { ValidationErrorList } from "@/components/admin/ValidationErrorList"
 
-interface ValidationError {
+interface ChallengeImportFormProps {
+  onImported?: () => void
+}
+
+interface FieldError {
   path: string
   message: string
 }
 
-export function ChallengeImportForm() {
+/**
+ * Paste-only challenge import (plan Feature 1): the JSON is parsed client-side
+ * for instant syntax feedback, then validated server-side. Structural and flow
+ * failures come back as itemized reasons — the app never guesses or repairs.
+ */
+export function ChallengeImportForm({ onImported }: ChallengeImportFormProps) {
   const [jsonInput, setJsonInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [errors, setErrors] = useState<ValidationError[]>([])
+  const [errors, setErrors] = useState<FieldError[]>([])
   const [success, setSuccess] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,10 +37,21 @@ export function ChallengeImportForm() {
     try {
       const data = JSON.parse(jsonInput)
       const response = await api.importChallenge(data)
-      setSuccess(`Challenge imported successfully! ID: ${response.challengeId}`)
+      setSuccess(
+        response.updated
+          ? "Challenge updated — the new content is live. Past sessions keep the score they earned."
+          : "Challenge imported and live in the library."
+      )
       setJsonInput('')
+      onImported?.()
     } catch (error: any) {
-      if (error.details?.errors) {
+      if (error instanceof SyntaxError) {
+        setErrors([{ path: 'json', message: `Invalid JSON: ${error.message}` }])
+      } else if (error?.errors?.length) {
+        // Import-style failures: itemized `{ path, message }` reasons on the
+        // ApiError itself (see api-client).
+        setErrors(error.errors)
+      } else if (error?.details?.errors) {
         setErrors(error.details.errors)
       } else {
         setErrors([{ path: 'root', message: error.message || 'Import failed' }])
@@ -42,39 +61,19 @@ export function ChallengeImportForm() {
     }
   }
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        setJsonInput(event.target?.result as string)
-      }
-      reader.readAsText(file)
-    }
-  }
-
   return (
     <Card>
       <CardHeader>
         <CardTitle>Import Challenge</CardTitle>
         <CardDescription>
-          Paste a challenge JSON or upload a .json file. The validator will check structure and references.
+          Paste the generator&apos;s challenge JSON. Validation checks structure and flow
+          (dead ends, loops, unreachable questions, reveal tables) and reports exact reasons
+          on failure. A new challenge goes live immediately; re-importing an existing id
+          updates it in place.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="json-file">Upload JSON File</Label>
-            <input
-              id="json-file"
-              type="file"
-              accept=".json"
-              onChange={handleFileUpload}
-              className="text-sm text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-medium file:text-primary-foreground hover:file:bg-primary/90"
-            />
-            <p className="text-xs text-muted-foreground">Or paste JSON below</p>
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="json-input">Challenge JSON</Label>
             <Textarea
@@ -82,50 +81,20 @@ export function ChallengeImportForm() {
               value={jsonInput}
               onChange={(e) => setJsonInput(e.target.value)}
               className="font-mono text-sm min-h-[300px]"
-              placeholder='{
-  "metadata": {
-    "title": "string",
-    "description": "string",
-    "estimatedMinutes": 15,
-    "roleId": "uuid",
-    "difficulty": 2,
-    "tier": "free",
-    "xpValue": 120,
-    "skillIds": ["uuid"]
-  },
-  "hiddenCase": { ... },
-  "applicantSteps": [...],
-  "answerSheet": [...]
-}'
+              placeholder={'{\n  "id": "onboarding_drop_off",\n  "title": "The Onboarding Drop-Off",\n  "role": "Product Design",\n  "difficulty": "medium",\n  "start": "Q1",\n  "questions": { "Q1": { "text": "...", "choices": [ ... ] }, ... }\n}'}
             />
           </div>
 
-          {errors.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="destructive">Validation Errors ({errors.length})</Badge>
-              </div>
-              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 max-h-60 overflow-y-auto">
-                <ul className="space-y-1 text-sm">
-                  {errors.map((error, index) => (
-                    <li key={index} className="flex gap-2 text-destructive">
-                      <code className="bg-background px-1 rounded">{error.path}</code>
-                      <span>{error.message}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
+          <ValidationErrorList errors={errors} />
 
           {success && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-800">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800">
               {success}
             </div>
           )}
 
-          <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? 'Importing...' : 'Import Challenge'}
+          <Button type="submit" disabled={isLoading || jsonInput.trim() === ''}>
+            {isLoading ? 'Validating…' : 'Import challenge'}
           </Button>
         </form>
       </CardContent>

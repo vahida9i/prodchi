@@ -1,36 +1,58 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { api } from "@/lib/api-client"
-import { StreakCalendar } from "@/components/challenge/StreakCalendar"
+import type { ProgressSummary, BadgeInfo, Leaderboard } from "@/lib/api-client"
 
+/**
+ * Progress + gamification reads: XP/player level, stars, levels passed,
+ * streak, per-industry rollups, the weekly cohort leaderboard and badges.
+ * Everything here is aggregated on read from LevelProgress by the API.
+ */
 export default function ProgressPage() {
-  const [profile, setProfile] = useState<any>(null)
-  const [leaderboard, setLeaderboard] = useState<any>(null)
+  const router = useRouter()
+  const [progress, setProgress] = useState<ProgressSummary | null>(null)
+  const [badges, setBadges] = useState<BadgeInfo[]>([])
+  const [leaderboard, setLeaderboard] = useState<Leaderboard | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchData = async () => {
+    const load = async () => {
       try {
-        const [profileRes, leaderboardRes] = await Promise.all([
-          api.getProfile().catch(() => null),
-          api.getLeaderboard().catch(() => null)
+        const [progressRes, badgesRes, leaderboardRes] = await Promise.all([
+          api.getProgress(),
+          api.getBadges(),
+          api.getLeaderboard()
         ])
-        setProfile(profileRes)
+        setProgress(progressRes)
+        setBadges(badgesRes.badges)
         setLeaderboard(leaderboardRes)
-      } catch (err) {
-        console.error('Failed to load progress:', err)
+      } catch (err: any) {
+        if (err?.status === 401) {
+          router.push("/login")
+          return
+        }
+        setError(err.message || "Failed to load progress")
       } finally {
         setLoading(false)
       }
     }
-    fetchData()
-  }, [])
+    load()
+  }, [router])
+
+  const handleLogout = async () => {
+    try {
+      await api.logout()
+    } catch {
+      // Cookie clearing is best-effort; always land on the login screen.
+    }
+    router.push("/login")
+  }
 
   if (loading) {
     return (
@@ -40,140 +62,158 @@ export default function ProgressPage() {
     )
   }
 
-  if (!profile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card>
-          <CardContent className="py-12 text-center">
-            <h2 className="text-xl font-semibold mb-2">No progress data yet</h2>
-            <p className="text-muted-foreground mb-4">Complete a challenge to see your progress</p>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Progress</h1>
+          <h1 className="text-2xl font-bold">Baaten</h1>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => router.push("/home")}>
+              Back to path
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              Log out
+            </Button>
+          </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 space-y-8">
-        {/* Streak */}
-        <section>
-          <h2 className="text-xl font-semibold mb-4">Streak</h2>
-          <StreakCalendar
-            currentStreak={profile.streak.currentStreak}
-            longestStreak={profile.streak.longestStreak}
-            lastActiveDay={profile.streak.lastActiveDay}
-          />
-        </section>
-
-        {/* Level & XP */}
-        <section>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Level</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-4xl font-bold">{profile.level}</div>
-                <p className="text-xs text-muted-foreground">Total XP: {profile.totalXp}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Challenges Completed</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-4xl font-bold">{profile.profile.challengesCompleted}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Case Studies</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-4xl font-bold">{profile.profile.caseStudiesCompleted}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Overall Score</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-4xl font-bold">{profile.profile.overallScore.toFixed(1)}</div>
-              </CardContent>
-            </Card>
+      <main className="container mx-auto px-4 py-8 max-w-3xl space-y-8">
+        {error && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive">
+            {error}
           </div>
-        </section>
+        )}
 
-        {/* Skill Breakdown */}
-        <section>
-          <h2 className="text-xl font-semibold mb-4">Skill Breakdown</h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {profile.profile.skillBreakdown?.map((skill: any) => (
-              <Card key={skill.skillId}>
-                <CardHeader>
-                  <CardTitle className="text-lg">{skill.skillName}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Progress value={skill.score} className="h-2 mb-2" />
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Score</span>
-                    <span className="font-medium">{skill.score.toFixed(1)}</span>
-                  </div>
+        {progress && (
+          <>
+            <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              <Card>
+                <CardContent className="py-4 text-center">
+                  <p className="text-3xl font-bold">{progress.totalXp}</p>
+                  <p className="text-xs text-muted-foreground">Total XP · level {progress.playerLevel}</p>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        </section>
+              <Card>
+                <CardContent className="py-4 text-center">
+                  <p className="text-3xl font-bold text-yellow-500">{progress.totalStars}</p>
+                  <p className="text-xs text-muted-foreground">Stars</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="py-4 text-center">
+                  <p className="text-3xl font-bold">
+                    {progress.levelsPassed}/{progress.levelsTotal}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Levels passed</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="py-4 text-center">
+                  <p className="text-3xl font-bold">{Math.round(progress.accuracy * 100)}%</p>
+                  <p className="text-xs text-muted-foreground">Best-call accuracy</p>
+                </CardContent>
+              </Card>
+            </section>
 
-        {/* Leaderboard */}
-        {leaderboard && (
-          <section>
-            <h2 className="text-xl font-semibold mb-4">Weekly Leaderboard</h2>
-            <Card>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Rank</TableHead>
-                      <TableHead>User</TableHead>
-                      <TableHead>Weekly XP</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {leaderboard.leaderboard.map((entry: any, index: number) => (
-                      <TableRow key={entry.userId}>
-                        <TableCell className="font-medium">{entry.rank}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarFallback>{entry.email[0].toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                            <span>{entry.email}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>{entry.weeklyXp}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                {leaderboard.userRank && (
-                  <div className="mt-4 p-4 bg-muted/50 rounded-lg">
-                    <p className="text-sm">
-                      Your rank: <span className="font-medium">#{leaderboard.userRank.rank}</span> 
-                      ({leaderboard.userRank.weeklyXp} XP this week)
+            <section>
+              <h2 className="text-xl font-semibold mb-3">Streak</h2>
+              <Card>
+                <CardContent className="py-4">
+                  <p className="text-lg font-semibold">🔥 {progress.streak.currentStreak}-day streak</p>
+                  <p className="text-sm text-muted-foreground">
+                    Longest: {progress.streak.longestStreak} day
+                    {progress.streak.longestStreak === 1 ? "" : "s"} — a day counts when a level is passed.
+                  </p>
+                </CardContent>
+              </Card>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-semibold mb-3">Industries</h2>
+              <div className="space-y-3">
+                {progress.industries.map(industry => (
+                  <Card key={industry.id}>
+                    <CardContent className="py-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium">{industry.name}</p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-yellow-500">{industry.stars}★</span>
+                          {industry.completed && <Badge>Completed</Badge>}
+                        </div>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded bg-muted">
+                        <div
+                          className="h-2 rounded bg-primary"
+                          style={{
+                            width: `${industry.levelsTotal === 0 ? 0 : Math.round((industry.levelsPassed / industry.levelsTotal) * 100)}%`
+                          }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {industry.levelsPassed}/{industry.levelsTotal} levels passed
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-semibold mb-3">Weekly leaderboard</h2>
+              <Card>
+                <CardContent className="py-4">
+                  {leaderboard && leaderboard.leaderboard.length > 0 ? (
+                    <div className="space-y-2">
+                      {leaderboard.leaderboard.map(row => (
+                        <div key={row.userId} className="flex items-center justify-between text-sm">
+                          <span>
+                            <span className="mr-2 font-semibold">#{row.rank}</span>
+                            {row.player}
+                          </span>
+                          <span className="font-medium">{row.weeklyXp} XP</span>
+                        </div>
+                      ))}
+                      {leaderboard.userRank && (
+                        <p className="pt-2 text-sm text-muted-foreground">
+                          You: #{leaderboard.userRank.rank} with {leaderboard.userRank.weeklyXp} XP this week
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No XP earned in your cohort this week yet.
                     </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </section>
+                  )}
+                </CardContent>
+              </Card>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-semibold mb-3">Badges</h2>
+              <div className="grid gap-3 md:grid-cols-2">
+                {badges.map(badge => (
+                  <Card key={badge.id} className={badge.earned ? "" : "opacity-60"}>
+                    <CardContent className="flex items-start gap-3 py-4">
+                      <div className="text-2xl">{badge.iconRef}</div>
+                      <div className="min-w-0">
+                        <p className="font-medium">
+                          {badge.name}
+                          {badge.earned && <span className="ml-2 text-xs text-primary">earned</span>}
+                        </p>
+                        <p className="text-sm text-muted-foreground">{badge.description}</p>
+                        {badge.earnedAt && (
+                          <p className="text-xs text-muted-foreground">
+                            Earned {new Date(badge.earnedAt).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </section>
+          </>
         )}
       </main>
     </div>

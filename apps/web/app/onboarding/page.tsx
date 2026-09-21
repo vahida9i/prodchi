@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { api } from "@/lib/api-client"
 
+// Roles are fixed seed data; only "Product Design" exists today.
 const ROLE_EMOJI: Record<string, string> = {
-  'Product Design': '🎨',
-  'Product Management': '📊'
+  'Product Design': '🎨'
 }
 
 const roleEmoji = (name: string) => ROLE_EMOJI[name] ?? '🧭'
@@ -85,9 +85,7 @@ export default function OnboardingPage() {
                 <div>
                   <p className="font-medium">{role.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {role.name === 'Product Design'
-                      ? 'User research, wireframing, visual design, usability testing...'
-                      : 'Product strategy, roadmapping, metrics, experimentation...'}
+                    User research, wireframing, visual design, usability testing...
                   </p>
                 </div>
               </Button>

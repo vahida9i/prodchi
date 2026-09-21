@@ -1,50 +1,98 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
+import { useCallback, useEffect, useState } from "react"
+import Link from "next/link"
+import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
+import { RevealBlock } from "@/components/challenge/RevealBlock"
 import { api } from "@/lib/api-client"
+import { cn } from "@/lib/utils"
 
+type Detail = Awaited<ReturnType<typeof api.getAdminChallenge>>
+
+/**
+ * Full internal challenge view for admins: metadata plus every question with
+ * its choices, stage labels, reveals, and next pointers. This is internal
+ * authoring scaffolding — candidates never see any of it.
+ */
 export default function AdminChallengeDetailPage() {
   const params = useParams()
-  const challengeId = params.id as string
-  const [challenge, setChallenge] = useState<any>(null)
+  const router = useRouter()
+  const id = params.id as string
+  const [detail, setDetail] = useState<Detail | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [editJson, setEditJson] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [saveState, setSaveState] = useState<{ kind: "ok" | "err"; message: string } | null>(null)
+
+  const load = useCallback(async () => {
+    try {
+      setDetail(await api.getAdminChallenge(id))
+    } catch (err: any) {
+      setError(err.message || "Failed to load challenge")
+    } finally {
+      setLoading(false)
+    }
+  }, [id])
 
   useEffect(() => {
-    const fetchChallenge = async () => {
-      try {
-        const data = await api.getAdminChallenge(challengeId)
-        setChallenge(data)
-      } catch (err) {
-        console.error('Failed to load challenge:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchChallenge()
-  }, [challengeId])
+    load()
+  }, [load])
 
-  const handleStatusChange = async (status: 'draft' | 'published') => {
+  const toggleStatus = async () => {
+    if (!detail) return
     try {
-      await api.updateChallengeStatus(challengeId, status)
-      const data = await api.getAdminChallenge(challengeId)
-      setChallenge(data)
+      await api.updateChallengeStatus(id, detail.status === "active" ? "retired" : "active")
+      await load()
     } catch (err: any) {
-      alert(err.message || 'Failed to update status')
+      alert(err.message || "Failed to update status")
     }
   }
 
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this challenge?')) return
+  /**
+   * Editing is a re-import: the internal view is a valid import payload (the API
+   * returns the role name for exactly this), so an update goes through the same
+   * deterministic validator as a first import and never needs a delete.
+   */
+  const startEditing = () => {
+    if (!detail) return
+    setSaveState(null)
+    setEditJson(JSON.stringify({
+      id: detail.importKey,
+      title: detail.title,
+      role: detail.role,
+      difficulty: detail.difficulty,
+      start: detail.startKey,
+      questions: detail.questions
+    }, null, 2))
+  }
+
+  const saveUpdate = async () => {
+    if (!editJson) return
+    setSaving(true)
+    setSaveState(null)
     try {
-      await api.deleteChallenge(challengeId)
-      window.location.href = '/admin/challenges'
+      await api.importChallenge(JSON.parse(editJson))
+      setEditJson(null)
+      await load()
+      setSaveState({ kind: "ok", message: "Challenge updated — the new content is live for every session started from now on." })
     } catch (err: any) {
-      alert(err.message || 'Failed to delete challenge')
+      if (err instanceof SyntaxError) {
+        setSaveState({ kind: "err", message: `Invalid JSON: ${err.message}` })
+      } else if (err?.errors?.length) {
+        setSaveState({
+          kind: "err",
+          message: err.errors.map((e: { path: string; message: string }) => `${e.path}: ${e.message}`).join(" · ")
+        })
+      } else {
+        setSaveState({ kind: "err", message: err.message || "Update failed" })
+      }
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -56,150 +104,131 @@ export default function AdminChallengeDetailPage() {
     )
   }
 
-  if (!challenge) {
+  if (error || !detail) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card>
           <CardContent className="py-12 text-center">
-            <h2 className="text-xl font-semibold mb-2">Challenge not found</h2>
-            <Button variant="link" onClick={() => window.history.back()}>Go back</Button>
+            <h2 className="text-xl font-semibold mb-2">{error || "Challenge not found"}</h2>
+            <Button variant="link" onClick={() => router.push("/admin/challenges")}>Back to challenges</Button>
           </CardContent>
         </Card>
       </div>
     )
   }
 
-  const difficultyColors = [
-    'bg-green-100 text-green-800',
-    'bg-blue-100 text-blue-800',
-    'bg-yellow-100 text-yellow-800',
-    'bg-orange-100 text-orange-800',
-    'bg-red-100 text-red-800'
-  ]
+  const questions = Object.entries(detail.questions)
 
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Admin: Challenge Detail</h1>
+          <div className="flex items-center gap-3">
+            <Link href="/admin/challenges">
+              <Button variant="ghost" size="sm">← Challenges</Button>
+            </Link>
+            <h1 className="text-2xl font-bold">{detail.title}</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant={detail.status === "active" ? "default" : "secondary"}>{detail.status}</Badge>
+            <Button variant="outline" size="sm" onClick={startEditing}>
+              Update content
+            </Button>
+            <Button variant="outline" size="sm" onClick={toggleStatus}>
+              {detail.status === "active" ? "Retire" : "Restore"}
+            </Button>
+          </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-5xl space-y-6">
+      <main className="container mx-auto px-4 py-8 max-w-3xl space-y-6">
         <Card>
           <CardHeader>
-            <div className="flex items-start justify-between">
-              <div>
-                <CardTitle className="text-2xl">{challenge.title}</CardTitle>
-                <p className="text-muted-foreground">{challenge.description}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className={difficultyColors[challenge.difficulty - 1] || difficultyColors[0]}>
-                  Level {challenge.difficulty}
-                </Badge>
-                <Badge variant={challenge.status === 'published' ? 'success' : 'secondary'}>
-                  {challenge.status}
-                </Badge>
-              </div>
-            </div>
+            <CardTitle className="text-base">Details</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap items-center gap-4">
-              <span className="flex items-center gap-2">
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {challenge.estimatedMinutes} minutes
-              </span>
-              <span className="flex items-center gap-2 text-primary">
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-                +{challenge.xpValue} XP
-              </span>
-              <span className="flex items-center gap-2">
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                {challenge.applicantSteps?.length || 0} steps
-              </span>
-              <span className="flex items-center gap-2">
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Tier: {challenge.tier}
-              </span>
-            </div>
-
-            <div className="flex gap-2">
-              {challenge.status === 'draft' && (
-                <Button onClick={() => handleStatusChange('published')}>Publish</Button>
-              )}
-              {challenge.status === 'published' && (
-                <Button variant="outline" onClick={() => handleStatusChange('draft')}>Unpublish</Button>
-              )}
-              <Button variant="destructive" onClick={handleDelete}>Delete</Button>
-            </div>
+          <CardContent className="space-y-1 text-sm">
+            <p><span className="text-muted-foreground">Import key:</span> <code>{detail.importKey}</code></p>
+            <p><span className="text-muted-foreground">Difficulty:</span> <span className="capitalize">{detail.difficulty}</span></p>
+            <p><span className="text-muted-foreground">Start question:</span> <code>{detail.startKey}</code></p>
+            <p><span className="text-muted-foreground">Questions:</span> {questions.length}</p>
+            <p className="text-muted-foreground">
+              Imported {new Date(detail.createdAt).toLocaleString()} · Updated {new Date(detail.updatedAt).toLocaleString()}
+            </p>
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="metadata" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="metadata">Metadata</TabsTrigger>
-            <TabsTrigger value="hiddenCase">Hidden Case</TabsTrigger>
-            <TabsTrigger value="applicantSteps">Applicant Steps</TabsTrigger>
-            <TabsTrigger value="answerSheet">Answer Sheet</TabsTrigger>
-          </TabsList>
+        {saveState && (
+          <div className={cn(
+            "rounded-lg border p-3 text-sm",
+            saveState.kind === "ok"
+              ? "bg-green-50 border-green-200 text-green-800"
+              : "bg-destructive/10 border-destructive/20 text-destructive"
+          )}>
+            {saveState.message}
+          </div>
+        )}
 
-          <TabsContent value="metadata">
-            <Card>
-              <CardContent>
-                <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm max-h-96">
-                  {JSON.stringify({
-                    title: challenge.title,
-                    description: challenge.description,
-                    estimatedMinutes: challenge.estimatedMinutes,
-                    roleId: challenge.roleId,
-                    difficulty: challenge.difficulty,
-                    tier: challenge.tier,
-                    xpValue: challenge.xpValue,
-                    skillIds: challenge.skillIds
-                  }, null, 2)}
-                </pre>
-              </CardContent>
-            </Card>
-          </TabsContent>
+        {editJson !== null && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Update content</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Edit the JSON and save. This re-imports through the same validator as a first
+                import — sessions already finished keep the score they earned, and a run in
+                progress is retired so nobody is stranded on content that changed.
+              </p>
+              <Textarea
+                value={editJson}
+                onChange={(e) => setEditJson(e.target.value)}
+                className="font-mono text-sm min-h-[400px]"
+              />
+              <div className="flex gap-2">
+                <Button onClick={saveUpdate} disabled={saving}>
+                  {saving ? "Saving…" : "Save update"}
+                </Button>
+                <Button variant="outline" onClick={() => setEditJson(null)} disabled={saving}>
+                  Cancel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-          <TabsContent value="hiddenCase">
-            <Card>
-              <CardContent>
-                <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm max-h-96">
-                  {JSON.stringify(challenge.hiddenCase, null, 2)}
-                </pre>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="applicantSteps">
-            <Card>
-              <CardContent>
-                <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm max-h-96">
-                  {JSON.stringify(challenge.applicantSteps, null, 2)}
-                </pre>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="answerSheet">
-            <Card>
-              <CardContent>
-                <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm max-h-96">
-                  {JSON.stringify(challenge.answerSheet, null, 2)}
-                </pre>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">Questions (internal view)</h2>
+          {questions.map(([key, q]) => (
+            <div key={key} className="rounded-lg border p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <code className="bg-muted px-2 py-0.5 rounded text-sm">{key}</code>
+                {key === detail.startKey && <Badge>start</Badge>}
+                <Badge variant="secondary">Answer key: choice {q.bestChoice}</Badge>
+              </div>
+              <p className="font-medium leading-relaxed">{q.text}</p>
+              <ul className="space-y-2">
+                {q.choices.map((choice, i) => (
+                  <li key={i} className={cn("rounded-md p-3 text-sm space-y-1", q.bestChoice === i ? "bg-primary/5 border border-primary/30" : "bg-muted/50")}>
+                    <p className="font-medium">
+                      {choice.text}
+                      {q.bestChoice === i && <Badge className="ml-2">best</Badge>}
+                    </p>
+                    <p>
+                      <Badge variant="outline">{choice.stage}</Badge>
+                    </p>
+                    <div className="space-y-1 text-muted-foreground">
+                      <p className="italic">Reveals:</p>
+                      <RevealBlock reveal={choice.reveal} variant="compact" />
+                    </div>
+                    <p className="text-muted-foreground">
+                      Next: {choice.next === "END" ? "ends the session" : <code>{choice.next}</code>}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
       </main>
     </div>
   )

@@ -1,68 +1,131 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { ChallengeImportForm } from "@/components/admin/ChallengeImportForm"
 import { api } from "@/lib/api-client"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-export default function AdminChallengesPage() {
-  const [draftChallenges, setDraftChallenges] = useState<any[]>([])
-  const [publishedChallenges, setPublishedChallenges] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('draft')
+type AdminChallenge = Awaited<ReturnType<typeof api.getAdminChallenges>>["challenges"][number]
 
-  useEffect(() => {
-    const fetchChallenges = async () => {
-      try {
-        const [draftRes, publishedRes] = await Promise.all([
-          api.getAdminChallenges('draft'),
-          api.getAdminChallenges('published')
-        ])
-        setDraftChallenges(draftRes.challenges)
-        setPublishedChallenges(publishedRes.challenges)
-      } catch (err) {
-        console.error('Failed to load challenges:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchChallenges()
+/**
+ * Admin challenge management (plan Features 1 + 5): import, library list with
+ * active/retired status, retire/restore, and delete (server blocks deletion
+ * when sessions exist).
+ */
+export default function AdminChallengesPage() {
+  const router = useRouter()
+  const [active, setActive] = useState<AdminChallenge[]>([])
+  const [retired, setRetired] = useState<AdminChallenge[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const refresh = useCallback(async () => {
+    const [activeRes, retiredRes] = await Promise.all([
+      api.getAdminChallenges("active"),
+      api.getAdminChallenges("retired")
+    ])
+    setActive(activeRes.challenges)
+    setRetired(retiredRes.challenges)
   }, [])
 
-  const handleStatusChange = async (id: string, status: 'draft' | 'published') => {
+  useEffect(() => {
+    refresh()
+      .catch(err => console.error("Failed to load challenges:", err))
+      .finally(() => setLoading(false))
+  }, [refresh])
+
+  const handleToggle = async (challenge: AdminChallenge) => {
     try {
-      await api.updateChallengeStatus(id, status)
-      // Refresh
-      const [draftRes, publishedRes] = await Promise.all([
-        api.getAdminChallenges('draft'),
-        api.getAdminChallenges('published')
-      ])
-      setDraftChallenges(draftRes.challenges)
-      setPublishedChallenges(publishedRes.challenges)
+      await api.updateChallengeStatus(
+        challenge.id,
+        challenge.status === "active" ? "retired" : "active"
+      )
+      await refresh()
     } catch (err: any) {
-      alert(err.message || 'Failed to update status')
+      alert(err.message || "Failed to update status")
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this challenge?')) return
+    if (!confirm("Delete this challenge? Deletion is only possible for challenges without sessions.")) return
     try {
       await api.deleteChallenge(id)
-      // Refresh
-      const [draftRes, publishedRes] = await Promise.all([
-        api.getAdminChallenges('draft'),
-        api.getAdminChallenges('published')
-      ])
-      setDraftChallenges(draftRes.challenges)
-      setPublishedChallenges(publishedRes.challenges)
+      await refresh()
     } catch (err: any) {
-      alert(err.message || 'Failed to delete challenge')
+      alert(err.message || "Failed to delete challenge")
     }
   }
+
+  const handleLogout = async () => {
+    try {
+      await api.logout()
+    } catch {
+      // Cookie clearing is best-effort; always land on the login screen.
+    }
+    router.push("/login")
+  }
+
+  const renderRows = (rows: AdminChallenge[], tab: "active" | "retired") => {
+    if (rows.length === 0) {
+      return (
+        <TableRow>
+          <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+            No {tab} challenges.
+          </TableCell>
+        </TableRow>
+      )
+    }
+    return rows.map((challenge) => (
+      <TableRow key={challenge.id}>
+        <TableCell className="font-medium">{challenge.title}</TableCell>
+        <TableCell className="capitalize">{challenge.difficulty}</TableCell>
+        <TableCell>
+          <code className="text-xs">{challenge.importKey}</code>
+        </TableCell>
+        <TableCell className="text-sm text-muted-foreground">
+          {new Date(challenge.createdAt).toLocaleDateString()}
+        </TableCell>
+        <TableCell className="text-right space-x-2">
+          <Badge variant={challenge.status === "active" ? "default" : "secondary"} className="mr-2">
+            {challenge.status}
+          </Badge>
+          <Link href={`/admin/challenges/${challenge.id}`}>
+            <Button variant="outline" size="sm">View</Button>
+          </Link>
+          <Button variant="outline" size="sm" onClick={() => handleToggle(challenge)}>
+            {tab === "active" ? "Retire" : "Restore"}
+          </Button>
+          <Button variant="destructive" size="sm" onClick={() => handleDelete(challenge.id)}>
+            Delete
+          </Button>
+        </TableCell>
+      </TableRow>
+    ))
+  }
+
+  const renderTable = (rows: AdminChallenge[], tab: "active" | "retired") => (
+    <Card>
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Difficulty</TableHead>
+              <TableHead>Import key</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead className="text-right">Status &amp; actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>{renderRows(rows, tab)}</TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  )
 
   if (loading) {
     return (
@@ -77,98 +140,33 @@ export default function AdminChallengesPage() {
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Admin: Challenges</h1>
+          <div className="flex items-center gap-2">
+            <Link href="/admin/levels">
+              <Button variant="outline" size="sm">Levels</Button>
+            </Link>
+            <Link href="/admin/imports">
+              <Button variant="outline" size="sm">Failed imports</Button>
+            </Link>
+            <Button variant="outline" size="sm" onClick={handleLogout}>Log out</Button>
+          </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-8">
-        {/* Import Form */}
         <section>
           <h2 className="text-xl font-semibold mb-4">Import New Challenge</h2>
-          <ChallengeImportForm />
+          <ChallengeImportForm onImported={refresh} />
         </section>
 
-        {/* Challenges List */}
         <section>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <h2 className="text-xl font-semibold mb-4">Challenge Library</h2>
+          <Tabs defaultValue="active">
             <TabsList>
-              <TabsTrigger value="draft">Draft ({draftChallenges.length})</TabsTrigger>
-              <TabsTrigger value="published">Published ({publishedChallenges.length})</TabsTrigger>
+              <TabsTrigger value="active">Active ({active.length})</TabsTrigger>
+              <TabsTrigger value="retired">Retired ({retired.length})</TabsTrigger>
             </TabsList>
-            <TabsContent value="draft">
-              <Card>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Title</TableHead>
-                        <TableHead>Difficulty</TableHead>
-                        <TableHead>XP</TableHead>
-                        <TableHead>Skills</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {draftChallenges.map((challenge) => (
-                        <TableRow key={challenge.id}>
-                          <TableCell className="font-medium">{challenge.title}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">Level {challenge.difficulty}</Badge>
-                          </TableCell>
-                          <TableCell>{challenge.xpValue}</TableCell>
-                          <TableCell>{challenge.skillIds.length} skills</TableCell>
-                          <TableCell>{new Date(challenge.createdAt).toLocaleDateString()}</TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="sm" onClick={() => handleStatusChange(challenge.id, 'published')}>
-                              Publish
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDelete(challenge.id)}>
-                              Delete
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            <TabsContent value="published">
-              <Card>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Title</TableHead>
-                        <TableHead>Difficulty</TableHead>
-                        <TableHead>XP</TableHead>
-                        <TableHead>Skills</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {publishedChallenges.map((challenge) => (
-                        <TableRow key={challenge.id}>
-                          <TableCell className="font-medium">{challenge.title}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">Level {challenge.difficulty}</Badge>
-                          </TableCell>
-                          <TableCell>{challenge.xpValue}</TableCell>
-                          <TableCell>{challenge.skillIds.length} skills</TableCell>
-                          <TableCell>{new Date(challenge.createdAt).toLocaleDateString()}</TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="sm" onClick={() => handleStatusChange(challenge.id, 'draft')}>
-                              Unpublish
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
+            <TabsContent value="active">{renderTable(active, "active")}</TabsContent>
+            <TabsContent value="retired">{renderTable(retired, "retired")}</TabsContent>
           </Tabs>
         </section>
       </main>

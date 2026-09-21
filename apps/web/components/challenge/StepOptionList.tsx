@@ -1,134 +1,67 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 interface StepOptionListProps {
-  step: {
-    stepIndex: number
-    stage: string
-    inputType: 'options' | 'freeText'
-    context: string
-    contextBlocks?: Array<{ type: 'table' | 'screenshot'; data: any }>
-    question: string
-    options?: Array<{ id: string; text: string }>
+  question: {
+    text: string
+    choices: Array<{ index: number; text: string }>
   }
-  onAnswer: (optionId: string) => void
-  onFreeText: (text: string) => void
+  onAnswer: (choiceIndex: number) => void
   disabled?: boolean
 }
 
-export function StepOptionList({ step, onAnswer, onFreeText, disabled }: StepOptionListProps) {
-  if (step.inputType === 'freeText') {
-    return (
-      <div className="space-y-4">
-        <div className="prose max-w-none">
-          <p>{step.context}</p>
-        </div>
-        {step.contextBlocks && step.contextBlocks.length > 0 && (
-          <div className="space-y-4">
-            {step.contextBlocks.map((block, index) => (
-              <div key={index} className="rounded-lg border bg-muted p-4">
-                {block.type === 'table' && (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b">
-                          {Object.keys(block.data.columns || {}).map((col, i) => (
-                            <th key={i} className="text-left p-2 font-medium">{col}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(block.data.rows || []).map((row: any, ri: number) => (
-                          <tr key={ri} className="border-b">
-                            {Object.values(row).map((cell, ci: number) => (
-                              <td key={ci} className="p-2">{String(cell)}</td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-                {block.type === 'screenshot' && (
-                  <div className="aspect-video bg-muted flex items-center justify-center">
-                    <span className="text-muted-foreground">Screenshot placeholder</span>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-        <Label htmlFor="free-text-response" className="block font-medium">
-          {step.question}
-        </Label>
-        <textarea
-          id="free-text-response"
-          className="min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          placeholder="Type your response here..."
-          onChange={(e) => onFreeText(e.target.value)}
-          disabled={disabled}
-        />
-      </div>
-    )
-  }
+/**
+ * Candidate-facing question + choices. The payload arrives already sanitized
+ * by the API (index + text only): stage labels, reveals, next pointers and the
+ * answer key never reach this component. Selecting is separate from
+ * submitting — a stray click cannot commit an irreversible choice.
+ */
+export function StepOptionList({ question, onAnswer, disabled }: StepOptionListProps) {
+  const [selected, setSelected] = useState<number | null>(null)
+
+  // New question, clean slate — the previous selection must not carry over.
+  useEffect(() => {
+    setSelected(null)
+  }, [question])
 
   return (
     <div className="space-y-4">
-      <div className="prose max-w-none">
-        <p>{step.context}</p>
-      </div>
-      {step.contextBlocks && step.contextBlocks.length > 0 && (
-        <div className="space-y-4">
-          {step.contextBlocks.map((block, index) => (
-            <div key={index} className="rounded-lg border bg-muted p-4">
-              {block.type === 'table' && (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b">
-                        {Object.keys(block.data.columns || {}).map((col, i) => (
-                          <th key={i} className="text-left p-2 font-medium">{col}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(block.data.rows || []).map((row: any, ri: number) => (
-                        <tr key={ri} className="border-b">
-                          {Object.values(row).map((cell, ci: number) => (
-                            <td key={ci} className="p-2">{String(cell)}</td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-              {block.type === 'screenshot' && (
-                <div className="aspect-video bg-muted flex items-center justify-center">
-                  <span className="text-muted-foreground">Screenshot placeholder</span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-      <Label className="block font-medium">{step.question}</Label>
-      <RadioGroup onValueChange={onAnswer} disabled={disabled}>
-        {step.options?.map((option) => (
-          <div key={option.id} className="flex items-start space-x-3">
-            <RadioGroupItem value={option.id} id={option.id} className="mt-1" />
-            <div className="flex-1 space-y-1">
-              <Label htmlFor={option.id} className="font-medium cursor-pointer">
-                {option.id}. {option.text}
-              </Label>
-            </div>
-          </div>
+      <p className="text-base leading-relaxed">{question.text}</p>
+      <RadioGroup
+        value={selected === null ? undefined : String(selected)}
+        onValueChange={(value) => setSelected(Number(value))}
+        disabled={disabled}
+        className="space-y-2"
+      >
+        {question.choices.map((choice) => (
+          <Label
+            key={choice.index}
+            htmlFor={`choice-${choice.index}`}
+            className={cn(
+              "flex items-start gap-3 rounded-lg border p-4 cursor-pointer hover:bg-muted/50 transition-colors",
+              selected === choice.index && "border-primary bg-primary/5",
+              disabled && "opacity-60 cursor-not-allowed"
+            )}
+          >
+            <RadioGroupItem value={String(choice.index)} id={`choice-${choice.index}`} className="mt-0.5" />
+            <span className="text-sm leading-relaxed">{choice.text}</span>
+          </Label>
         ))}
       </RadioGroup>
+      <Button
+        className="w-full"
+        disabled={disabled || selected === null}
+        onClick={() => {
+          if (selected !== null) onAnswer(selected)
+        }}
+      >
+        {disabled ? "Submitting…" : "Submit choice"}
+      </Button>
     </div>
   )
 }
