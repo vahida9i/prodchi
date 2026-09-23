@@ -35,7 +35,7 @@ function barClass(skill: SkillScore) {
   return "bg-muted-foreground/30"
 }
 
-/** One row of the "all six skills" breakdown. */
+/** One row of the role's skill breakdown. */
 function SkillRow({ skill }: { skill: SkillScore }) {
   return (
     <div className="space-y-1">
@@ -179,7 +179,7 @@ export default function ProfilePage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mb-3">The six design skills</h2>
+              <h2 className="text-xl font-semibold mb-3">Your role's skills</h2>
               <Card>
                 <CardContent className="py-6">
                   <SkillRadar skills={skills} />
@@ -230,7 +230,7 @@ export default function ProfilePage() {
             )}
 
             <section>
-              <h2 className="text-xl font-semibold mb-3">All six skills</h2>
+              <h2 className="text-xl font-semibold mb-3">All skills</h2>
               <Card>
                 <CardContent className="py-4 space-y-4">
                   {skills.map(skill => (

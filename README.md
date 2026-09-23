@@ -233,7 +233,7 @@ The candidate's real-world capability profile — what they are good at in their
 
 ### Progress (candidate)
 - `GET /api/v1/progress` — Totals: XP, player level, levels passed, stars, accuracy, streak, per-industry rollups
-- `GET /api/v1/progress/skills` — The skill profile: six real-world design skills scored from the recorded decisions (weighted best/reasonable/poor, `strong` needs rate ≥ 0.75 **and** ≥ 3 decisions), with per-skill evidence lines and proficiency bands
+- `GET /api/v1/progress/skills` — The skill profile: the role's own real-world skills (six for Product Design, seven for Product Management) scored from the recorded decisions (weighted best/reasonable/poor, `strong` needs rate ≥ 0.75 **and** ≥ 3 decisions), with per-skill evidence lines and proficiency bands
 - `GET /api/v1/progress/badges` — Every badge with earned state
 - `GET /api/v1/progress/leaderboard` — Weekly XP within the caller's cohort + the caller's rank
 

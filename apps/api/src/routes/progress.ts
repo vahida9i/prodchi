@@ -64,8 +64,9 @@ export async function progressRoutes(fastify: FastifyInstance) {
     })
   })
 
-  // GET /api/v1/progress/skills — the real-world skill profile (Framing,
-  // Research, Synthesis, Ideation, Solution, Validation), aggregated on read
+  // GET /api/v1/progress/skills — the real-world skill profile (the role's own
+  // skills: the six design skills for Product Design, the seven management
+  // skills for Product Management), aggregated on read
   // from the caller's completed runs: each recorded decision is classified by
   // the authored stage of the move the candidate actually chose and weighted
   // best = 1, reasonable = 0.5, poor = 0. Same aggregate-on-read philosophy as
