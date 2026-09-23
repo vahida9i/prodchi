@@ -85,10 +85,48 @@ test('rejects an internal stage value outside the enum (DECIDE was removed)', ()
   assert.ok(result.errors.some(e => e.path === 'questions.Q1.choices[0].stage'))
 })
 
-test('rejects a role other than "Product Design"', () => {
-  const result = validateChallengeImport(mutate(c => { c.role = 'Product Management' as any }))
+test('rejects an unknown role', () => {
+  const result = validateChallengeImport(mutate(c => { c.role = 'Data Science' as any }))
   assert.equal(result.valid, false)
   assert.ok(result.errors.some(e => e.path === 'role'))
+})
+
+test('accepts a Product Management challenge whose stages speak the PM vocabulary', async () => {
+  const { readFileSync } = await import('node:fs')
+  const { fileURLToPath } = await import('node:url')
+  const pmFixture = JSON.parse(readFileSync(
+    fileURLToPath(new URL('../../docs/fixtures/pm-feature-cut.json', import.meta.url)), 'utf-8'
+  ))
+  const result = validateChallengeImport(pmFixture)
+  assert.equal(result.valid, true, `expected no errors, got: ${JSON.stringify(result.errors)}`)
+})
+
+test('rejects a Product Management challenge using a Product Design stage', async () => {
+  const { readFileSync } = await import('node:fs')
+  const { fileURLToPath } = await import('node:url')
+  const pmFixture = JSON.parse(readFileSync(
+    fileURLToPath(new URL('../../docs/fixtures/pm-feature-cut.json', import.meta.url)), 'utf-8'
+  ))
+  pmFixture.questions.Q1.choices[0].stage = 'INVESTIGATE'
+  const result = validateChallengeImport(pmFixture)
+  assert.equal(result.valid, false)
+  assert.ok(
+    result.errors.some(e =>
+      e.path === 'questions.Q1.choices[0].stage' && e.message.includes('Product Management process')
+    ),
+    `expected a per-role stage error, got: ${JSON.stringify(result.errors)}`
+  )
+})
+
+test('rejects a Product Design challenge using a Product Management stage', () => {
+  const result = validateChallengeImport(mutate(c => { c.questions.Q1.choices[0].stage = 'PRIORITIZE' as any }))
+  assert.equal(result.valid, false)
+  assert.ok(
+    result.errors.some(e =>
+      e.path === 'questions.Q1.choices[0].stage' && e.message.includes('Product Design process')
+    ),
+    `expected a per-role stage error, got: ${JSON.stringify(result.errors)}`
+  )
 })
 
 test('rejects an empty questions map', () => {
@@ -269,6 +307,24 @@ test('rejects partial grading (quality is all-or-nothing per question)', () => {
   assert.ok(
     result.errors.some(e => e.path === 'questions.Q1.choices' && e.message.includes('all-or-nothing')),
     `expected an all-or-nothing error, got: ${JSON.stringify(result.errors)}`
+  )
+})
+
+test('reports the all-or-nothing violation exactly once per question', () => {
+  // Best untagged + one other choice tagged is the shape a second, duplicate
+  // guard used to double-report; the importer must emit the error once.
+  const result = validateChallengeImport(mutate(c => {
+    const q = c.questions.Q1
+    if (q.choices[q.bestChoice].quality !== undefined) delete (q.choices[q.bestChoice] as { quality?: string }).quality
+    ;(c.questions.Q1.choices[0] as { quality?: string }).quality = 'poor'
+  }))
+  assert.equal(result.valid, false)
+  const allOrNothing = result.errors.filter(
+    e => e.path === 'questions.Q1.choices' && e.message.includes('all-or-nothing')
+  )
+  assert.equal(
+    allOrNothing.length, 1,
+    `expected exactly one all-or-nothing error, got: ${JSON.stringify(allOrNothing)}`
   )
 })
 

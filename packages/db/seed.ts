@@ -22,15 +22,22 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('Seeding database...')
 
-  // The app consumes challenges for one role only; the import validator checks
-  // the challenge JSON's `role` against this exact name.
+  // The role tracks are fixed seed data (spec Section 4): the import validator
+  // checks a challenge JSON's `role` against these exact names, and a
+  // candidate's onboarding choice picks the track their content comes from.
   const productDesign = await prisma.role.upsert({
     where: { name: 'Product Design' },
     update: {},
     create: { name: 'Product Design' }
   })
 
-  console.log('Created roles:', productDesign.name)
+  const productManagement = await prisma.role.upsert({
+    where: { name: 'Product Management' },
+    update: {},
+    create: { name: 'Product Management' }
+  })
+
+  console.log('Created roles:', productDesign.name + ', ' + productManagement.name)
 
   // Create admin user from env vars
   const adminEmail = process.env.ADMIN_SEED_EMAIL || 'admin@baaten.local'
@@ -56,7 +63,8 @@ async function main() {
     { name: 'E-commerce', order: 0 },
     { name: 'Fintech', order: 1 },
     { name: 'Health', order: 2 },
-    { name: 'SaaS', order: 3 }
+    { name: 'SaaS', order: 3 },
+    { name: 'Productivity', order: 4 }
   ]
 
   const industryByName = new Map<string, { id: string }>()

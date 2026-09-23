@@ -7,6 +7,7 @@ const REVEAL = { text: 'what you learn' }
 
 /** The same two questions, plus the unit-layer rubric they are assessed under. */
 const RUBRICED: RunChallenge = {
+  role: 'Product Design',
   startKey: 'Q1',
   assessment: {
     criteria: [
@@ -58,6 +59,7 @@ test('an unrubriced challenge reports an empty unit layer', () => {
 
 /** Two questions whose best moves test different reasoning areas. */
 const graph: RunChallenge = {
+  role: 'Product Design',
   startKey: 'Q1',
   questions: {
     Q1: {

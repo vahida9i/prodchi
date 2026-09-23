@@ -169,6 +169,37 @@ export interface Leaderboard {
   userRank: { rank: number; weeklyXp: number } | null
 }
 
+// ---------------------------------------------------------------------------
+// Skill profile (real-world capabilities read from the recorded decisions;
+// mirrors @baaten/shared-types/skills buildSkillProfile, aggregated on read by
+// the API). Internal stage ids never appear here — the payload speaks the
+// public vocabulary only.
+// ---------------------------------------------------------------------------
+
+export type SkillProficiency = 'strong' | 'developing' | 'emerging' | 'unproven'
+
+export interface SkillScore {
+  id: string
+  name: string
+  shortName: string
+  blurb: string
+  growthNote: string
+  count: number
+  bestHits: number
+  reasonableCalls: number
+  rate: number
+  evidence: string
+  proficiency: SkillProficiency
+  thinEvidence: boolean
+}
+
+export interface SkillProfile {
+  skills: SkillScore[]
+  overallRate: number
+  decisions: number
+  scenarios: number
+}
+
 class ApiClient {
   private baseUrl: string
 
@@ -301,6 +332,10 @@ class ApiClient {
 
   getLeaderboard() {
     return this.get<Leaderboard>('/progress/leaderboard')
+  }
+
+  getSkills() {
+    return this.get<SkillProfile>('/progress/skills')
   }
   // Roles (onboarding)
   getRoles() {

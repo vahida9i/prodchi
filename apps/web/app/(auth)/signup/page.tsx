@@ -50,7 +50,7 @@ export default function SignupPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
-          <CardDescription className="text-center">Start practicing product design skills</CardDescription>
+          <CardDescription className="text-center">Start practicing product skills</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">

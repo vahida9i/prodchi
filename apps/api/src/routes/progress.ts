@@ -1,6 +1,9 @@
 import { FastifyInstance } from 'fastify'
 import { prisma } from '../lib/prisma.ts'
 import { levelFromXp } from '@baaten/shared-types/scoring'
+import { buildSkillProfile } from '@baaten/shared-types/skills'
+import type { SkillPathEntry } from '@baaten/shared-types/skills'
+import type { Question } from '@baaten/shared-types/challenge-schema'
 
 /**
  * Candidate progress + gamification reads.
@@ -59,6 +62,41 @@ export async function progressRoutes(fastify: FastifyInstance) {
         }
       })
     })
+  })
+
+  // GET /api/v1/progress/skills — the real-world skill profile (Framing,
+  // Research, Synthesis, Ideation, Solution, Validation), aggregated on read
+  // from the caller's completed runs: each recorded decision is classified by
+  // the authored stage of the move the candidate actually chose and weighted
+  // best = 1, reasonable = 0.5, poor = 0. Same aggregate-on-read philosophy as
+  // above — no profile table, so it can never contradict a finished run's own
+  // report. `path` and the question graphs are JSON columns; at MVP scale one
+  // indexed query over the user's completed sessions is fine.
+  fastify.get('/skills', async (request, reply) => {
+    const user = request.user!
+
+    const [sessions, account] = await Promise.all([
+      prisma.session.findMany({
+        where: { userId: user.userId, status: 'completed' },
+        select: { path: true, challenge: { select: { questions: true } } }
+      }),
+      prisma.user.findUnique({
+        where: { id: user.userId },
+        select: { roleTrack: { select: { name: true } } }
+      })
+    ])
+
+    // The role track decides which skill set the decisions are read against —
+    // onboarding sets it once, before any run can exist, so it is always here.
+    const roleName = account?.roleTrack?.name
+    if (roleName !== 'Product Design' && roleName !== 'Product Management') {
+      return reply.status(400).send({ error: 'Role not selected. Complete onboarding first.' })
+    }
+
+    return reply.send(buildSkillProfile(sessions.map(session => ({
+      path: (Array.isArray(session.path) ? session.path : []) as unknown as SkillPathEntry[],
+      questions: (session.challenge.questions ?? {}) as Record<string, Question>
+    })), roleName))
   })
 
   // GET /api/v1/progress/badges — every badge, with earned state and condition

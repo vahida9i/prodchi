@@ -1,0 +1,207 @@
+{
+  "id": "pm_feature_cut",
+  "title": "The Roadmap Squeeze",
+  "role": "Product Management",
+  "difficulty": "medium",
+  "summary": "Taskline is a project-management tool for small agencies — teams plan work, track tasks, and bill time in one place. Its customers are agency leads who pay per seat, and the company earns when whole teams adopt it and renew year after year.",
+  "start": "Q1",
+  "questions": {
+    "Q1": {
+      "text": "Seat expansion has stalled: accounts buy five seats and never add more, even as their teams grow. New-signup conversion is healthy. What do you do first?",
+      "choices": [
+        {
+          "text": "Segment seat growth by account size and tenure",
+          "stage": "DIAGNOSE",
+          "reveal": "Small accounts never expand; mid-size agencies add seats for three months, then stop — the stall begins after onboarding, not at signup.",
+          "next": "Q2",
+          "quality": "reasonable",
+          "criteria": ["evidence-first"]
+        },
+        {
+          "text": "Interview the leads of accounts that added zero seats in the last 90 days",
+          "stage": "DIAGNOSE",
+          "reveal": "The leads say the same thing in different words: freelancers join per-project, and 'a seat forever' doesn't fit how they hire.",
+          "next": "Q3",
+          "quality": "best",
+          "criteria": ["evidence-first", "customer-impact"],
+          "because": "The people who stopped expanding can say why — their reasons isolate the cause faster than another cut of the same data."
+        },
+        {
+          "text": "Reframe the goal: is the target seat expansion or total account growth?",
+          "stage": "FRAME",
+          "reveal": "Leadership's target is explicitly seat expansion — account growth is already healthy. The goal stays seats.",
+          "next": "Q2",
+          "quality": "reasonable",
+          "criteria": ["customer-impact"]
+        },
+        {
+          "text": "Start speccing the reporting feature leadership asked for",
+          "stage": "EXECUTE",
+          "reveal": "A week goes into the spec while the stall goes undiagnosed — the build is aimed at a problem nobody has named.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 1
+    },
+    "Q2": {
+      "text": "The stall starts after onboarding: accounts add seats for three months, then stop — and mid-size agencies drive it. What do you diagnose next?",
+      "choices": [
+        {
+          "text": "Check whether new-seat invites and provisioning have friction",
+          "stage": "DIAGNOSE",
+          "reveal": "Invites are clean — provisioned seats go active within minutes. The friction isn't in the invite flow.",
+          "next": "Q4",
+          "quality": "reasonable",
+          "criteria": ["evidence-first"]
+        },
+        {
+          "text": "Pull the timing: what changes in an account's third month",
+          "stage": "DIAGNOSE",
+          "reveal": "Month three is when agency projects end — the temporary teammates those projects hired simply leave, and nobody replaces them.",
+          "next": "Q5",
+          "quality": "best",
+          "criteria": ["evidence-first"],
+          "because": "The stall has a clock on it — whatever changes at month three is closer to the cause than another aggregate cut."
+        },
+        {
+          "text": "Compare renewal rates between stalled and expanding accounts",
+          "stage": "DIAGNOSE",
+          "reveal": "Stalled accounts renew at the same rate — they stay and pay; they just never grow. Retention isn't the issue.",
+          "next": "Q4",
+          "quality": "reasonable",
+          "criteria": ["evidence-first"]
+        }
+      ],
+      "bestChoice": 1
+    },
+    "Q3": {
+      "text": "Leads tell you freelancers join per-project and a permanent seat doesn't fit them. What do you do next?",
+      "choices": [
+        {
+          "text": "Explore a per-project guest tier with three design-partner agencies",
+          "stage": "STRATEGIZE",
+          "reveal": "The leads like the direction; two ask the same question — 'will my seated leads still see the freelancer's work?'",
+          "next": "Q5",
+          "quality": "reasonable",
+          "criteria": ["customer-impact", "trade-off-clarity"]
+        },
+        {
+          "text": "Size the opportunity first: how many stalled seats are freelancer-shaped, and what revenue rides on them",
+          "stage": "STRATEGIZE",
+          "reveal": "Roughly 60% of stalled seats sit in agencies with per-project hiring — a segment big enough to earn a roadmap slot.",
+          "next": "Q6",
+          "quality": "best",
+          "criteria": ["evidence-first", "trade-off-clarity"],
+          "because": "A tier is only a good bet if the segment it serves is big enough to matter — sizing comes before the roadmap slot."
+        },
+        {
+          "text": "Write the guest-tier PRD and hand it to engineering",
+          "stage": "EXECUTE",
+          "reveal": "The spec lands in a sprint before anyone knows whether freelancer-shaped demand is big enough to earn the build.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 1
+    },
+    "Q4": {
+      "text": "Invites are frictionless and stalled accounts renew at the same rate — the stall is expansion-specific, not satisfaction-related. What do you do?",
+      "choices": [
+        {
+          "text": "Take the freelancer pattern into strategy: size the segment and the offer that fits it",
+          "stage": "STRATEGIZE",
+          "reveal": "The diagnostics all point at per-project work — sizing that segment turns three dead ends into one decision.",
+          "next": "Q6",
+          "quality": "best",
+          "criteria": ["trade-off-clarity", "evidence-first"],
+          "because": "Every thread ends at the same customer pattern — sizing it is the move that turns evidence into a decision."
+        },
+        {
+          "text": "Ship the reporting feature leadership asked for",
+          "stage": "EXECUTE",
+          "reveal": "Reporting ships on time; seat counts stay flat — feature value that doesn't change the seat decision doesn't move expansion.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": ["customer-impact"]
+        },
+        {
+          "text": "Add automated expansion nudge emails at month three",
+          "stage": "EXECUTE",
+          "reveal": "Nudges bump seat adds for two weeks, then fade — pressure without a better offer.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q5": {
+      "text": "The evidence converges on freelancers: per-project work that a permanent seat doesn't fit. What do you do?",
+      "choices": [
+        {
+          "text": "Position a per-project guest tier against the seat model and size the revenue trade-off",
+          "stage": "STRATEGIZE",
+          "reveal": "The tier trades a little seat revenue for a new expansion path — the trade-off is explicit and acceptable at the sized segment.",
+          "next": "Q6",
+          "quality": "best",
+          "criteria": ["trade-off-clarity"],
+          "because": "The tier only makes sense if its trade-off with seat revenue is explicit — the direction and its cost get decided together."
+        },
+        {
+          "text": "Scope a guest-tier pilot with the interviewed agencies",
+          "stage": "PLAN",
+          "reveal": "A ten-agency pilot scopes quickly, but without sizing the trade-off the pilot can't say what success should be.",
+          "next": "Q6",
+          "quality": "reasonable",
+          "criteria": ["outcome-measurement"]
+        },
+        {
+          "text": "Instrument seat-add events more precisely and revisit next quarter",
+          "stage": "MEASURE",
+          "reveal": "Cleaner dashboards describe the stall; they don't change the offer that caused it.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q6": {
+      "text": "You've sized the opportunity and the guest tier is the front-runner. What settles whether it works?",
+      "choices": [
+        {
+          "text": "Track guest-project creation across all accounts weekly",
+          "stage": "MEASURE",
+          "reveal": "Guest projects tick up, but without a comparison you can't tell the tier's effect from seasonal project churn.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": ["outcome-measurement"]
+        },
+        {
+          "text": "Pilot with ten agencies: measure guest-to-seat conversion and each account's seat expansion against its own baseline",
+          "stage": "MEASURE",
+          "reveal": "In the pilot, half the guest projects convert to paid members within a month, and pilot accounts' seat expansion resumes — the stall was the seat, not the product.",
+          "next": "END",
+          "quality": "best",
+          "criteria": ["outcome-measurement", "customer-impact"],
+          "because": "A pilot cohort turns the tier into a measured bet — its effect on expansion is exactly the number the stall was about."
+        },
+        {
+          "text": "Launch broadly and compare quarter-end revenue",
+          "stage": "MEASURE",
+          "reveal": "Quarter-end revenue can't separate the tier's effect from renewals — only the pilot cohort can.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 1
+    }
+  },
+  "assessment": {
+    "criteria": [
+      { "id": "evidence-first", "label": "Letting evidence lead", "guidance": "Name the driver before betting the roadmap." },
+      { "id": "customer-impact", "label": "Sizing customer impact", "guidance": "Ground the decision in what changes for the customer, not the feature count." },
+      { "id": "trade-off-clarity", "label": "Making the trade-off explicit", "guidance": "Name what each direction costs — revenue, focus, or roadmap time." },
+      { "id": "outcome-measurement", "label": "Proving the outcome", "guidance": "Define the measure that separates the bet's effect from noise before launch." }
+    ]
+  }
+}

@@ -6,7 +6,10 @@ import { scoreLevel } from '@baaten/shared-types/scoring'
 import type { LevelScore } from '@baaten/shared-types/scoring'
 import { evaluateRun } from '@baaten/shared-types/feedback'
 import type { FeedbackReport } from '@baaten/shared-types/feedback'
-import type { Assessment } from '@baaten/shared-types/challenge-schema'
+import type { Assessment, Role } from '@baaten/shared-types/challenge-schema'
+
+/** The challenge's stored role name, narrowed to the known role tracks. */
+type RunChallengeRole = Role
 
 /** The rubric as stored on the challenge; reads normalize rather than trust it. */
 function challengeAssessment(value: unknown): Assessment | null {
@@ -122,7 +125,9 @@ export async function sessionRoutes(fastify: FastifyInstance) {
       if (levelId && levelId !== challenge.level.id) {
         return reply.status(400).send({ error: 'Level does not match this challenge' })
       }
-      if (!(await isLevelPlayable(user.userId, challenge.level))) {
+      // The caller's role scopes the gate: a track's levels unlock only
+      // against that same track's progress, never another role's.
+      if (!(await isLevelPlayable(user.userId, challenge.level, user.roleTrackId))) {
         return reply.status(403).send({ error: 'This level is locked. Pass the previous level to unlock it.' })
       }
       sessionLevelId = challenge.level.id
@@ -157,7 +162,7 @@ export async function sessionRoutes(fastify: FastifyInstance) {
 
     const session = await prisma.session.findFirst({
       where: { id, userId: user.userId },
-      include: { challenge: true }
+      include: { challenge: { include: { role: { select: { name: true } } } } }
     })
     if (!session) {
       return reply.status(404).send({ error: 'Session not found' })
@@ -211,6 +216,7 @@ export async function sessionRoutes(fastify: FastifyInstance) {
       // The feedback report freezes alongside the score, computed once from
       // the graph as it stood at completion — for free-play runs too.
       const feedback = evaluateRun(path, {
+        role: session.challenge.role.name as RunChallengeRole,
         startKey: session.challenge.startKey,
         questions,
         assessment: challengeAssessment(session.challenge.assessment)
@@ -312,7 +318,7 @@ export async function sessionRoutes(fastify: FastifyInstance) {
 
     const session = await prisma.session.findFirst({
       where: { id, userId: user.userId },
-      include: { challenge: true }
+      include: { challenge: { include: { role: { select: { name: true } } } } }
     })
     if (!session) {
       return reply.status(404).send({ error: 'Session not found' })
@@ -351,6 +357,7 @@ export async function sessionRoutes(fastify: FastifyInstance) {
       // computation is the fallback for runs recorded before the snapshot.
       feedback: sessionFeedback(session.feedback) ??
         evaluateRun(toPath(session), {
+          role: session.challenge.role.name as RunChallengeRole,
           startKey: session.challenge.startKey,
           questions,
           assessment: challengeAssessment(session.challenge.assessment)

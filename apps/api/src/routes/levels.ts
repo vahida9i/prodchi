@@ -115,8 +115,10 @@ export async function levelRoutes(fastify: FastifyInstance) {
 
     // Gating is enforced here, not just hidden in the UI: only the first active
     // level, or a level the caller has already unlocked/passed, can be started.
-    // The same shared gate guards a level-tagged `POST /sessions`.
-    const playable = await isLevelPlayable(user.userId, level)
+    // The same shared gate guards a level-tagged `POST /sessions`. The role must
+    // travel with the call — without it the gate widens to every role's levels
+    // and locks one track behind progress it can never see or make.
+    const playable = await isLevelPlayable(user.userId, level, user.roleTrackId)
     if (!playable) {
       return reply.status(403).send({ error: 'This level is locked. Pass the previous level to unlock it.' })
     }

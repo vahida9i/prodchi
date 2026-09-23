@@ -17,12 +17,13 @@ baaten/
 │   └── api/          # Fastify API server (import validation, session engine, progression)
 ├── packages/
 │   ├── db/           # Prisma schema, migrations, seed (roles, industries, badges)
-│   └── shared-types/ # Challenge JSON schema (Zod), graph validator, scoring, tests
+│   └── shared-types/ # Zod schema, graph validator, deterministic scoring/feedback, tests
 ├── docs/
 │   └── fixtures/     # onboarding-drop-off.json + single-question-sample.json
+├── test/
+│   └── e2e/          # end-to-end API flows: import → play → resume → levels → XP
 └── scripts/
-    ├── e2e-import-session.mjs  # end-to-end: import → play → resume → concurrency (API only)
-    └── e2e-level-path.mjs      # end-to-end: levels → gating → scoring → XP → badges
+    └── reset-content.mjs  # wipes authored content/progress for a clean level path
 ```
 
 ## Getting Started
@@ -197,6 +198,17 @@ Failures are rejected with itemized reasons (e.g. *"Question Q11 loops back to Q
 - **Player level**: `floor(√(totalXp / 100))` from total credited XP.
 - **Streaks**: UTC-day streak incremented when a level is passed. **Badges**: condition-based (`levelsPassedAbove`, `perfectLevelsAbove`, `starsAbove`, `streakAbove`, `industryCompleted`). **Leaderboard**: weekly XP within the player's cohort.
 
+## Skill Profile
+
+The candidate's real-world capability profile — what they are good at in their role, read from how they answered. Like everything else here it is **fully deterministic** (no AI, no new authoring): every choice in every challenge is tagged with a process `stage`, and each role's stages map onto the skills that role lists on a CV.
+
+- **Product Design (six skills)** (fixed process order): Problem framing (`FRAME`), Research & evidence (`INVESTIGATE`), Synthesis & definition (`DEFINE`), Ideation & options (`EXPLORE`), Solution & tradeoffs (`DESIGN`), Validation & experimentation (`VALIDATE`).
+- **Product Management (seven skills)** (fixed process order): Problem framing (`FRAME`), Diagnosis (`DIAGNOSE`), Strategy & direction (`STRATEGIZE`), Prioritization (`PRIORITIZE`), Planning & roadmapping (`PLAN`), Execution & delivery (`EXECUTE`), Measurement & learning (`MEASURE`).
+- Each decision is credited to the skill of the stage on the move the candidate **chose** — not the ideal one — weighted best = 1, reasonable = 0.5, poor = 0 (`packages/shared-types/skills.ts`). Stages are per-role at import: a PM challenge may only use PM stages, a PD challenge only PD stages (`FRAME` is shared).
+- **Proficiency bands** reuse the run-feedback thresholds: `strong` ≥ 75%, `emerging` ≤ 50%, else `developing`. A skill also needs **≥ 3 observed decisions** (`MIN_SKILL_EVIDENCE`) before it may read strong — a thin perfect record stays `developing` and is flagged `thinEvidence` ("needs more evidence"), so one lucky answer cannot claim mastery. Skills with no decisions read `unproven` ("not yet observed") — no fake zeros.
+- **Aggregated on read, no profile table**: `GET /api/v1/progress/skills` walks the caller's completed sessions and their challenges' stored graphs with the same pure `buildSkillProfile` used by the unit tests, so the profile can never contradict a finished run's own report. Challenge-local rubric criteria are deliberately **not** part of the profile — they stay in the end-of-run report.
+- **Web**: `/profile` — header stats (strong-call rate, decisions, scenarios), an SVG radar of the role's skills, Strengths and "Where you lose ground" cards (growth ones surface the authored remediation note), and the full skill breakdown.
+
 ## API Endpoints
 
 ### Auth
@@ -221,6 +233,7 @@ Failures are rejected with itemized reasons (e.g. *"Question Q11 loops back to Q
 
 ### Progress (candidate)
 - `GET /api/v1/progress` — Totals: XP, player level, levels passed, stars, accuracy, streak, per-industry rollups
+- `GET /api/v1/progress/skills` — The skill profile: six real-world design skills scored from the recorded decisions (weighted best/reasonable/poor, `strong` needs rate ≥ 0.75 **and** ≥ 3 decisions), with per-skill evidence lines and proficiency bands
 - `GET /api/v1/progress/badges` — Every badge with earned state
 - `GET /api/v1/progress/leaderboard` — Weekly XP within the caller's cohort + the caller's rank
 
@@ -256,19 +269,29 @@ Failures are rejected with itemized reasons (e.g. *"Question Q11 loops back to Q
 ## Testing
 
 ```bash
+# 1. Start from a clean level path (both suites reuse existing levels otherwise)
+pnpm db:reset-content
+
+# 2. Run the whole e2e layer — one suite per role track
+pnpm test:e2e
+
 # Schema + graph + scoring unit tests
 pnpm --filter @baaten/shared-types test
 
 # Typecheck everything
 pnpm typecheck
-
-# Full API flow verification (requires the API running on :4000)
-node scripts/e2e-import-session.mjs   # import → play → resume → concurrency
-node scripts/e2e-level-path.mjs       # levels → gating → scoring → XP → badges
 ```
 
+The e2e layer is organised by role track — one suite per role, each a complete
+journey (`role onboarding → import → play → level path → skills profile`):
+
+| Suite | Track |
+|---|---|
+| `test/e2e/e2e-product-design.mjs` | Product Design — content ops, session mechanics, the level path, the six design skills |
+| `test/e2e/e2e-product-management.mjs` | Product Management — the same journey plus role isolation and the seven PM skills |
+
 Both suites mutate the database they run against: they import fixtures, build levels as
-they go (`e2e-level-path.mjs` claims a level 2 with `single-question-sample.json` when
+they go (`e2e-product-design.mjs` claims a level 2 with `single-question-sample.json` when
 that slot is free) and leave their throwaway candidates behind. They also *reuse*
 whatever already occupies the level numbers they need, so a database that already carries
 the authored path makes them play someone else's content and fail their own assertions.
@@ -284,8 +307,7 @@ cd packages/db && pnpm exec prisma migrate deploy && pnpm db:seed
 
 # The API keeps a real environment variable over .env, so it can be pointed per run:
 cd ../.. && DATABASE_URL=postgresql://postgres@localhost:5432/baaten_e2e pnpm dev:api
-node scripts/e2e-import-session.mjs
-node scripts/e2e-level-path.mjs
+pnpm test:e2e
 ```
 
 Then restore `packages/db/.env` and drop the scratch database. The authored scenarios

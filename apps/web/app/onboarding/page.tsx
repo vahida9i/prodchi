@@ -6,12 +6,21 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { api } from "@/lib/api-client"
 
-// Roles are fixed seed data; only "Product Design" exists today.
+// Roles are fixed seed data exposed by GET /api/v1/roles; the emoji and the
+// one-line description are keyed by name so a new seed role renders as soon
+// as it exists (unknown roles fall back to the compass emoji).
 const ROLE_EMOJI: Record<string, string> = {
-  'Product Design': '🎨'
+  'Product Design': '🎨',
+  'Product Management': '📊'
+}
+
+const ROLE_DESCRIPTION: Record<string, string> = {
+  'Product Design': 'User research, wireframing, visual design, usability testing...',
+  'Product Management': 'Diagnosis, strategy, prioritization, roadmapping, measurement...'
 }
 
 const roleEmoji = (name: string) => ROLE_EMOJI[name] ?? '🧭'
+const roleDescription = (name: string) => ROLE_DESCRIPTION[name] ?? 'Practice the decisions your role makes every day.'
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -85,7 +94,7 @@ export default function OnboardingPage() {
                 <div>
                   <p className="font-medium">{role.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    User research, wireframing, visual design, usability testing...
+                    {roleDescription(role.name)}
                   </p>
                 </div>
               </Button>

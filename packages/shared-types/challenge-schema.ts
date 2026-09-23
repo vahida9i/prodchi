@@ -1,12 +1,45 @@
 import { z } from 'zod'
 
 /**
- * Internal design stages. Scaffolding only — per the product plan (Section 7)
- * these must never be sent to or shown in the candidate-facing UI. Note the
- * enum deliberately excludes 'DECIDE', which the v1 format had.
+ * Role tracks. Fixed seed data: the import validator checks the challenge
+ * JSON's `role` against this list, and each role carries its own internal
+ * stage set and skill profile (see ROLE_STAGES and skills.ts).
  */
-export const STAGES = ['FRAME', 'INVESTIGATE', 'DEFINE', 'EXPLORE', 'DESIGN', 'VALIDATE'] as const
-export const StageSchema = z.enum(STAGES)
+export const ROLES = ['Product Design', 'Product Management'] as const
+export type Role = (typeof ROLES)[number]
+
+/**
+ * Internal process stages — scaffolding only — per the product plan (Section 7)
+ * these must never be sent to or shown in the candidate-facing UI.
+ *
+ * Stages are per-role: a challenge's choices must use the stage set of the
+ * challenge's own role (enforced at import, itemized per choice). FRAME is
+ * shared; the rest speak each role's own process vocabulary.
+ *
+ * PD (6): FRAME, INVESTIGATE, DEFINE, EXPLORE, DESIGN, VALIDATE
+ * PM (7): FRAME, DIAGNOSE, STRATEGIZE, PRIORITIZE, PLAN, EXECUTE, MEASURE
+ */
+export const PD_STAGES = ['FRAME', 'INVESTIGATE', 'DEFINE', 'EXPLORE', 'DESIGN', 'VALIDATE'] as const
+export const PM_STAGES = ['FRAME', 'DIAGNOSE', 'STRATEGIZE', 'PRIORITIZE', 'PLAN', 'EXECUTE', 'MEASURE'] as const
+
+/** Kept as the PD list under its historical name for existing call sites. */
+export const STAGES = PD_STAGES
+
+/** Stage sets per role, in process order. */
+export const ROLE_STAGES: Record<Role, readonly Stage[]> = {
+  'Product Design': PD_STAGES,
+  'Product Management': PM_STAGES
+}
+
+export function stagesForRole(role: Role): readonly Stage[] {
+  return ROLE_STAGES[role]
+}
+
+/** The full stage union across roles (validation bound for `choice.stage`). */
+export const ALL_STAGES = [...PD_STAGES, ...PM_STAGES] as const
+
+export const StageSchema = z.enum(ALL_STAGES)
+export const RoleSchema = z.enum(ROLES)
 
 export const DIFFICULTIES = ['easy', 'medium', 'hard'] as const
 export const DifficultySchema = z.enum(DIFFICULTIES)
@@ -159,19 +192,9 @@ export const QuestionSchema = z.object({
   }
   const best = question.choices[question.bestChoice]
   if (!best) return // out-of-range bestChoice is reported by the graph validator
-  const bestUntagged = best.quality === undefined
-  const choices = question.choices
-  // Grading is all-or-nothing per question — unless the question already sits
-  // on a coherent graded baseline (the choice at bestChoice is 'best'), in
-  // which case a test may tag one extra choice without re-grading the rest.
-  if (tagged > 0 && tagged < choices.length && (bestUntagged || choices[0].quality === 'best')) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['choices'],
-      message: `quality is all-or-nothing per question: ${tagged} of ${choices.length} choices are tagged`
-    })
-  }
-  if (tagged === choices.length && best.quality !== 'best') {
+  // Grading is all-or-nothing per question (rejected above when partial); once
+  // fully tagged, the choice at bestChoice must carry the "best" tier.
+  if (tagged === question.choices.length && best.quality !== 'best') {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['choices', question.bestChoice, 'quality'],
@@ -216,7 +239,7 @@ export const XP_PER_BEST_CHOICE = 10
 export const ChallengeImportSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
-  role: z.literal('Product Design'),
+  role: RoleSchema,
   difficulty: DifficultySchema,
   /**
    * What the company is, before any of the incident: a short brief on the
@@ -243,6 +266,21 @@ export const ChallengeImportSchema = z.object({
       code: z.ZodIssueCode.custom,
       path: ['questions'],
       message: `questions must contain at most ${MAX_QUESTIONS} questions (got ${count})`
+    })
+  }
+  // Stages are per-role: every choice's `stage` must belong to the challenge's
+  // own role's process vocabulary. Itemized per choice like every other
+  // authoring error, so the admin can fix the source and re-import.
+  const allowed = ROLE_STAGES[value.role]
+  for (const [key, question] of Object.entries(value.questions)) {
+    question.choices.forEach((choice, index) => {
+      if (!allowed.includes(choice.stage)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['questions', key, 'choices', index, 'stage'],
+          message: `"${choice.stage}" is not a stage of the ${value.role} process (valid: ${allowed.join(', ')})`
+        })
+      }
     })
   }
 })

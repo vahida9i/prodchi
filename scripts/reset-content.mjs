@@ -42,7 +42,8 @@ const PATH = [
   { file: 'clinic-booking.json', industry: 'Health' },
   { file: 'kyc-drop-off.json', industry: 'Fintech' },
   { file: 'onboarding-drop-off.json', industry: 'E-commerce' },
-  { file: 'saas-pricing-rework.json', industry: 'SaaS' }
+  { file: 'saas-pricing-rework.json', industry: 'SaaS' },
+  { file: 'pm-feature-cut.json', industry: 'Productivity' }
 ]
 
 let cookie = ''

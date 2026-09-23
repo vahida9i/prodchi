@@ -179,14 +179,32 @@ export async function evaluateBadges(userId: string): Promise<BadgeAward[]> {
  * level right before it is passed. Deriving means retiring, restoring or
  * renumbering a level re-routes the path instead of stranding players on a
  * stale unlock row.
+ *
+ * The path is per-role: level numbers run across every role track, so the
+ * preceding levels must be narrowed to the same role track the level belongs
+ * to — exactly the set `GET /levels` shows the caller. Without that, a role's
+ * first level would sit behind the other role's levels and could never open.
+ * A preceding level whose challenge is retired is skipped for the same reason
+ * the map skips it: it is not on the caller's path at all.
+ *
+ * `roleId` arrives as its own argument because a `Level` row carries no role —
+ * the challenge does. A caller that passed a level object without the role
+ * would silently widen the filter (Prisma ignores an `undefined` field) and
+ * gate one role's levels behind another role's progress, which is exactly what
+ * the explicitly required argument rules out.
  */
 export async function isLevelPlayable(
   userId: string,
-  level: { id: string; number: number }
+  level: { id: string; number: number },
+  roleId: string
 ): Promise<boolean> {
   const [precedingLevels, ownProgress] = await Promise.all([
     prisma.level.findMany({
-      where: { status: 'active', number: { lt: level.number } },
+      where: {
+        status: 'active',
+        number: { lt: level.number },
+        challenge: { roleId, status: 'active' }
+      },
       orderBy: { number: 'asc' },
       select: { id: true }
     }),

@@ -6,7 +6,17 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { StepOptionList } from "@/components/challenge/StepOptionList"
 import { RevealBlock } from "@/components/challenge/RevealBlock"
-import { api, SanitizedQuestion, SessionHistoryEntry, LevelCompletion, RevealBlock as RevealBlockData } from "@/lib/api-client"
+import { api, AuthoredReveal, SanitizedQuestion, SessionHistoryEntry, LevelCompletion, RevealBlock as RevealBlockData } from "@/lib/api-client"
+
+/**
+ * A step with no revealed content renders nothing, so the path list drops it
+ * instead of leaving an empty block behind. A payload recorded before tables
+ * existed can still arrive as a bare sentence, hence the string case.
+ */
+function hasReveal(reveal: AuthoredReveal | RevealBlockData | null | undefined): boolean {
+  if (typeof reveal === "string") return reveal.trim().length > 0
+  return Boolean(reveal?.text || reveal?.table)
+}
 
 /**
  * Guided candidate session (plan Feature 3): one question at a time, reveal
@@ -133,6 +143,9 @@ export default function SessionPage() {
     applyNext(pendingRef.current)
   }
 
+  // Every step that produced something to look back at, in play order.
+  const pathReveals = history.filter(entry => hasReveal(entry.reveal))
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -253,20 +266,23 @@ export default function SessionPage() {
           </Card>
         )}
 
-        {history.length > 0 && (
-          <details className="rounded-lg border p-4">
+        {pathReveals.length > 0 && (
+          <details open className="rounded-lg border p-4">
             <summary className="text-sm font-medium cursor-pointer">
-              Your path so far ({history.length})
+              What you have found
             </summary>
-            <ul className="mt-4 space-y-3">
-              {history.map((entry, i) => (
-                <li key={i} className="text-sm border-l-2 pl-3">
-                  <p className="font-medium">{entry.questionText}</p>
-                  <p className="text-muted-foreground">You chose: {entry.choiceText}</p>
-                  <RevealBlock reveal={entry.reveal} variant="compact" />
-                </li>
+            {/* One block per step, carrying only what that choice revealed — no
+                question text, no "you chose" — so the evidence the run produced
+                is what the candidate sees when they look back. */}
+            <div className="mt-4 space-y-4">
+              {pathReveals.map((entry, i) => (
+                <Card key={i}>
+                  <CardContent className="pt-6">
+                    <RevealBlock reveal={entry.reveal} />
+                  </CardContent>
+                </Card>
               ))}
-            </ul>
+            </div>
           </details>
         )}
       </main>

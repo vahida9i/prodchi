@@ -1,5 +1,5 @@
 import { END, MAX_QUESTIONS } from './challenge-schema'
-import type { Assessment, Choice, Question, QualityTier, Stage } from './challenge-schema'
+import type { Assessment, Choice, Question, QualityTier, Role, Stage } from './challenge-schema'
 
 /**
  * Deterministic end-of-run feedback — the "how well did you traverse it"
@@ -22,6 +22,8 @@ export interface RunPathEntry {
 }
 
 export interface RunChallenge {
+  /** The challenge's role track — the report's stage labels come from it. */
+  role: Role
   startKey: string
   questions: Record<string, Question>
   /** Unit-layer rubric (optional): when present the report speaks the challenge's own vocabulary. */
@@ -40,15 +42,31 @@ const VERDICT_WEIGHT: Record<Verdict, number> = { strongest: 1, reasonable: 0.5,
 /**
  * Candidate-friendly labels for the internal stages (field visibility rule:
  * raw stage strings never reach the candidate — these labels are what the
- * report shows instead).
+ * report shows instead). Per role: each role's report speaks its own process
+ * vocabulary. FRAME is shared.
  */
-const STAGE_LABEL: Record<Stage, string> = {
-  FRAME: 'Framing the challenge',
-  INVESTIGATE: 'Digging into evidence',
-  DEFINE: 'Defining the problem',
-  EXPLORE: 'Generating options',
-  DESIGN: 'Designing the solution',
-  VALIDATE: 'Validating with users'
+const STAGE_LABELS: Record<Role, Record<string, string>> = {
+  'Product Design': {
+    FRAME: 'Framing the challenge',
+    INVESTIGATE: 'Digging into evidence',
+    DEFINE: 'Defining the problem',
+    EXPLORE: 'Generating options',
+    DESIGN: 'Designing the solution',
+    VALIDATE: 'Validating with users'
+  },
+  'Product Management': {
+    FRAME: 'Framing the problem',
+    DIAGNOSE: 'Diagnosing the cause',
+    STRATEGIZE: 'Setting the direction',
+    PRIORITIZE: 'Prioritizing the work',
+    PLAN: 'Planning the roadmap',
+    EXECUTE: 'Executing and shipping',
+    MEASURE: 'Measuring the outcome'
+  }
+}
+
+export function stageLabel(role: Role, stage: Stage): string {
+  return STAGE_LABELS[role][stage] ?? stage
 }
 
 /**
@@ -182,7 +200,7 @@ export function evaluateRun(path: readonly RunPathEntry[], challenge: RunChallen
     const best = question.choices[question.bestChoice] ?? chosen
     const quality = qualityOf(chosen, isBest)
     const verdict = verdictOf(quality)
-    const area = STAGE_LABEL[best.stage]
+    const area = stageLabel(challenge.role, best.stage)
     weightSum += QUALITY_WEIGHT[quality]
 
     const stat = byArea.get(area) ?? { count: 0, bestHits: 0, reasonableCalls: 0, weight: 0 }

@@ -21,6 +21,10 @@
       "types": "./dist/scoring.d.ts",
       "default": "./dist/scoring.js"
     },
+    "./skills": {
+      "types": "./dist/skills.d.ts",
+      "default": "./dist/skills.js"
+    },
     "./feedback": {
       "types": "./dist/feedback.d.ts",
       "default": "./dist/feedback.js"
@@ -36,7 +40,7 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test validator.test.ts scoring.test.ts feedback.test.ts"
+    "test": "node --import tsx --test validator.test.ts scoring.test.ts feedback.test.ts skills.test.ts"
   },
   "dependencies": {
     "zod": "^3.22.4"
