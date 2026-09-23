@@ -127,16 +127,18 @@ export async function authRoutes(fastify: FastifyInstance) {
     if (!user) {
       return reply.status(401).send({ error: 'User not found' })
     }
-    
-    if (user.roleTrackId) {
-      return reply.status(409).send({ error: 'Role already selected' })
-    }
 
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: { roleTrackId: roleId },
-      select: { id: true, email: true, role: true, roleTrackId: true, cohortId: true }
-    })
+    // Select or switch: first pick sets the track, a different pick switches it
+    // (the role-select page is revisitable), and re-picking the current track is
+    // a no-op. The session token embeds roleTrackId, so a fresh cookie is issued
+    // in every case — the gate and every role-scoped read follow the new value.
+    const updatedUser = user.roleTrackId === roleId
+      ? user
+      : await prisma.user.update({
+          where: { id: userId },
+          data: { roleTrackId: roleId },
+          select: { id: true, email: true, role: true, roleTrackId: true, cohortId: true }
+        })
 
     const newToken = createSessionToken(toAuthUser(updatedUser))
     reply.setCookie('session', newToken, {

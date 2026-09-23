@@ -53,22 +53,23 @@ function utcDayStart(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
 }
 
-async function sumXp(userId: string): Promise<number> {
+/** XP of this account ON ONE role track — profile/progress never aggregate across tracks. */
+async function sumXp(userId: string, roleId: string): Promise<number> {
   const aggregate = await prisma.levelProgress.aggregate({
-    where: { userId },
+    where: { userId, level: { challenge: { roleId } } },
     _sum: { xpEarned: true }
   })
   return aggregate._sum.xpEarned ?? 0
 }
 
-/** Yesterday extends the streak, today is a no-op, anything older restarts at 1. */
-async function updateStreak(userId: string) {
+/** Yesterday extends the streak, today is a no-op, anything older restarts at 1. Per (user, role). */
+async function updateStreak(userId: string, roleId: string) {
   const today = utcDayStart(new Date())
-  const existing = await prisma.streak.findUnique({ where: { userId } })
+  const existing = await prisma.streak.findUnique({ where: { userId_roleId: { userId, roleId } } })
 
   if (!existing) {
     return prisma.streak.create({
-      data: { userId, currentStreak: 1, longestStreak: 1, lastActiveDay: today }
+      data: { userId, roleId, currentStreak: 1, longestStreak: 1, lastActiveDay: today }
     })
   }
 
@@ -85,7 +86,7 @@ async function updateStreak(userId: string) {
   }
 
   return prisma.streak.update({
-    where: { userId },
+    where: { userId_roleId: { userId, roleId } },
     data: {
       currentStreak,
       longestStreak: Math.max(existing.longestStreak, currentStreak),
@@ -95,16 +96,19 @@ async function updateStreak(userId: string) {
 }
 
 /**
- * Evaluate every badge the user has not earned yet against current path state.
- * An unknown `unlockCondition.type` is skipped rather than unlocked, so a typo
- * in seed data can never hand out a badge for free.
+ * Evaluate every badge the user has not earned yet on THIS role track against
+ * that track's current path state. Progress, streak and industry completion are
+ * all scoped to the track — a badge earned on one track never shows (or counts)
+ * on the other. An unknown `unlockCondition.type` is skipped rather than
+ * unlocked, so a typo in seed data can never hand out a badge for free.
  */
-export async function evaluateBadges(userId: string): Promise<BadgeAward[]> {
+export async function evaluateBadges(userId: string, roleId: string): Promise<BadgeAward[]> {
   const [allBadges, earned, progress, streak] = await Promise.all([
     prisma.badge.findMany(),
-    prisma.userBadge.findMany({ where: { userId } }),
-    prisma.levelProgress.findMany({ where: { userId } }),
-    prisma.streak.findUnique({ where: { userId } })
+    prisma.userBadge.findMany({ where: { userId, roleId } }),
+    // Only this track's levels count toward thresholds.
+    prisma.levelProgress.findMany({ where: { userId, level: { challenge: { roleId } } } }),
+    prisma.streak.findUnique({ where: { userId_roleId: { userId, roleId } } })
   ])
 
   const earnedIds = new Set(earned.map(row => row.badgeId))
@@ -140,8 +144,11 @@ export async function evaluateBadges(userId: string): Promise<BadgeAward[]> {
         break
       case 'industryCompleted': {
         if (!condition.industryId) break
+        // Scoped to the track: only this role's levels inside the industry can
+        // complete it — the other track's levels in the same industry are not
+        // part of this candidate's path at all.
         const industryLevels = await prisma.level.findMany({
-          where: { industryId: condition.industryId, status: 'active' },
+          where: { industryId: condition.industryId, status: 'active', challenge: { roleId } },
           select: { id: true }
         })
         const passedIds = new Set(passed.map(row => row.levelId))
@@ -155,7 +162,7 @@ export async function evaluateBadges(userId: string): Promise<BadgeAward[]> {
     if (!unlocked) continue
 
     try {
-      await prisma.userBadge.create({ data: { userId, badgeId: badge.id } })
+      await prisma.userBadge.create({ data: { userId, badgeId: badge.id, roleId } })
       newBadges.push({
         id: badge.id,
         name: badge.name,
@@ -241,12 +248,19 @@ export async function creditLevelResult(
   levelId: string,
   score: LevelScore
 ): Promise<LevelCompletion> {
-  const levelRow = await prisma.level.findUnique({ where: { id: levelId } })
+  // The level's role track travels with every write below: XP totals, streak,
+  // badges and the unlock chain are all scoped to this track so the completion
+  // card can never contradict the (per-track) progress page.
+  const levelRow = await prisma.level.findUnique({
+    where: { id: levelId },
+    include: { challenge: { select: { roleId: true } } }
+  })
   if (!levelRow) {
     throw new Error('Level not found')
   }
+  const roleId = levelRow.challenge.roleId
 
-  const totalXpBefore = await sumXp(userId)
+  const totalXpBefore = await sumXp(userId, roleId)
 
   // The two writes (record the run, unlock the next active level) and the
   // pre-read happen in one transaction, so a parallel completion can never
@@ -284,9 +298,11 @@ export async function creditLevelResult(
       }
     })
 
-    // Unlock the next active level (retired levels are skipped by number order).
+    // Unlock the next active level OF THE SAME TRACK (retired levels are
+    // skipped by number order). Cross-track levels must never be unlocked by
+    // this completion — they are not on the candidate's path.
     const nextLevel = await tx.level.findFirst({
-      where: { status: 'active', number: { gt: levelRow.number } },
+      where: { status: 'active', number: { gt: levelRow.number }, challenge: { roleId } },
       orderBy: { number: 'asc' },
       select: { id: true, number: true }
     })
@@ -303,9 +319,9 @@ export async function creditLevelResult(
   })
 
   const firstPass = previous?.status !== 'passed'
-  const streak = await updateStreak(userId)
-  const newBadges = await evaluateBadges(userId)
-  const totalXp = await sumXp(userId)
+  const streak = await updateStreak(userId, roleId)
+  const newBadges = await evaluateBadges(userId, roleId)
+  const totalXp = await sumXp(userId, roleId)
   const playerLevel = levelFromXp(totalXp)
 
   return {

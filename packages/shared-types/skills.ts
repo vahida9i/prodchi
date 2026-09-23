@@ -8,9 +8,9 @@ import { qualityOf } from './feedback'
  *
  * Every authored choice carries a `stage` (the role's process phase the move
  * belongs to), and each role's stages map 1:1 onto the skills that role lists
- * on a CV: for Product Design the six design skills (framing, research,
- * synthesis, ideation, solution design, validation); for Product Management
- * the seven management skills (framing, diagnosis, strategy, prioritization,
+ * on a CV: for Product Design the seven design skills (framing, discovery,
+ * synthesis, ideation, solution design, testing, refinement); for Product
+ * Management the seven management skills (framing, diagnosis, strategy,
  * planning, execution, measurement). The profile groups every recorded
  * decision by the stage of the move the candidate *chose* (not the ideal one)
  * and credits it with the same deterministic weights as the run feedback
@@ -39,7 +39,7 @@ export interface SkillRun {
 const QUALITY_WEIGHT: Record<QualityTier, number> = { best: 1, reasonable: 0.5, poor: 0 }
 
 /**
- * The six skills, in design-process order. `stage` is the authored tag the
+ * The seven skills, in design-process order. `stage` is the authored tag the
  * skill is read from — internal only: it is how the answer is classified and
  * never crosses the API boundary (the payload speaks only the public
  * vocabulary below).
@@ -73,10 +73,10 @@ const PD_SKILLS: readonly SkillDefinition[] = [
     growthNote: 'Restate the problem in the customer\'s words before reaching for a solution.'
   },
   {
-    id: 'research',
-    name: 'Research & evidence',
-    shortName: 'Research',
-    stage: 'INVESTIGATE',
+    id: 'discovery',
+    name: 'Discovery & evidence',
+    shortName: 'Discovery',
+    stage: 'DISCOVER',
     blurb: 'You pick the right question to ask and the evidence that can actually answer it.',
     growthNote: 'Ask what you most need to learn first — then choose the move that learns it.'
   },
@@ -92,7 +92,7 @@ const PD_SKILLS: readonly SkillDefinition[] = [
     id: 'ideation',
     name: 'Ideation & options',
     shortName: 'Ideation',
-    stage: 'EXPLORE',
+    stage: 'IDEATE',
     blurb: 'You generate real alternatives instead of anchoring on the first idea.',
     growthNote: 'Sketch the boring option, the bold option and the cheap option before you pick one.'
   },
@@ -105,12 +105,20 @@ const PD_SKILLS: readonly SkillDefinition[] = [
     growthNote: 'Name the tradeoff out loud: what does this choice cost, and why is it worth paying here?'
   },
   {
-    id: 'validation',
-    name: 'Validation & experimentation',
-    shortName: 'Validation',
-    stage: 'VALIDATE',
+    id: 'testing',
+    name: 'Testing with users',
+    shortName: 'Testing',
+    stage: 'TEST',
     blurb: 'You test the riskiest assumption before committing to the build.',
     growthNote: 'Identify the assumption that would sink the idea if wrong — test that one first.'
+  },
+  {
+    id: 'refinement',
+    name: 'Refinement & iteration',
+    shortName: 'Refinement',
+    stage: 'REFINE',
+    blurb: 'You tighten the solution from test evidence instead of shipping the first version that works.',
+    growthNote: 'Take one test finding back into the design before calling it done.'
   }
 ]
 
@@ -221,7 +229,7 @@ export interface SkillScore {
 }
 
 export interface SkillProfile {
-  /** All six skills, fixed process order. */
+  /** All skills of the role, fixed process order. */
   skills: SkillScore[]
   /** Weighted rate across every recorded decision, 0 when none. */
   overallRate: number

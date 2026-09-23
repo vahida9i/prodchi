@@ -20,8 +20,8 @@ const RUBRICED: RunChallenge = {
       text: 'First decision',
       bestChoice: 0,
       choices: [
-        { text: 'Split by device', stage: 'INVESTIGATE', reveal: REVEAL, next: 'Q2', quality: 'best', because: 'The pattern is device-dependent.', criteria: ['root-cause'] },
-        { text: 'Brainstorm fixes', stage: 'EXPLORE', reveal: REVEAL, next: 'Q2', quality: 'poor', criteria: ['root-cause'] },
+        { text: 'Split by device', stage: 'DISCOVER', reveal: REVEAL, next: 'Q2', quality: 'best', because: 'The pattern is device-dependent.', criteria: ['root-cause'] },
+        { text: 'Brainstorm fixes', stage: 'IDEATE', reveal: REVEAL, next: 'Q2', quality: 'poor', criteria: ['root-cause'] },
         { text: 'Ship a variant', stage: 'DESIGN', reveal: REVEAL, next: 'END', quality: 'reasonable', criteria: ['validate'] }
       ]
     },
@@ -29,8 +29,8 @@ const RUBRICED: RunChallenge = {
       text: 'Second decision',
       bestChoice: 1,
       choices: [
-        { text: 'Trust the average', stage: 'EXPLORE', reveal: REVEAL, next: 'END', quality: 'poor', criteria: ['root-cause'] },
-        { text: 'Validate with users', stage: 'VALIDATE', reveal: REVEAL, next: 'END', quality: 'best', because: 'Averages hide the segments.', criteria: ['validate'] },
+        { text: 'Trust the average', stage: 'IDEATE', reveal: REVEAL, next: 'END', quality: 'poor', criteria: ['root-cause'] },
+        { text: 'Validate with users', stage: 'TEST', reveal: REVEAL, next: 'END', quality: 'best', because: 'Averages hide the segments.', criteria: ['validate'] },
         { text: 'Define the metric', stage: 'DEFINE', reveal: REVEAL, next: 'END', quality: 'reasonable' }
       ]
     }
@@ -66,8 +66,8 @@ const graph: RunChallenge = {
       text: 'First decision',
       bestChoice: 0,
       choices: [
-        { text: 'Split by device', stage: 'INVESTIGATE', reveal: REVEAL, next: 'Q2', quality: 'best', because: 'The pattern is device-dependent.' },
-        { text: 'Brainstorm fixes', stage: 'EXPLORE', reveal: REVEAL, next: 'Q2', quality: 'poor' },
+        { text: 'Split by device', stage: 'DISCOVER', reveal: REVEAL, next: 'Q2', quality: 'best', because: 'The pattern is device-dependent.' },
+        { text: 'Brainstorm fixes', stage: 'IDEATE', reveal: REVEAL, next: 'Q2', quality: 'poor' },
         { text: 'Ship a variant', stage: 'DESIGN', reveal: REVEAL, next: 'END', quality: 'reasonable' }
       ]
     },
@@ -75,8 +75,8 @@ const graph: RunChallenge = {
       text: 'Second decision',
       bestChoice: 1,
       choices: [
-        { text: 'Trust the average', stage: 'EXPLORE', reveal: REVEAL, next: 'END', quality: 'poor' },
-        { text: 'Validate with users', stage: 'VALIDATE', reveal: REVEAL, next: 'END', quality: 'best', because: 'Averages hide the segments.' },
+        { text: 'Trust the average', stage: 'IDEATE', reveal: REVEAL, next: 'END', quality: 'poor' },
+        { text: 'Validate with users', stage: 'TEST', reveal: REVEAL, next: 'END', quality: 'best', because: 'Averages hide the segments.' },
         { text: 'Define the metric', stage: 'DEFINE', reveal: REVEAL, next: 'END', quality: 'reasonable' }
       ]
     }
@@ -102,14 +102,14 @@ test('a miss carries the strongest move, its because, and the mismatch flag', ()
   assert.equal(report.rate, 0.5)
   const first = report.perQuestion[0]
   assert.equal(first.verdict, 'missed')
-  assert.equal(first.mismatch, true) // EXPLORE move where INVESTIGATE was needed
+  assert.equal(first.mismatch, true) // IDEATE move where DISCOVER was needed
   assert.equal(first.strongest?.text, 'Split by device')
   assert.equal(first.strongest?.because, 'The pattern is device-dependent.')
-  const growth = report.growth.find(g => g.area === 'Digging into evidence')
-  assert.ok(growth, 'expected the INVESTIGATE area in growth')
+  const growth = report.growth.find(g => g.area === 'Discovering needs & evidence')
+  assert.ok(growth, 'expected the DISCOVER area in growth')
   assert.equal(growth.atQuestion, 'Q1')
   assert.equal(growth.strongest.because, 'The pattern is device-dependent.')
-  assert.ok(report.strengths.some(s => s.area === 'Validating with users'))
+  assert.ok(report.strengths.some(s => s.area === 'Testing with users'))
 })
 
 test('reasonable moves count half and surface as defensible in evidence', () => {

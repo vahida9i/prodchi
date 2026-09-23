@@ -13,17 +13,39 @@ import type { Question } from '@baaten/shared-types/challenge-schema'
  * pass state (one indexed query at this scale).
  */
 export async function progressRoutes(fastify: FastifyInstance) {
+  // The caller's track — the single scoping key for everything below. Profile
+  // and progress are strictly per-track: nothing here ever aggregates across
+  // roles (XP, stars, levels, industries, streak, badges, leaderboard).
+  async function requireTrackRole(userId: string): Promise<string | null> {
+    const account = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { roleTrack: { select: { name: true } } }
+    })
+    const name = account?.roleTrack?.name
+    return name === 'Product Design' || name === 'Product Management' ? name : null
+  }
+
   // GET /api/v1/progress
   fastify.get('/', async (request, reply) => {
     const user = request.user!
 
+    if (!(await requireTrackRole(user.userId))) {
+      return reply.status(400).send({ error: 'Role not selected. Complete onboarding first.' })
+    }
+    const roleId = user.roleTrackId! // non-null: the account has a known track
+
     const [progressRows, streak, industries] = await Promise.all([
-      prisma.levelProgress.findMany({ where: { userId: user.userId } }),
-      prisma.streak.findUnique({ where: { userId: user.userId } }),
+      // Scoped through the level's challenge to the caller's track.
+      prisma.levelProgress.findMany({
+        where: { userId: user.userId, level: { challenge: { roleId } } }
+      }),
+      prisma.streak.findUnique({ where: { userId_roleId: { userId: user.userId, roleId } } }),
+      // Only industries that actually carry this track's levels, counted within
+      // that scope — the other track's industries don't exist on this dashboard.
       prisma.industry.findMany({
         orderBy: { order: 'asc' },
-        include: { levels: { where: { status: 'active' }, select: { id: true } } }
-      })
+        include: { levels: { where: { status: 'active', challenge: { roleId } }, select: { id: true } } }
+      }).then(rows => rows.filter(industry => industry.levels.length > 0))
     ])
 
     const totalXp = progressRows.reduce((sum, row) => sum + row.xpEarned, 0)
@@ -104,9 +126,15 @@ export async function progressRoutes(fastify: FastifyInstance) {
   fastify.get('/badges', async (request, reply) => {
     const user = request.user!
 
+    if (!(await requireTrackRole(user.userId))) {
+      return reply.status(400).send({ error: 'Role not selected. Complete onboarding first.' })
+    }
+    const roleId = user.roleTrackId!
+
     const [allBadges, earned] = await Promise.all([
       prisma.badge.findMany({ orderBy: { name: 'asc' } }),
-      prisma.userBadge.findMany({ where: { userId: user.userId } })
+      // Earned rows are per (user, role): only this track's trophies show.
+      prisma.userBadge.findMany({ where: { userId: user.userId, roleId } })
     ])
 
     const earnedAtByBadge = new Map(earned.map(row => [row.badgeId, row.earnedAt]))
@@ -131,12 +159,27 @@ export async function progressRoutes(fastify: FastifyInstance) {
     if (!user.cohortId) {
       return reply.send({ leaderboard: [], userRank: null })
     }
+    if (!(await requireTrackRole(user.userId))) {
+      return reply.status(400).send({ error: 'Role not selected. Complete onboarding first.' })
+    }
+    const roleId = user.roleTrackId!
+
+    // Weekly XP counts only the caller's TRACK's levels: the ranking compares
+    // output on the same content, never a mix of both roles' paths. The level
+    // set is a path's worth of rows — an `in` filter stays cheap.
+    const trackLevelIds = (await prisma.level.findMany({
+      where: { challenge: { roleId } },
+      select: { id: true }
+    })).map(level => level.id)
+    if (trackLevelIds.length === 0) {
+      return reply.send({ leaderboard: [], userRank: null })
+    }
 
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
 
     const grouped = await prisma.levelProgress.groupBy({
       by: ['userId'],
-      where: { passedAt: { gte: oneWeekAgo }, user: { cohortId: user.cohortId } },
+      where: { levelId: { in: trackLevelIds }, passedAt: { gte: oneWeekAgo }, user: { cohortId: user.cohortId } },
       _sum: { xpEarned: true }
     })
 

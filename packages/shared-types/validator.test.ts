@@ -107,7 +107,7 @@ test('rejects a Product Management challenge using a Product Design stage', asyn
   const pmFixture = JSON.parse(readFileSync(
     fileURLToPath(new URL('../../docs/fixtures/pm-feature-cut.json', import.meta.url)), 'utf-8'
   ))
-  pmFixture.questions.Q1.choices[0].stage = 'INVESTIGATE'
+  pmFixture.questions.Q1.choices[0].stage = 'DISCOVER'
   const result = validateChallengeImport(pmFixture)
   assert.equal(result.valid, false)
   assert.ok(
@@ -127,6 +127,19 @@ test('rejects a Product Design challenge using a Product Management stage', () =
     ),
     `expected a per-role stage error, got: ${JSON.stringify(result.errors)}`
   )
+})
+
+test('rejects the retired PD vocabulary on a Product Design challenge', () => {
+  for (const retired of ['INVESTIGATE', 'EXPLORE', 'VALIDATE']) {
+    const result = validateChallengeImport(mutate(c => { c.questions.Q1.choices[0].stage = retired as any }))
+    assert.equal(result.valid, false, `expected ${retired} to be rejected`)
+    assert.ok(
+      result.errors.some(e =>
+        e.path === 'questions.Q1.choices[0].stage' && e.message.includes('Product Design process')
+      ),
+      `expected a per-role stage error for ${retired}, got: ${JSON.stringify(result.errors)}`
+    )
+  }
 })
 
 test('rejects an empty questions map', () => {

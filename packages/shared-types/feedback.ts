@@ -48,11 +48,12 @@ const VERDICT_WEIGHT: Record<Verdict, number> = { strongest: 1, reasonable: 0.5,
 const STAGE_LABELS: Record<Role, Record<string, string>> = {
   'Product Design': {
     FRAME: 'Framing the challenge',
-    INVESTIGATE: 'Digging into evidence',
+    DISCOVER: 'Discovering needs & evidence',
     DEFINE: 'Defining the problem',
-    EXPLORE: 'Generating options',
+    IDEATE: 'Generating options',
     DESIGN: 'Designing the solution',
-    VALIDATE: 'Validating with users'
+    TEST: 'Testing with users',
+    REFINE: 'Refining the solution'
   },
   'Product Management': {
     FRAME: 'Framing the problem',

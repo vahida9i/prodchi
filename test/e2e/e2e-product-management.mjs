@@ -215,6 +215,78 @@ check('proficiencies stay within the declared bands',
 const skillLeaks = INTERNAL_KEYS.filter(key => keysOf(r.json).has(key))
 check('the skill payload exposes no authoring internals', skillLeaks.length === 0, `leaked: ${skillLeaks.join(', ')}`)
 
+// 8. the role select is revisitable, and EVERYTHING follows a switch — path,
+// progress (XP/levels/stars/streak), badges and the skill profile are strictly
+// per-track, never aggregated across roles.
+r = await req('GET', '/progress')
+check('PM progress is readable before the switch', r.status === 200, JSON.stringify(r.json).slice(0, 200))
+const pmProgress = r.json ?? {}
+check('the PM candidate earned XP on the PM track', (pmProgress.totalXp ?? 0) > 0, JSON.stringify(pmProgress))
+const pmIndustries = (pmProgress.industries ?? []).map(industry => industry.name)
+check('the PM dashboard lists only PM-track industries',
+  pmIndustries.includes('Productivity') && !pmIndustries.includes('E-commerce'),
+  JSON.stringify(pmIndustries))
+r = await req('GET', '/progress/badges')
+const pmEarnedIds = new Set((r.json?.badges ?? []).filter(badge => badge.earned).map(badge => badge.id))
+check('the PM candidate earned a badge on the PM track', pmEarnedIds.size > 0, JSON.stringify([...pmEarnedIds]))
+
+const rolesRes = await req('GET', '/roles')
+const pdRole = rolesRes.json?.roles?.find(role => role.name === 'Product Design')
+const pmRole = rolesRes.json?.roles?.find(role => role.name === 'Product Management')
+check('both role ids resolve for the switch', Boolean(pdRole && pmRole), JSON.stringify(rolesRes.json))
+
+r = await req('POST', '/auth/onboarding/role', { roleId: pmRole.id })
+check('re-selecting the current role → 200 (no-op)', r.status === 200, JSON.stringify(r.json))
+
+r = await req('POST', '/auth/onboarding/role', { roleId: pdRole.id })
+check('switching the role → 200', r.status === 200, JSON.stringify(r.json))
+
+// The path flips to the other track immediately (cookie re-issued with it).
+r = await req('GET', '/levels')
+const switchedLevels = r.json?.levels ?? []
+check('after the switch the PM level is gone from the path',
+  !switchedLevels.some(level => level.id === pmLevel.id),
+  JSON.stringify(switchedLevels.map(level => level.number)))
+check('after the switch the path shows exactly the PD track',
+  switchedLevels.length > 0 && switchedLevels.every(level => pdLevelIds.has(level.id)),
+  JSON.stringify(switchedLevels.map(level => level.id)))
+
+// Progress is per-track: the PM candidate's fresh PD dashboard aggregates nothing.
+r = await req('GET', '/progress')
+const pdProgress = r.json ?? {}
+check('PM-track XP/stars/streak do not follow the switch',
+  pdProgress.totalXp === 0 && pdProgress.levelsPassed === 0 && pdProgress.totalStars === 0 &&
+  (pdProgress.streak?.currentStreak ?? 0) === 0,
+  JSON.stringify(pdProgress))
+
+r = await req('GET', '/progress/badges')
+const pdEarnedIds = (r.json?.badges ?? []).filter(badge => badge.earned).map(badge => badge.id)
+check('a badge earned on the PM track does not show on the PD track',
+  pdEarnedIds.every(id => !pmEarnedIds.has(id)),
+  JSON.stringify({ pm: [...pmEarnedIds], pd: pdEarnedIds }))
+
+r = await req('GET', '/progress/skills')
+const switchedSkills = r.json?.skills ?? []
+check('after the switch the profile is the PD six, in process order',
+  switchedSkills.map(skill => skill.id).join(',') === 'framing,research,synthesis,ideation,solution,validation',
+  JSON.stringify(switchedSkills.map(skill => skill.id)))
+check('the fresh track reads unproven — PM decisions score nothing for PD',
+  r.json?.decisions === 0 && switchedSkills.every(skill => skill.proficiency === 'unproven'),
+  JSON.stringify({ decisions: r.json?.decisions, proficiencies: switchedSkills.map(skill => skill.proficiency) }))
+
+// Switching back restores the PM dashboard exactly — nothing was lost or merged.
+r = await req('POST', '/auth/onboarding/role', { roleId: pmRole.id })
+check('switching back → 200', r.status === 200, JSON.stringify(r.json))
+r = await req('GET', '/progress')
+check('switching back restores the PM dashboard exactly',
+  r.json?.totalXp === pmProgress.totalXp &&
+  r.json?.levelsPassed === pmProgress.levelsPassed &&
+  r.json?.totalStars === pmProgress.totalStars,
+  JSON.stringify({
+    now: { xp: r.json?.totalXp, passed: r.json?.levelsPassed, stars: r.json?.totalStars },
+    before: { xp: pmProgress.totalXp, passed: pmProgress.levelsPassed, stars: pmProgress.totalStars }
+  }))
+
 // cleanup: restore any level state the suite changed
 if (pmLevelPrior && pmLevelPrior.status && pmLevelPrior.status !== 'active') {
   const back = await req('PATCH', `/admin/levels/${pmLevel.id}`, { status: pmLevelPrior.status })

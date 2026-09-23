@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { api } from "@/lib/api-client"
 import type { SkillProfile, SkillScore } from "@/lib/api-client"
 import { SkillRadar } from "@/components/profile/SkillRadar"
+import { RoleChip } from "@/components/RoleChip"
 
 /**
  * The candidate's skill profile — what they are good at as a designer, read
@@ -63,13 +64,23 @@ function SkillRow({ skill }: { skill: SkillScore }) {
 export default function ProfilePage() {
   const router = useRouter()
   const [profile, setProfile] = useState<SkillProfile | null>(null)
+  const [roleName, setRoleName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
       try {
-        setProfile(await api.getSkills())
+        const [skillsRes, me] = await Promise.all([api.getSkills(), api.getMe()])
+        setProfile(skillsRes)
+        if (me.user.roleTrackId) {
+          try {
+            const { roles } = await api.getRoles()
+            setRoleName(roles.find(role => role.id === me.user.roleTrackId)?.name ?? null)
+          } catch {
+            setRoleName(null)
+          }
+        }
       } catch (err: any) {
         if (err?.status === 401) {
           router.push("/login")
@@ -115,6 +126,7 @@ export default function ProfilePage() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Baaten</h1>
           <div className="flex items-center gap-2">
+            <RoleChip />
             <Button variant="outline" size="sm" onClick={() => router.push("/home")}>
               Back to path
             </Button>
@@ -179,7 +191,12 @@ export default function ProfilePage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mb-3">Your role's skills</h2>
+              <h2 className="text-xl font-semibold mb-3">{roleName ? `${roleName} skills` : "Your role's skills"}</h2>
+              <p className="mb-3 text-sm text-muted-foreground">
+                {roleName
+                  ? `Scoped to ${roleName} — switching tracks switches this profile.`
+                  : 'Scoped to your current track — switching tracks switches this profile.'}
+              </p>
               <Card>
                 <CardContent className="py-6">
                   <SkillRadar skills={skills} />

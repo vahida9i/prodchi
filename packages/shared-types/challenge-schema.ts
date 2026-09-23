@@ -16,10 +16,10 @@ export type Role = (typeof ROLES)[number]
  * challenge's own role (enforced at import, itemized per choice). FRAME is
  * shared; the rest speak each role's own process vocabulary.
  *
- * PD (6): FRAME, INVESTIGATE, DEFINE, EXPLORE, DESIGN, VALIDATE
+ * PD (7): FRAME, DISCOVER, DEFINE, IDEATE, DESIGN, TEST, REFINE
  * PM (7): FRAME, DIAGNOSE, STRATEGIZE, PRIORITIZE, PLAN, EXECUTE, MEASURE
  */
-export const PD_STAGES = ['FRAME', 'INVESTIGATE', 'DEFINE', 'EXPLORE', 'DESIGN', 'VALIDATE'] as const
+export const PD_STAGES = ['FRAME', 'DISCOVER', 'DEFINE', 'IDEATE', 'DESIGN', 'TEST', 'REFINE'] as const
 export const PM_STAGES = ['FRAME', 'DIAGNOSE', 'STRATEGIZE', 'PRIORITIZE', 'PLAN', 'EXECUTE', 'MEASURE'] as const
 
 /** Kept as the PD list under its historical name for existing call sites. */
@@ -35,8 +35,8 @@ export function stagesForRole(role: Role): readonly Stage[] {
   return ROLE_STAGES[role]
 }
 
-/** The full stage union across roles (validation bound for `choice.stage`). */
-export const ALL_STAGES = [...PD_STAGES, ...PM_STAGES] as const
+/** The full stage union across roles (validation bound for `choice.stage`). FRAME is shared. */
+export const ALL_STAGES = ['FRAME', 'DISCOVER', 'DEFINE', 'IDEATE', 'DESIGN', 'TEST', 'REFINE', 'DIAGNOSE', 'STRATEGIZE', 'PRIORITIZE', 'PLAN', 'EXECUTE', 'MEASURE'] as const
 
 export const StageSchema = z.enum(ALL_STAGES)
 export const RoleSchema = z.enum(ROLES)

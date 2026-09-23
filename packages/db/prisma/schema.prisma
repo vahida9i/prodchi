@@ -19,7 +19,7 @@ model User {
   sessions      Session[]
   levelProgress LevelProgress[]
   badges        UserBadge[]
-  streak        Streak?
+  streaks       Streak[]
 
   @@index([cohortId])
 }
@@ -29,6 +29,8 @@ model Role {
   name       String      @unique // "Product Design" — imported challenges validate against this name
   challenges Challenge[]
   users      User[]
+  streaks    Streak[]
+  userBadges UserBadge[]
 }
 
 model Challenge {
@@ -170,12 +172,20 @@ model LevelProgress {
 // Streak and badges are the gamification layer that survives the removal of the
 // skill tree: XP/levels/badges/leaderboard stay, SkillCategory/Skill/SkillScore
 // and the rubrics do not.
+//
+// Strictly per role track: one streak row per (user, role), so switching tracks
+// starts that track's own streak and switching back resumes the old one. No
+// cross-role aggregation anywhere on profile/progress.
 model Streak {
-  userId        String    @id
+  userId        String
+  roleId        String
   currentStreak Int       @default(0)
   longestStreak Int       @default(0)
   lastActiveDay DateTime?
   user          User      @relation(fields: [userId], references: [id])
+  role          Role      @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
 }
 
 model Badge {
@@ -192,12 +202,17 @@ model Badge {
   users           UserBadge[]
 }
 
+// Earned per role track: the same badge can be earned once on each track, and
+// /progress/badges only shows the current track's rows — profile and progress
+// never aggregate across roles.
 model UserBadge {
   userId   String
   badgeId  String
+  roleId   String
   earnedAt DateTime @default(now())
-  user     User  @relation(fields: [userId], references: [id])
-  badge    Badge @relation(fields: [badgeId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+  badge    Badge    @relation(fields: [badgeId], references: [id])
+  role     Role     @relation(fields: [roleId], references: [id])
 
-  @@id([userId, badgeId])
+  @@id([userId, badgeId, roleId])
 }

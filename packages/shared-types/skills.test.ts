@@ -30,25 +30,25 @@ function question(stages: Stage[], bestIndex = 0): Question {
 }
 
 const GRAPH = {
-  A: question(['VALIDATE', 'FRAME', 'EXPLORE'], 0),
+  A: question(['TEST', 'FRAME', 'IDEATE'], 0),
   B: gradedQuestion([
-    { stage: 'VALIDATE', quality: 'reasonable' },
+    { stage: 'TEST', quality: 'reasonable' },
     { stage: 'FRAME' },
-    { stage: 'EXPLORE' }
+    { stage: 'IDEATE' }
   ]),
   C: gradedQuestion([
-    { stage: 'VALIDATE', quality: 'reasonable' },
+    { stage: 'TEST', quality: 'reasonable' },
     { stage: 'FRAME' },
-    { stage: 'EXPLORE' }
+    { stage: 'IDEATE' }
   ]),
-  D: question(['VALIDATE', 'FRAME', 'EXPLORE'], 0)
+  D: question(['TEST', 'FRAME', 'IDEATE'], 0)
 }
 
-const validation = (profile: ReturnType<typeof buildSkillProfile>) =>
-  profile.skills.find(skill => skill.id === 'validation')!
+const testing = (profile: ReturnType<typeof buildSkillProfile>) =>
+  profile.skills.find(skill => skill.id === 'testing')!
 
 test('skills are always in fixed process order', () => {
-  assert.deepEqual(SKILL_ORDER, ['framing', 'research', 'synthesis', 'ideation', 'solution', 'validation'])
+  assert.deepEqual(SKILL_ORDER, ['framing', 'discovery', 'synthesis', 'ideation', 'solution', 'testing', 'refinement'])
   assert.deepEqual(buildSkillProfile([]).skills.map(skill => skill.id), SKILL_ORDER)
 })
 
@@ -68,15 +68,15 @@ test('an empty history yields an unproven profile with no fake zeros', () => {
 
 test('each decision credits the skill of the stage on the move actually chosen', () => {
   const questions = {
-    Q1: question(['FRAME', 'INVESTIGATE', 'EXPLORE'], 0),
-    Q2: question(['VALIDATE', 'FRAME', 'EXPLORE'], 0)
+    Q1: question(['FRAME', 'DISCOVER', 'IDEATE'], 0),
+    Q2: question(['TEST', 'FRAME', 'IDEATE'], 0)
   }
   // Q1: best FRAME move. Q2: the poor FRAME-tagged alternative (not the best
-  // VALIDATE move) — credit follows the chosen move's stage, not the ideal one.
+  // TEST move) — credit follows the chosen move's stage, not the ideal one.
   const profile = buildSkillProfile([{ path: [{ key: 'Q1', choiceIndex: 0 }, { key: 'Q2', choiceIndex: 1 }], questions }])
   const framing = profile.skills.find(skill => skill.id === 'framing')!
-  const validation = profile.skills.find(skill => skill.id === 'validation')!
-  const research = profile.skills.find(skill => skill.id === 'research')!
+  const testing = profile.skills.find(skill => skill.id === 'testing')!
+  const discovery = profile.skills.find(skill => skill.id === 'discovery')!
 
   assert.equal(framing.count, 2)
   assert.equal(framing.bestHits, 1)
@@ -84,8 +84,8 @@ test('each decision credits the skill of the stage on the move actually chosen',
   assert.equal(framing.proficiency, 'developing')
   assert.equal(framing.thinEvidence, true)
   assert.equal(framing.evidence, '1 of 2 strongest calls')
-  assert.equal(validation.count, 0)
-  assert.equal(research.count, 0)
+  assert.equal(testing.count, 0)
+  assert.equal(discovery.count, 0)
   assert.equal(profile.decisions, 2)
   assert.equal(profile.scenarios, 1)
   assert.equal(profile.overallRate, 0.5)
@@ -94,23 +94,23 @@ test('each decision credits the skill of the stage on the move actually chosen',
 test('strong needs the rate AND the evidence floor — thin perfect records stay developing', () => {
   assert.ok(MIN_SKILL_EVIDENCE === 3)
   const thin = buildSkillProfile([{ path: [{ key: 'A', choiceIndex: 0 }, { key: 'D', choiceIndex: 0 }], questions: GRAPH }])
-  assert.equal(validation(thin).rate, 1)
-  assert.equal(validation(thin).count, 2)
-  assert.equal(validation(thin).proficiency, 'developing')
-  assert.equal(validation(thin).thinEvidence, true)
+  assert.equal(testing(thin).rate, 1)
+  assert.equal(testing(thin).count, 2)
+  assert.equal(testing(thin).proficiency, 'developing')
+  assert.equal(testing(thin).thinEvidence, true)
 
-  const third = question(['VALIDATE', 'FRAME', 'EXPLORE'], 0)
+  const third = question(['TEST', 'FRAME', 'IDEATE'], 0)
   const full = buildSkillProfile([{
     path: [{ key: 'A', choiceIndex: 0 }, { key: 'D', choiceIndex: 0 }, { key: 'E', choiceIndex: 0 }],
     questions: { ...GRAPH, E: third }
   }])
-  assert.equal(validation(full).proficiency, 'strong')
-  assert.equal(validation(full).thinEvidence, false)
+  assert.equal(testing(full).proficiency, 'strong')
+  assert.equal(testing(full).thinEvidence, false)
   assert.equal(full.overallRate, 1)
 })
 
 test('a defensible call counts half a strongest call', () => {
-  // 2 best + 2 reasonable validation moves → weight 3 of 4 → 0.75 → strong.
+  // 2 best + 2 reasonable testing moves → weight 3 of 4 → 0.75 → strong.
   const profile = buildSkillProfile([{
     path: [
       { key: 'A', choiceIndex: 0 },
@@ -120,7 +120,7 @@ test('a defensible call counts half a strongest call', () => {
     ],
     questions: GRAPH
   }])
-  const skill = validation(profile)
+  const skill = testing(profile)
   assert.equal(skill.count, 4)
   assert.equal(skill.bestHits, 2)
   assert.equal(skill.reasonableCalls, 2)
@@ -136,7 +136,7 @@ test('runs merge, and only runs that actually scored count as scenarios', () => 
   const profile = buildSkillProfile([run1, run2, emptyRun])
   assert.equal(profile.scenarios, 2)
   assert.equal(profile.decisions, 2)
-  assert.equal(validation(profile).count, 2)
+  assert.equal(testing(profile).count, 2)
 })
 
 test('path entries whose question left the graph do not score and cannot throw', () => {
@@ -146,7 +146,7 @@ test('path entries whose question left the graph do not score and cannot throw',
   }])
   assert.equal(profile.decisions, 1)
   assert.equal(profile.scenarios, 1)
-  assert.equal(validation(profile).count, 1)
+  assert.equal(testing(profile).count, 1)
 })
 
 test('an out-of-range choice index is skipped rather than throwing', () => {
@@ -178,7 +178,7 @@ test('PM skills are always in fixed process order', () => {
     skillOrderFor('Product Management')
   )
   assert.equal(skillCountFor('Product Management'), 7)
-  assert.equal(skillCountFor('Product Design'), 6)
+  assert.equal(skillCountFor('Product Design'), 7)
 })
 
 test('a PM run credits PM skills by the stage of the move actually chosen', () => {
@@ -206,8 +206,20 @@ test('a PM run credits PM skills by the stage of the move actually chosen', () =
   assert.equal(profile.overallRate, 0.5)
 })
 
-test('the PD default is untouched: a PD run reads the six design skills', () => {
-  const questions = { Q1: question(['FRAME', 'INVESTIGATE', 'EXPLORE'], 0) }
+test('PD skills are the seven design stages in process order', () => {
+  assert.deepEqual(
+    skillOrderFor('Product Design'),
+    ['framing', 'discovery', 'synthesis', 'ideation', 'solution', 'testing', 'refinement']
+  )
+  assert.deepEqual(
+    buildSkillProfile([], 'Product Design').skills.map(skill => skill.id),
+    skillOrderFor('Product Design')
+  )
+  assert.equal(skillCountFor('Product Design'), 7)
+})
+
+test('the PD default is untouched: a PD run reads the seven design skills', () => {
+  const questions = { Q1: question(['FRAME', 'DISCOVER', 'IDEATE'], 0) }
   const profile = buildSkillProfile([{ path: [{ key: 'Q1', choiceIndex: 0 }], questions }])
   assert.deepEqual(profile.skills.map(skill => skill.id), SKILL_ORDER)
 })
@@ -216,7 +228,7 @@ test('a PM profile skips stages that belong to no role skill set without throwin
   // A stale PM run whose graph somehow carries a PD stage: it belongs to no PM
   // skill, so it scores nothing at all — not in the skills, not in the rates.
   const questions = {
-    Q1: question(['VALIDATE' as Stage, 'DIAGNOSE', 'EXECUTE'], 0),
+    Q1: question(['TEST' as Stage, 'DIAGNOSE', 'EXECUTE'], 0),
     Q2: question(['MEASURE' as Stage, 'DIAGNOSE', 'EXECUTE'], 0)
   }
   const profile = buildSkillProfile(

@@ -215,7 +215,7 @@ The candidate's real-world capability profile — what they are good at in their
 - `POST /api/v1/auth/signup` — Register new user
 - `POST /api/v1/auth/login` — Login
 - `POST /api/v1/auth/logout` — Logout
-- `POST /api/v1/auth/onboarding/role` — Select role (one-time)
+- `POST /api/v1/auth/onboarding/role` — Select or switch role (first pick, switch, or same-role no-op; re-issues the session cookie so the gate and every scoped read follow the new track)
 
 ### Sessions (guided candidate session)
 - `POST /api/v1/sessions` — Start (or resume) a session for a challenge. A challenge assigned to a level is only playable through that level: the session is always tagged with it and the progression gate is enforced (403 when locked). Unassigned challenges play unscored. Returns the first question.
@@ -232,10 +232,10 @@ The candidate's real-world capability profile — what they are good at in their
 - `POST /api/v1/levels/:id/start` — Start (or resume) a level's session; 403 when the level is locked
 
 ### Progress (candidate)
-- `GET /api/v1/progress` — Totals: XP, player level, levels passed, stars, accuracy, streak, per-industry rollups
+- `GET /api/v1/progress` — Totals **for the caller's role track**: XP, player level, levels passed, stars, accuracy, streak, per-industry rollups — never aggregated across roles
 - `GET /api/v1/progress/skills` — The skill profile: the role's own real-world skills (six for Product Design, seven for Product Management) scored from the recorded decisions (weighted best/reasonable/poor, `strong` needs rate ≥ 0.75 **and** ≥ 3 decisions), with per-skill evidence lines and proficiency bands
-- `GET /api/v1/progress/badges` — Every badge with earned state
-- `GET /api/v1/progress/leaderboard` — Weekly XP within the caller's cohort + the caller's rank
+- `GET /api/v1/progress/badges` — Every badge with earned state (evaluated and stored per track — a badge earned on one role doesn't show on the other)
+- `GET /api/v1/progress/leaderboard` — Weekly XP on the caller's track's levels within their cohort + the caller's rank
 
 ### Admin: Challenges
 - `POST /api/v1/admin/challenges/import` — Paste challenge JSON. Idempotent on `id`: the first import creates the challenge (live immediately), and re-importing the same `id` **updates it in place** — the update workflow is simply pasting the generator's output again. The same validator gates both. Never touches `status`
@@ -256,7 +256,8 @@ The candidate's real-world capability profile — what they are good at in their
 
 ## Web Routes
 
-- `/` `/login` `/signup` `/onboarding` — entry, auth, role selection
+- `/` `/login` `/signup` — entry and auth
+- `/onboarding` `/role` — role selection: first run, and the revisitable role-select page behind the header's role chip (both render the shared selector; success lands on `/home`, the selected track's path)
 - `/home` — the level path map (play/replay levels, each node showing the challenge's business brief; locked levels unlock in order)
 - `/sessions/[id]` — guided session player (reveal waits for Continue; level result card on completion)
 - `/sessions/[id]/summary` — session recap + score

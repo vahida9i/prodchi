@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { api } from "@/lib/api-client"
 import type { ProgressSummary, BadgeInfo, Leaderboard } from "@/lib/api-client"
+import { RoleChip } from "@/components/RoleChip"
 
 /**
  * Progress + gamification reads: XP/player level, stars, levels passed,
@@ -16,6 +17,7 @@ import type { ProgressSummary, BadgeInfo, Leaderboard } from "@/lib/api-client"
 export default function ProgressPage() {
   const router = useRouter()
   const [progress, setProgress] = useState<ProgressSummary | null>(null)
+  const [roleName, setRoleName] = useState<string | null>(null)
   const [badges, setBadges] = useState<BadgeInfo[]>([])
   const [leaderboard, setLeaderboard] = useState<Leaderboard | null>(null)
   const [loading, setLoading] = useState(true)
@@ -24,14 +26,23 @@ export default function ProgressPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [progressRes, badgesRes, leaderboardRes] = await Promise.all([
+        const [progressRes, badgesRes, leaderboardRes, me] = await Promise.all([
           api.getProgress(),
           api.getBadges(),
-          api.getLeaderboard()
+          api.getLeaderboard(),
+          api.getMe()
         ])
         setProgress(progressRes)
         setBadges(badgesRes.badges)
         setLeaderboard(leaderboardRes)
+        if (me.user.roleTrackId) {
+          try {
+            const { roles } = await api.getRoles()
+            setRoleName(roles.find(role => role.id === me.user.roleTrackId)?.name ?? null)
+          } catch {
+            setRoleName(null)
+          }
+        }
       } catch (err: any) {
         if (err?.status === 401) {
           router.push("/login")
@@ -68,6 +79,7 @@ export default function ProgressPage() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Baaten</h1>
           <div className="flex items-center gap-2">
+            <RoleChip />
             <Button variant="outline" size="sm" onClick={() => router.push("/home")}>
               Back to path
             </Button>
@@ -87,6 +99,11 @@ export default function ProgressPage() {
 
         {progress && (
           <>
+            <p className="text-sm text-muted-foreground">
+              {roleName
+                ? `Showing ${roleName} progress — XP, streak, badges and leaderboard are per-track.`
+                : 'Showing your current track — XP, streak, badges and leaderboard are per-track.'}
+            </p>
             <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
               <Card>
                 <CardContent className="py-4 text-center">
