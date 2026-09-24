@@ -11,7 +11,7 @@
       "choices": [
         {
           "text": "Compare drop-off across document types (passport, licence, ID card)",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "Passport, licence and ID-card uploads complete at nearly identical rates — the type of document isn't the problem.",
           "next": "Q2",
           "quality": "reasonable",
@@ -21,7 +21,7 @@
         },
         {
           "text": "Pull the timing: how long after upload do users abandon, and what are they shown during the wait?",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "Most users who abandon do so 30–90 seconds after a successful upload, while the 'verifying…' screen is up.",
           "next": "Q3",
           "quality": "best",
@@ -32,7 +32,7 @@
         },
         {
           "text": "Interview users who abandoned during verification",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "Interviews confirm the wait is the pain: 'I didn't know if it was working or if it ate my document.'",
           "next": "Q3",
           "quality": "reasonable",
@@ -58,7 +58,7 @@
       "choices": [
         {
           "text": "Review the upload error states with engineering",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": {
             "text": "Upload error rates are under 2% — errors are not driving a 40% loss.",
             "table": {
@@ -87,7 +87,7 @@
         },
         {
           "text": "Segment abandonment by device and user age",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "Abandonment is flat across segments — this is not a niche-device problem.",
           "next": "Q3",
           "quality": "reasonable",
@@ -97,7 +97,7 @@
         },
         {
           "text": "Check what happens between upload and the verification result",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "After upload, users see a bare 'verifying…' screen with no estimate, no reassurance, and no way to leave safely.",
           "next": "Q3",
           "quality": "best",
@@ -126,14 +126,14 @@
         },
         {
           "text": "Move KYC to a later point in the journey so fewer users hit it",
-          "stage": "EXPLORE",
+          "stage": "DISCOVER",
           "reveal": "Deferring KYC is viable for some features, but regulation means core money movement can't start before verification — so for the core journey the wait experience is the work.",
           "next": "Q4",
           "quality": "poor"
         },
         {
           "text": "Reduce verification time by switching providers",
-          "stage": "EXPLORE",
+          "stage": "DISCOVER",
           "reveal": "Provider benchmarks show a possible 20-second improvement, but that is a procurement project measured in quarters, not this month.",
           "next": "Q4",
           "quality": "poor"
@@ -167,7 +167,7 @@
         },
         {
           "text": "A live-chat option in case verification fails",
-          "stage": "EXPLORE",
+          "stage": "DISCOVER",
           "reveal": "Chat adds confidence for a few, but the dominant fear is 'is this stuck?', which chat doesn't answer.",
           "next": "Q6",
           "quality": "poor",
@@ -183,7 +183,7 @@
       "choices": [
         {
           "text": "Instrument the exact abandon moment and re-run the timing analysis",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "Timing data shows abandonment clusters 30–90 seconds after upload — the animation never addressed the uncertainty.",
           "next": "Q3",
           "quality": "best",
@@ -194,7 +194,7 @@
         },
         {
           "text": "Keep the harmless animation and restart from evidence",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "The animation stays, but the real work is the wait experience — back to the data.",
           "next": "Q3",
           "quality": "reasonable",
@@ -204,7 +204,7 @@
         },
         {
           "text": "Accept the flat result and move on to the next roadmap item",
-          "stage": "EXPLORE",
+          "stage": "DISCOVER",
           "reveal": "The metric stays at 60% — the KYC wall remains for every new user.",
           "next": "END",
           "quality": "poor"
@@ -217,7 +217,7 @@
       "choices": [
         {
           "text": "Roll it out to everyone and monitor support tickets",
-          "stage": "VALIDATE",
+          "stage": "TEST",
           "reveal": "Ticket volume about verification drops, but without a comparison group you can't attribute the change cleanly.",
           "next": "END",
           "quality": "reasonable",
@@ -227,7 +227,7 @@
         },
         {
           "text": "A/B the new screen against the old on the next 10% of new users, watching KYC completion",
-          "stage": "VALIDATE",
+          "stage": "TEST",
           "reveal": {
             "text": "Completion on the new screen climbs from 60% to 71% in the first week of the test.",
             "table": {

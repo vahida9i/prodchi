@@ -2,10 +2,10 @@ import { FastifyInstance } from 'fastify'
 import { prisma } from '../../lib/prisma.ts'
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
-import { validateChallengeImport } from '@baaten/shared-types/validator'
-import { isSingleQuestion } from '@baaten/shared-types/scoring'
-import type { Question } from '@baaten/shared-types/challenge-schema'
-import { normalizeReveal } from '@baaten/shared-types/challenge-schema'
+import { validateChallengeImport } from '@prodchi/shared-types/validator'
+import { isSingleQuestion } from '@prodchi/shared-types/scoring'
+import type { Question } from '@prodchi/shared-types/challenge-schema'
+import { normalizeReveal } from '@prodchi/shared-types/challenge-schema'
 
 const updateChallengeStatusSchema = z.object({
   status: z.enum(['active', 'retired'])

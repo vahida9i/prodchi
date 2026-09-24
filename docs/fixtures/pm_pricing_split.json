@@ -1,0 +1,461 @@
+{
+  "id": "pm_pricing_split",
+  "title": "The Pricing Experiment That Split the Team",
+  "role": "Product Management",
+  "difficulty": "medium",
+  "summary": "DevTools Co is a SaaS platform for engineering teams — it provides CI/CD pipelines, container orchestration, and deployment automation. Its customers are engineering managers who pay per seat per month.",
+  "start": "Q1",
+  "questions": {
+    "Q1": {
+      "text": "A pricing experiment is live: half see $20/seat, half $25/seat. After 30 days, $20 has 15% more signups but 8% lower ARPU. What do you do first?",
+      "choices": [
+        {
+          "text": "Segment the results by company size and team maturity",
+          "stage": "DIAGNOSE",
+          "reveal": "Small accounts never expand; mid-size agencies add seats for three months, then stop. The stall is segment-dependent.",
+          "next": "Q2",
+          "quality": "best",
+          "criteria": [
+            "evidence-first",
+            "customer-impact"
+          ],
+          "because": "The headline numbers hide a segment-level story."
+        },
+        {
+          "text": "Calculate the total revenue impact of the conversion lift",
+          "stage": "DIAGNOSE",
+          "reveal": "15% more signups at $20 produces $12K more MRR — but 8% ARPU drop costs $18K across existing base. Net negative.",
+          "next": "Q3",
+          "quality": "reasonable",
+          "criteria": [
+            "evidence-first"
+          ]
+        },
+        {
+          "text": "Interview three customers who recently signed up at $20",
+          "stage": "DIAGNOSE",
+          "reveal": "They say the lower price was decisive — but also express concerns about missing features they'll need as they grow.",
+          "next": "Q2",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Recommend rolling out $20/seat across the board",
+          "stage": "STRATEGIZE",
+          "reveal": "The recommendation ignores the ARPU drop and segment differences.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q2": {
+      "text": "Small teams convert 25% better at $20, mid-market shows no difference, enterprise unaffected. What do you do next?",
+      "choices": [
+        {
+          "text": "Model the long-term LTV of small-team signups at $20 vs $25",
+          "stage": "STRATEGIZE",
+          "reveal": "Small teams churn at 8%/month — LTV is $340 at $20, $390 at $25. The conversion lift adds 15% more teams, each worth less.",
+          "next": "Q4",
+          "quality": "best",
+          "criteria": [
+            "evidence-first",
+            "trade-off-clarity"
+          ],
+          "because": "LTV modeling shows the trade-off directly."
+        },
+        {
+          "text": "Recommend $20 for small, $25 for mid-market and enterprise",
+          "stage": "STRATEGIZE",
+          "reveal": "The segmented recommendation is scoped — but requires tiered pricing infrastructure.",
+          "next": "Q5",
+          "quality": "reasonable",
+          "criteria": [
+            "trade-off-clarity",
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Run a full A/B test on pricing page copy",
+          "stage": "EXECUTE",
+          "reveal": "Copy variations improve click-through — but conversion to paid stays the same.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q3": {
+      "text": "The net revenue impact is negative this month. What do you do next?",
+      "choices": [
+        {
+          "text": "Check whether small-team churn is price-sensitive or feature-driven",
+          "stage": "DIAGNOSE",
+          "reveal": "Small-team churn correlates with lack of advanced features (SSO, audit logs), not price.",
+          "next": "Q4",
+          "quality": "best",
+          "criteria": [
+            "evidence-first"
+          ],
+          "because": "Churn being feature-driven changes the LTV calculation — the $20 lift is genuine new revenue."
+        },
+        {
+          "text": "Extend the experiment for 60 more days to confirm",
+          "stage": "MEASURE",
+          "reveal": "The extension runs — but the segment pattern is already clear at 30 days.",
+          "next": "END",
+          "quality": "poor"
+        },
+        {
+          "text": "Survey more customers to get additional signal",
+          "stage": "DIAGNOSE",
+          "reveal": "More survey data arrives — but without segment analysis, responses are just a larger version of the same mixed signal.",
+          "next": "Q4",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q4": {
+      "text": "LTV modeling and churn analysis both favor $20 for small teams. The question is whether to implement tiered pricing. What do you propose?",
+      "choices": [
+        {
+          "text": "Prioritize tiered pricing as a Q3 initiative with clear success metrics",
+          "stage": "PRIORITIZE",
+          "reveal": "The initiative is prioritized with clear metrics: small-team conversion and 12-month LTV. Engineering estimates 6 weeks. The roadmap slot is defended.",
+          "next": "Q6",
+          "quality": "best",
+          "criteria": [
+            "trade-off-clarity"
+          ],
+          "because": "Prioritizing with defined metrics turns the pricing question into a testable bet with measurable outcomes."
+        },
+        {
+          "text": "Accept the constraint and move forward with one price",
+          "stage": "FRAME",
+          "reveal": "You accept the constraint — growth momentum stalls. The business case for the other workloads remains buried.",
+          "next": "Q7",
+          "quality": "reasonable",
+          "criteria": [
+            "outcome-measurement"
+          ]
+        },
+        {
+          "text": "Scope tiered pricing as a minimal change to checkout flow",
+          "stage": "PLAN",
+          "reveal": "The minimal scope is proposed — but tiered pricing touches the billing system, and a minimal scope doesn't address customer-facing differences.",
+          "next": "Q6",
+          "quality": "reasonable",
+          "criteria": [
+            "trade-off-clarity"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q5": {
+      "text": "You've decided tiered pricing is the right strategy but engineering says it's not ready. What do you do?",
+      "choices": [
+        {
+          "text": "Propose an MVP with two tiers: $20 SMB and $25 mid-market, manual enterprise",
+          "stage": "PLAN",
+          "reveal": "The MVP scopes to 4 weeks — covers the segments with real data, defers enterprise automation. The product team can ship the billing changes.",
+          "next": "Q6",
+          "quality": "best",
+          "criteria": [
+            "trade-off-clarity"
+          ],
+          "because": "An MVP covering the data-backed segments is better than waiting for a full solution."
+        },
+        {
+          "text": "Build the full 3-tier model with custom enterprise fields",
+          "stage": "PLAN",
+          "reveal": "The full build is scoped at 10 weeks — solves enterprise edge cases but delays the SMB change that the data supports now.",
+          "next": "END",
+          "quality": "poor"
+        },
+        {
+          "text": "Implement price discrimination via coupon codes for now",
+          "stage": "EXECUTE",
+          "reveal": "Coupon codes handle the pricing difference — but the checkout flow doesn't explain why tiers exist. Customers report confusion.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q6": {
+      "text": "Tiered pricing MVP is scoped at 4 weeks. How do you launch and measure it?",
+      "choices": [
+        {
+          "text": "Launch to 50% of new SMB signups and compare conversion against control",
+          "stage": "MEASURE",
+          "reveal": "The 50% cohort converts 18% better than control, retention flat. The tiered price improves acquisition without hurting retention.",
+          "next": "Q8",
+          "quality": "best",
+          "criteria": [
+            "outcome-measurement"
+          ],
+          "because": "A 50% rollout with a control group isolates the pricing change's effect from other variables."
+        },
+        {
+          "text": "Ship to all new signups and monitor total MRR next month",
+          "stage": "MEASURE",
+          "reveal": "MRR rises — but without a control group, you can't tell if it was the pricing change or a seasonal uptick.",
+          "next": "Q8",
+          "quality": "reasonable",
+          "criteria": [
+            "outcome-measurement"
+          ]
+        },
+        {
+          "text": "A/B test pricing page layouts instead",
+          "stage": "EXECUTE",
+          "reveal": "The layout test runs — but it doesn't test the tiered pricing itself. The core question of price segmentation remains unanswered.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q7": {
+      "text": "You've chosen a single price for now. But 3 months later, the plateau hasn't broken. What do you do?",
+      "choices": [
+        {
+          "text": "Re-run the pricing experiment with additional segment data",
+          "stage": "MEASURE",
+          "reveal": "The re-run confirms the segment pattern — small teams want $20, mid-market doesn't care. The data is now strong enough to justify tiered pricing.",
+          "next": "Q8",
+          "quality": "best",
+          "criteria": [
+            "evidence-first"
+          ],
+          "because": "A re-run with more segment data strengthens the case for tiered pricing and removes the engineering-readiness objection."
+        },
+        {
+          "text": "Survey churned customers about pricing",
+          "stage": "DIAGNOSE",
+          "reveal": "Churned customers cite pricing among their reasons — but the survey doesn't distinguish price sensitivity from product-market fit issues.",
+          "next": "Q8",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Offer a limited-time discount to reactivate churned customers",
+          "stage": "STRATEGIZE",
+          "reveal": "The discount campaign runs — some customers return, but they churn again at the same rate after the discount ends. The underlying issue is unaddressed.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q8": {
+      "text": "You've confirmed the segment pattern with stronger data. The C-suite wants a decision. What's your recommendation?",
+      "choices": [
+        {
+          "text": "Recommend tiered pricing with a phased rollout and success metrics",
+          "stage": "STRATEGIZE",
+          "reveal": "The recommendation is clear: $20 for SMB with limited features, $25 for mid-market with full features. Phased rollout with 50% test group, success metric = net new MRR.",
+          "next": "Q10",
+          "quality": "best",
+          "criteria": [
+            "trade-off-clarity",
+            "outcome-measurement"
+          ],
+          "because": "A tiered recommendation with phased rollout and defined metrics turns the pricing decision into a measured bet."
+        },
+        {
+          "text": "Recommend keeping $25 flat and investing in features instead",
+          "stage": "STRATEGIZE",
+          "reveal": "The flat-price recommendation is given — but it ignores the data showing small teams are price-sensitive. The plateau continues.",
+          "next": "Q9",
+          "quality": "reasonable"
+        },
+        {
+          "text": "Recommend $20 flat for all segments to maximize growth",
+          "stage": "STRATEGIZE",
+          "reveal": "The recommendation goes out — but mid-market and enterprise customers, who were willing to pay $25, leave for competitors. ARPU drops across the base.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q9": {
+      "text": "The tiered pricing launches. Month 1: SMB conversion up 18%, mid-market flat. Month 2: a competitor launches at $18 flat. What do you do?",
+      "choices": [
+        {
+          "text": "Match the competitor's price for SMB tier, keep mid-market at $25",
+          "stage": "STRATEGIZE",
+          "reveal": "SMB price drops to $18 — but mid-market customers see the price cut and ask why they're paying more. Internal churn rises among mid-market.",
+          "next": "Q11",
+          "quality": "best",
+          "criteria": [
+            "customer-impact",
+            "trade-off-clarity"
+          ],
+          "because": "Matching only on the threatened tier preserves mid-market value while defending the segment under attack."
+        },
+        {
+          "text": "Match the competitor's price across all tiers",
+          "stage": "STRATEGIZE",
+          "reveal": "All prices drop to $18 — total revenue drops 28% overnight. The competitor's cost structure is unknown, and you may be leaving money on the table.",
+          "next": "END",
+          "quality": "poor"
+        },
+        {
+          "text": "Ignore the competitor and stick with the tiered pricing research",
+          "stage": "FRAME",
+          "reveal": "The competitor is ignored — but SMB churn rises 15% as price-sensitive customers defect. The research doesn't protect against competitive moves.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q10": {
+      "text": "You matched the competitor's price on SMB tier only. What's the risk mitigation?",
+      "choices": [
+        {
+          "text": "Define success metrics that catch mid-market churn early",
+          "stage": "MEASURE",
+          "reveal": "The metrics are defined: mid-market NPS and churn rate tracked weekly. At the 3-week mark, mid-market churn is up 4% — early enough to adjust the positioning.",
+          "next": "Q11",
+          "quality": "best",
+          "criteria": [
+            "outcome-measurement"
+          ],
+          "because": "Early churn detection on the non-discounted tier lets you react before the damage compounds."
+        },
+        {
+          "text": "Offer mid-market customers a feature bonus to justify the higher price",
+          "stage": "EXECUTE",
+          "reveal": "The feature bonus is announced — but features take time to build, and customers who hear about the discount can't yet see the value.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Monitor overall MRR and hope the volume makes up for the price cut",
+          "stage": "FRAME",
+          "reveal": "Overall MRR is monitored — but without tier-level tracking, the mid-market churn is invisible until the quarterly review.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q11": {
+      "text": "Mid-market churn is up 4% at the 3-week mark. The feature bonus takes 2 weeks. What do you do immediately?",
+      "choices": [
+        {
+          "text": "Communicate the upcoming feature roadmap to mid-market customers",
+          "stage": "EXECUTE",
+          "reveal": "The roadmap is shared — mid-market churn stabilizes as customers see the value coming. By the time the bonus features launch, churn is back to baseline.",
+          "next": "Q12",
+          "quality": "best",
+          "criteria": [
+            "customer-impact"
+          ],
+          "because": "Communicating the roadmap buys time — customers hold off churning for features they can see are coming."
+        },
+        {
+          "text": "Offer a temporary retention discount to mid-market customers",
+          "stage": "PRIORITIZE",
+          "reveal": "The retention discount is offered — some customers stay, but the discount trains them to wait for price cuts. Renewal pricing expectations are now elevated.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "trade-off-clarity"
+          ]
+        },
+        {
+          "text": "Accept the 4% churn and focus on rebuilding the feature bonus",
+          "stage": "FRAME",
+          "reveal": "The churn is accepted — but 4% monthly churn compounds fast. By the time features launch, 8% of the mid-market base has left.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q12": {
+      "text": "Mid-market churn is stabilized. The feature bonus launches next week. The board asks for a final verdict on the tiered pricing strategy. What do you report?",
+      "choices": [
+        {
+          "text": "Report on both the successes and the competitive-response lessons, with a revised forecast",
+          "stage": "MEASURE",
+          "reveal": "The report covers: SMB conversion +18%, mid-market churn stabilized, competitive response cost $42K in discounts. Revised 12-month forecast: $180K net new MRR, down from $210K but sustainable.",
+          "next": "END",
+          "quality": "best",
+          "criteria": [
+            "outcome-measurement",
+            "evidence-first"
+          ],
+          "because": "An honest report on both wins and lessons — with a grounded revised forecast — gives the board the full picture for decision-making."
+        },
+        {
+          "text": "Report the positive SMB conversion and mid-market stabilization as overall success",
+          "stage": "MEASURE",
+          "reveal": "The success story is told — but the board later discovers the $42K discount cost and the revised forecast. Trust in financial discipline erodes.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Blame the competitor for the entire mid-market churn episode",
+          "stage": "FRAME",
+          "reveal": "The competitor is blamed — but the board recognizes that competitive response was a choice, not a force majeure. The analysis lacks ownership.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    }
+  },
+  "assessment": {
+    "criteria": [
+      {
+        "id": "evidence-first",
+        "label": "Letting evidence lead",
+        "guidance": "Name the segment pattern before recommending a price."
+      },
+      {
+        "id": "customer-impact",
+        "label": "Sizing customer impact",
+        "guidance": "Ground the decision in what changes for each segment."
+      },
+      {
+        "id": "trade-off-clarity",
+        "label": "Making the trade-off explicit",
+        "guidance": "Name what each direction costs."
+      },
+      {
+        "id": "outcome-measurement",
+        "label": "Proving the outcome",
+        "guidance": "Define the measure that validates the bet."
+      }
+    ]
+  }
+}

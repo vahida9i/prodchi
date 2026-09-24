@@ -11,7 +11,7 @@
       "choices": [
         {
           "text": "Look at what patients receive between booking and the appointment",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "Patients get a single confirmation email at booking and nothing else — no reminder, no way to change or cancel.",
           "next": "Q2",
           "quality": "best",
@@ -22,7 +22,7 @@
         },
         {
           "text": "Interview patients who no-showed",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "Several no-shows say they forgot; a few admit they felt too guilty to cancel and just didn't come.",
           "next": "Q3",
           "quality": "reasonable",
@@ -32,7 +32,7 @@
         },
         {
           "text": "Check whether no-shows cluster by appointment type, day, or time",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "No-shows are flat across appointment types but spike on early-morning slots.",
           "next": "Q4",
           "quality": "reasonable",
@@ -58,7 +58,7 @@
         },
         {
           "text": "Map the journey from symptom to appointment day to see where intent is made or lost",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "The map shows booking happens days before the visit, with no touchpoint in between to carry the patient's intent.",
           "next": "Q5",
           "quality": "best",
@@ -69,7 +69,7 @@
         },
         {
           "text": "Compare no-show rates before and after the online launch",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": {
             "text": "No-shows were 12% with phone bookings — the jump to 30% began with online booking, not with the clinic.",
             "table": {
@@ -104,7 +104,7 @@
       "choices": [
         {
           "text": "Map the gap between booking and appointment to find where the commitment fades",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "The map shows a 3–10 day silence after booking — nothing carries the patient's intent to appointment day.",
           "next": "Q5",
           "quality": "best",
@@ -138,7 +138,7 @@
       "choices": [
         {
           "text": "Follow a handful of patients from booking to the morning of an early visit",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "Booking is effortless; the morning itself — transit, work, childcare — is where plans break, and the booking screen never sees it.",
           "next": "Q5",
           "quality": "best",
@@ -149,14 +149,14 @@
         },
         {
           "text": "Stop offering early-morning slots online",
-          "stage": "EXPLORE",
+          "stage": "DISCOVER",
           "reveal": "Removing the slots punishes punctual patients for a problem the flow created.",
           "next": "END",
           "quality": "poor"
         },
         {
           "text": "Have staff call everyone who books an early slot",
-          "stage": "EXPLORE",
+          "stage": "DISCOVER",
           "reveal": "Calls don't scale, and they pile onto a front desk that is already short-staffed.",
           "next": "END",
           "quality": "poor"
@@ -191,7 +191,7 @@
         },
         {
           "text": "Overbook early-morning slots by 10% to absorb no-shows",
-          "stage": "EXPLORE",
+          "stage": "DISCOVER",
           "reveal": "Overbooking risks queues when everyone shows — it treats the symptom, not the cause.",
           "next": "Q6",
           "quality": "poor"
@@ -204,7 +204,7 @@
       "choices": [
         {
           "text": "Roll it out to all patients and survey the staff",
-          "stage": "VALIDATE",
+          "stage": "TEST",
           "reveal": "Staff like it, but without a comparison window the effect on no-shows is guesswork.",
           "next": "END",
           "quality": "reasonable",
@@ -214,7 +214,7 @@
         },
         {
           "text": "Ask patients in the waiting room whether they would use it",
-          "stage": "VALIDATE",
+          "stage": "TEST",
           "reveal": "Stated intent overpromises — behavior in the weeks after booking is the real test.",
           "next": "END",
           "quality": "poor",
@@ -224,7 +224,7 @@
         },
         {
           "text": "Pilot with two weeks of early-morning bookers and compare no-shows to the same window before",
-          "stage": "VALIDATE",
+          "stage": "TEST",
           "reveal": {
             "text": "Early-morning no-shows fall from 38% to 19% in the pilot; guilt-driven absences now show up as reschedules the clinic can refill.",
             "table": {

@@ -1,9 +1,9 @@
 import { FastifyInstance } from 'fastify'
 import { prisma } from '../lib/prisma.ts'
-import { levelFromXp } from '@baaten/shared-types/scoring'
-import { buildSkillProfile } from '@baaten/shared-types/skills'
-import type { SkillPathEntry } from '@baaten/shared-types/skills'
-import type { Question } from '@baaten/shared-types/challenge-schema'
+import { levelFromXp } from '@prodchi/shared-types/scoring'
+import { buildSkillProfile } from '@prodchi/shared-types/skills'
+import type { SkillPathEntry } from '@prodchi/shared-types/skills'
+import type { Question } from '@prodchi/shared-types/challenge-schema'
 
 /**
  * Candidate progress + gamification reads.
@@ -87,7 +87,7 @@ export async function progressRoutes(fastify: FastifyInstance) {
   })
 
   // GET /api/v1/progress/skills — the real-world skill profile (the role's own
-  // skills: the six design skills for Product Design, the seven management
+  // skills: the seven design skills for Product Design, the seven management
   // skills for Product Management), aggregated on read
   // from the caller's completed runs: each recorded decision is classified by
   // the authored stage of the move the candidate actually chose and weighted

@@ -61,7 +61,7 @@ async function importFixture(fixture) {
 /** Signup + onboarding as a candidate of the given role track. */
 async function signupAs(roleName) {
   const stamp = Date.now() + Math.random().toString(36).slice(2, 8)
-  const email = `pm-e2e-${stamp}@baaten.test`
+  const email = `pm-e2e-${stamp}@prodchi.test`
   const signup = await req('POST', '/auth/signup', { email, password: PASSWORD })
   if (signup.status !== 201) throw new Error(`signup failed: ${JSON.stringify(signup.json)}`)
   const roles = await req('GET', '/roles')
@@ -92,7 +92,7 @@ async function playLevel(levelId, questions, chooseBest = true) {
 const stamp = Date.now()
 
 // 1. seed seam: both role tracks are live
-let r = await req('POST', '/auth/login', { email: 'admin@baaten.local', password: 'admin123' })
+let r = await req('POST', '/auth/login', { email: 'admin@prodchi.local', password: 'admin123' })
 check('admin login', r.status === 200, JSON.stringify(r.json))
 
 r = await req('GET', '/roles')
@@ -267,8 +267,8 @@ check('a badge earned on the PM track does not show on the PD track',
 
 r = await req('GET', '/progress/skills')
 const switchedSkills = r.json?.skills ?? []
-check('after the switch the profile is the PD six, in process order',
-  switchedSkills.map(skill => skill.id).join(',') === 'framing,research,synthesis,ideation,solution,validation',
+check('after the switch the profile is the PD seven, in process order',
+  switchedSkills.map(skill => skill.id).join(',') === 'framing,discovery,synthesis,ideation,solution,testing,refinement',
   JSON.stringify(switchedSkills.map(skill => skill.id)))
 check('the fresh track reads unproven — PM decisions score nothing for PD',
   r.json?.decisions === 0 && switchedSkills.every(skill => skill.proficiency === 'unproven'),

@@ -1,7 +1,7 @@
 import { prisma } from '../lib/prisma.ts'
 import type { Prisma } from '@prisma/client'
-import type { Question, RevealBlock } from '@baaten/shared-types/challenge-schema'
-import { normalizeReveal } from '@baaten/shared-types/challenge-schema'
+import type { Question, RevealBlock } from '@prodchi/shared-types/challenge-schema'
+import { normalizeReveal } from '@prodchi/shared-types/challenge-schema'
 
 /**
  * Session engine primitives, shared by the two ways a session can be started:

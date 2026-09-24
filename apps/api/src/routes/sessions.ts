@@ -2,11 +2,11 @@ import { FastifyInstance } from 'fastify'
 import { prisma } from '../lib/prisma.ts'
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
-import { scoreLevel } from '@baaten/shared-types/scoring'
-import type { LevelScore } from '@baaten/shared-types/scoring'
-import { evaluateRun } from '@baaten/shared-types/feedback'
-import type { FeedbackReport } from '@baaten/shared-types/feedback'
-import type { Assessment, Role } from '@baaten/shared-types/challenge-schema'
+import { scoreLevel } from '@prodchi/shared-types/scoring'
+import type { LevelScore } from '@prodchi/shared-types/scoring'
+import { evaluateRun } from '@prodchi/shared-types/feedback'
+import type { FeedbackReport } from '@prodchi/shared-types/feedback'
+import type { Assessment, Role } from '@prodchi/shared-types/challenge-schema'
 
 /** The challenge's stored role name, narrowed to the known role tracks. */
 type RunChallengeRole = Role

@@ -14,7 +14,7 @@ function question(bestChoice: number, choices = 3): Question {
     text: 'question',
     choices: Array.from({ length: choices }, (_, i) => ({
       text: `choice ${i}`,
-      stage: 'INVESTIGATE' as const,
+      stage: 'FRAME' as const,
       reveal: `reveal ${i}`,
       next: END
     })),

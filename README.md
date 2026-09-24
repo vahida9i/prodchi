@@ -1,4 +1,4 @@
-# Baaten — Challenge Import, Session & Progression App
+# Prodchi — Challenge Import, Session & Progression App
 
 A product-design skill-practice app: admins import branching scenario challenges as JSON, candidates play them one question at a time along a numbered level path, and the finished reasoning path is viewable as a recap with the run's score. The app **consumes, runs, and tracks** challenge content — it never generates or edits it, and scoring is fully deterministic (no LLM, no per-content judgments beyond the authored answer key).
 
@@ -11,7 +11,7 @@ A product-design skill-practice app: admins import branching scenario challenges
 ## Project Structure
 
 ```
-baaten/
+prodchi/
 ├── apps/
 │   ├── web/          # Next.js frontend (level path, candidate sessions, progress + admin panel)
 │   └── api/          # Fastify API server (import validation, session engine, progression)
@@ -84,7 +84,7 @@ deliberately: it is the quick-call sample the e2e suites import, not path conten
 For a clean slate first, wipe and re-seed:
 
 ```bash
-cd packages/db && DATABASE_URL=postgresql://postgres@localhost:5432/baaten pnpm exec prisma migrate reset --force
+cd packages/db && DATABASE_URL=postgresql://postgres@localhost:5432/prodchi pnpm exec prisma migrate reset --force
 pnpm db:seed && pnpm db:reset-content
 ```
 
@@ -119,7 +119,7 @@ Challenges are authored externally (by the Challenge Generator) and imported as 
       "text": "...",
       "bestChoice": 1,
       "choices": [
-        { "text": "...", "stage": "INVESTIGATE", "reveal": "...", "next": "Q2" },
+        { "text": "...", "stage": "DISCOVER", "reveal": "...", "next": "Q2" },
         { "text": "...", "stage": "DEFINE", "reveal": "...", "next": "END" }
       ]
     }
@@ -202,7 +202,7 @@ Failures are rejected with itemized reasons (e.g. *"Question Q11 loops back to Q
 
 The candidate's real-world capability profile — what they are good at in their role, read from how they answered. Like everything else here it is **fully deterministic** (no AI, no new authoring): every choice in every challenge is tagged with a process `stage`, and each role's stages map onto the skills that role lists on a CV.
 
-- **Product Design (six skills)** (fixed process order): Problem framing (`FRAME`), Research & evidence (`INVESTIGATE`), Synthesis & definition (`DEFINE`), Ideation & options (`EXPLORE`), Solution & tradeoffs (`DESIGN`), Validation & experimentation (`VALIDATE`).
+- **Product Design (seven skills)** (fixed process order): Problem framing (`FRAME`), Discovery & evidence (`DISCOVER`), Synthesis & definition (`DEFINE`), Ideation & options (`IDEATE`), Solution & tradeoffs (`DESIGN`), Testing with users (`TEST`), Refinement & iteration (`REFINE`).
 - **Product Management (seven skills)** (fixed process order): Problem framing (`FRAME`), Diagnosis (`DIAGNOSE`), Strategy & direction (`STRATEGIZE`), Prioritization (`PRIORITIZE`), Planning & roadmapping (`PLAN`), Execution & delivery (`EXECUTE`), Measurement & learning (`MEASURE`).
 - Each decision is credited to the skill of the stage on the move the candidate **chose** — not the ideal one — weighted best = 1, reasonable = 0.5, poor = 0 (`packages/shared-types/skills.ts`). Stages are per-role at import: a PM challenge may only use PM stages, a PD challenge only PD stages (`FRAME` is shared).
 - **Proficiency bands** reuse the run-feedback thresholds: `strong` ≥ 75%, `emerging` ≤ 50%, else `developing`. A skill also needs **≥ 3 observed decisions** (`MIN_SKILL_EVIDENCE`) before it may read strong — a thin perfect record stays `developing` and is flagged `thinEvidence` ("needs more evidence"), so one lucky answer cannot claim mastery. Skills with no decisions read `unproven` ("not yet observed") — no fake zeros.
@@ -233,7 +233,7 @@ The candidate's real-world capability profile — what they are good at in their
 
 ### Progress (candidate)
 - `GET /api/v1/progress` — Totals **for the caller's role track**: XP, player level, levels passed, stars, accuracy, streak, per-industry rollups — never aggregated across roles
-- `GET /api/v1/progress/skills` — The skill profile: the role's own real-world skills (six for Product Design, seven for Product Management) scored from the recorded decisions (weighted best/reasonable/poor, `strong` needs rate ≥ 0.75 **and** ≥ 3 decisions), with per-skill evidence lines and proficiency bands
+- `GET /api/v1/progress/skills` — The skill profile: the role's own real-world skills (seven for Product Design, seven for Product Management) scored from the recorded decisions (weighted best/reasonable/poor, `strong` needs rate ≥ 0.75 **and** ≥ 3 decisions), with per-skill evidence lines and proficiency bands
 - `GET /api/v1/progress/badges` — Every badge with earned state (evaluated and stored per track — a badge earned on one role doesn't show on the other)
 - `GET /api/v1/progress/leaderboard` — Weekly XP on the caller's track's levels within their cohort + the caller's rank
 
@@ -277,7 +277,7 @@ pnpm db:reset-content
 pnpm test:e2e
 
 # Schema + graph + scoring unit tests
-pnpm --filter @baaten/shared-types test
+pnpm --filter @prodchi/shared-types test
 
 # Typecheck everything
 pnpm typecheck
@@ -288,7 +288,7 @@ journey (`role onboarding → import → play → level path → skills profile`
 
 | Suite | Track |
 |---|---|
-| `test/e2e/e2e-product-design.mjs` | Product Design — content ops, session mechanics, the level path, the six design skills |
+| `test/e2e/e2e-product-design.mjs` | Product Design — content ops, session mechanics, the level path, the seven design skills |
 | `test/e2e/e2e-product-management.mjs` | Product Management — the same journey plus role isolation and the seven PM skills |
 
 Both suites mutate the database they run against: they import fixtures, build levels as
@@ -299,7 +299,7 @@ the authored path makes them play someone else's content and fail their own asse
 Give them a scratch database:
 
 ```bash
-createdb baaten_e2e
+createdb prodchi_e2e
 
 # Point the seed at the scratch database by editing packages/db/.env (gitignored):
 # seed.ts loads it with process.loadEnvFile, which OVERRIDES the environment, so this
@@ -307,7 +307,7 @@ createdb baaten_e2e
 cd packages/db && pnpm exec prisma migrate deploy && pnpm db:seed
 
 # The API keeps a real environment variable over .env, so it can be pointed per run:
-cd ../.. && DATABASE_URL=postgresql://postgres@localhost:5432/baaten_e2e pnpm dev:api
+cd ../.. && DATABASE_URL=postgresql://postgres@localhost:5432/prodchi_e2e pnpm dev:api
 pnpm test:e2e
 ```
 

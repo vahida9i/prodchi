@@ -1,9 +1,9 @@
 import { FastifyInstance } from 'fastify'
 import { prisma } from '../../lib/prisma.ts'
 import { z } from 'zod'
-import { isSingleQuestion } from '@baaten/shared-types/scoring'
-import { DIFFICULTIES } from '@baaten/shared-types/challenge-schema'
-import type { Question } from '@baaten/shared-types/challenge-schema'
+import { isSingleQuestion } from '@prodchi/shared-types/scoring'
+import { DIFFICULTIES } from '@prodchi/shared-types/challenge-schema'
+import type { Question } from '@prodchi/shared-types/challenge-schema'
 
 const createIndustrySchema = z.object({
   name: z.string().min(1),

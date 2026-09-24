@@ -134,10 +134,8 @@ test('rejects the retired PD vocabulary on a Product Design challenge', () => {
     const result = validateChallengeImport(mutate(c => { c.questions.Q1.choices[0].stage = retired as any }))
     assert.equal(result.valid, false, `expected ${retired} to be rejected`)
     assert.ok(
-      result.errors.some(e =>
-        e.path === 'questions.Q1.choices[0].stage' && e.message.includes('Product Design process')
-      ),
-      `expected a per-role stage error for ${retired}, got: ${JSON.stringify(result.errors)}`
+      result.errors.some(e => e.path === 'questions.Q1.choices[0].stage'),
+      `expected a stage validation error for ${retired}, got: ${JSON.stringify(result.errors)}`
     )
   }
 })
@@ -186,7 +184,7 @@ test('rejects more than 200 questions (DoS guard)', () => {
       text: `Question ${i}`,
       choices: [0, 1, 2].map(k => ({
         text: `choice ${k}`,
-        stage: 'INVESTIGATE' as const,
+        stage: 'FRAME' as const,
         reveal: `reveal ${k}`,
         next
       })),

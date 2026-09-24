@@ -11,7 +11,7 @@
       "choices": [
         {
           "text": "Review usability session recordings from the last month",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "Most users who drop off pause noticeably on the permissions screen before leaving.",
           "next": "Q2",
           "quality": "reasonable",
@@ -21,7 +21,7 @@
         },
         {
           "text": "Talk to users who recently abandoned onboarding",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "Several users say they weren't sure why the app needed the permissions it asked for.",
           "next": "Q3",
           "quality": "best",
@@ -32,7 +32,7 @@
         },
         {
           "text": "Check what changed in the onboarding flow recently",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "A new permissions screen was added three weeks ago to support a location-based feature.",
           "next": "Q4",
           "quality": "reasonable",
@@ -55,7 +55,7 @@
       "choices": [
         {
           "text": "Break down drop-off by device type",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": {
             "text": "On mobile, most drop-off happens on the permissions screen. On desktop, drop-off is spread evenly across all steps.",
             "table": {
@@ -86,7 +86,7 @@
         },
         {
           "text": "Review what the permissions screen currently communicates",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "The screen lists the permissions requested but doesn't explain why they're needed or what happens if a user declines.",
           "next": "Q7",
           "quality": "reasonable",
@@ -96,7 +96,7 @@
         },
         {
           "text": "Check whether declining a permission blocks onboarding entirely",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "Declining any permission currently stops onboarding, with no way to continue.",
           "next": "Q8",
           "quality": "reasonable",
@@ -112,7 +112,7 @@
       "choices": [
         {
           "text": "Review what the permissions screen currently communicates",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "The screen lists the permissions requested but doesn't explain why they're needed or what happens if a user declines.",
           "next": "Q7",
           "quality": "poor",
@@ -122,7 +122,7 @@
         },
         {
           "text": "Check whether this is a new problem or a longstanding one",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "The permissions screen was added three weeks ago; before that, onboarding didn't request these permissions at all.",
           "next": "Q4",
           "quality": "best",
@@ -149,7 +149,7 @@
       "choices": [
         {
           "text": "Compare onboarding completion before and after the screen was added",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "Completion was stable at 78% before the screen was added and has declined steadily since.",
           "next": "Q6",
           "quality": "best",
@@ -160,14 +160,14 @@
         },
         {
           "text": "Check whether the permission is required or optional for core app use",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "The location permission is only needed for one optional feature, not for the app's core functionality.",
           "next": "Q8",
           "quality": "reasonable"
         },
         {
           "text": "Explore whether this permission request could happen later, in context",
-          "stage": "EXPLORE",
+          "stage": "DISCOVER",
           "reveal": "Other permissions in the app are currently requested contextually, at the moment they're needed, except this one.",
           "next": "Q10",
           "quality": "poor"
@@ -180,7 +180,7 @@
       "choices": [
         {
           "text": "Investigate what users understand about the app right after onboarding",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "In short follow-up surveys, many users who completed onboarding can't clearly explain what the location permission was for.",
           "next": "Q9",
           "quality": "reasonable",
@@ -190,7 +190,7 @@
         },
         {
           "text": "Investigate where users hesitate during onboarding",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "Most users who drop off pause noticeably on the permissions screen before leaving.",
           "next": "Q2",
           "quality": "best",
@@ -214,7 +214,7 @@
       "choices": [
         {
           "text": "Review how the permissions screen renders on mobile specifically",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "On smaller screens, the explanation text is truncated, leaving only the permission name and two buttons visible.",
           "next": "Q7",
           "quality": "best",
@@ -225,14 +225,14 @@
         },
         {
           "text": "Investigate the general desktop drop-off separately",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "Desktop drop-off appears linked to overall onboarding length, not any single screen.",
           "next": "Q11",
           "quality": "reasonable"
         },
         {
           "text": "Check whether the permissions screen is mandatory on both platforms",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "The permissions screen is mandatory on both platforms, with no option to skip and return later.",
           "next": "Q8",
           "quality": "reasonable"
@@ -256,14 +256,14 @@
         },
         {
           "text": "Explore alternative ways to present this screen",
-          "stage": "EXPLORE",
+          "stage": "DISCOVER",
           "reveal": "Options include an inline explanation, a contextual request tied to the relevant feature, or a benefit-led framing before the system prompt.",
           "next": "Q10",
           "quality": "poor"
         },
         {
           "text": "Check how similar permission requests are handled elsewhere in the app",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "Other permissions in the app are requested contextually, with a short explanation shown just before the system prompt.",
           "next": "Q10",
           "quality": "reasonable"
@@ -287,14 +287,14 @@
         },
         {
           "text": "Explore letting users skip and continue onboarding",
-          "stage": "EXPLORE",
+          "stage": "DISCOVER",
           "reveal": "Removing the hard block would require a way to re-prompt for the permission later, in context.",
           "next": "Q10",
           "quality": "reasonable"
         },
         {
           "text": "Check with engineering whether the feature can degrade gracefully without the permission",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "Engineering confirms the feature can be fully disabled without the permission, with no impact on the rest of the app.",
           "next": "Q10",
           "quality": "reasonable"
@@ -307,7 +307,7 @@
       "choices": [
         {
           "text": "Explore how to communicate this at the right moment",
-          "stage": "EXPLORE",
+          "stage": "DISCOVER",
           "reveal": "Two directions emerge: explain everything upfront in onboarding, or move the request to the moment the feature is first used.",
           "next": "Q10",
           "quality": "best",
@@ -328,7 +328,7 @@
         },
         {
           "text": "Investigate whether moving the request later is technically feasible",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "Engineering confirms the permission can be requested contextually rather than during onboarding.",
           "next": "Q10",
           "quality": "reasonable"
@@ -352,7 +352,7 @@
         },
         {
           "text": "Explore the trade-offs of each direction with stakeholders",
-          "stage": "EXPLORE",
+          "stage": "DISCOVER",
           "reveal": "Engineering notes the contextual version is straightforward to build; analytics notes it will be harder to track permission grant rate against onboarding.",
           "next": "Q13",
           "quality": "reasonable"
@@ -372,7 +372,7 @@
       "choices": [
         {
           "text": "Investigate which steps users spend the most time on",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "Two steps account for most of the time spent: the permissions screen and a preferences-setup step.",
           "next": "Q13",
           "quality": "best",
@@ -383,7 +383,7 @@
         },
         {
           "text": "Explore reducing the number of required onboarding steps",
-          "stage": "EXPLORE",
+          "stage": "DISCOVER",
           "reveal": "The preferences-setup step could be deferred to a later moment without blocking core app use.",
           "next": "Q13",
           "quality": "reasonable"
@@ -403,7 +403,7 @@
       "choices": [
         {
           "text": "Run a usability test comparing it to the current version",
-          "stage": "VALIDATE",
+          "stage": "TEST",
           "reveal": "Users understand the purpose of the permission significantly more often with the new version, and fewer hesitate before deciding.",
           "next": "Q14",
           "quality": "best",
@@ -414,7 +414,7 @@
         },
         {
           "text": "Review the direction with engineering and accessibility",
-          "stage": "VALIDATE",
+          "stage": "TEST",
           "reveal": "The design is technically feasible and passes an accessibility review, with one note about contrast on the explanation text.",
           "next": "Q14",
           "quality": "reasonable",
@@ -424,7 +424,7 @@
         },
         {
           "text": "Test it with users who previously declined the permission",
-          "stage": "VALIDATE",
+          "stage": "TEST",
           "reveal": "Several previously-declining users say they would grant the permission now that they understand what it's for.",
           "next": "Q14",
           "quality": "reasonable",
@@ -440,7 +440,7 @@
       "choices": [
         {
           "text": "Prototype a shortened onboarding flow and test it",
-          "stage": "VALIDATE",
+          "stage": "TEST",
           "reveal": "A shortened flow tests well for completion, but a few users express uncertainty about whether onboarding is 'finished.'",
           "next": "Q14",
           "quality": "best",
@@ -461,7 +461,7 @@
         },
         {
           "text": "Review the shortened flow with the design-system team",
-          "stage": "VALIDATE",
+          "stage": "TEST",
           "reveal": "The design-system team confirms the deferred-step pattern already exists elsewhere in the app and can be reused here.",
           "next": "Q14",
           "quality": "reasonable",
@@ -477,7 +477,7 @@
       "choices": [
         {
           "text": "Release it gradually and monitor onboarding completion",
-          "stage": "VALIDATE",
+          "stage": "TEST",
           "reveal": "Onboarding completion recovers to 76% within two weeks of the gradual rollout.",
           "next": "END",
           "quality": "best",
@@ -488,7 +488,7 @@
         },
         {
           "text": "Expand the rollout while monitoring post-onboarding understanding",
-          "stage": "VALIDATE",
+          "stage": "TEST",
           "reveal": "Follow-up surveys show a significant increase in users who can correctly explain what the permission is used for.",
           "next": "END",
           "quality": "reasonable",

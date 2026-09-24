@@ -32,7 +32,7 @@ export interface SessionHistoryEntry {
 
 // ---------------------------------------------------------------------------
 // End-of-run feedback (deterministic, rule-based — mirrors
-// @baaten/shared-types/feedback evaluateRun, frozen on the session at
+// @prodchi/shared-types/feedback evaluateRun, frozen on the session at
 // completion)
 // ---------------------------------------------------------------------------
 
@@ -171,7 +171,7 @@ export interface Leaderboard {
 
 // ---------------------------------------------------------------------------
 // Skill profile (real-world capabilities read from the recorded decisions;
-// mirrors @baaten/shared-types/skills buildSkillProfile, aggregated on read by
+// mirrors @prodchi/shared-types/skills buildSkillProfile, aggregated on read by
 // the API). Internal stage ids never appear here — the payload speaks the
 // public vocabulary only.
 // ---------------------------------------------------------------------------

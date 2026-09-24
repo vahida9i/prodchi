@@ -1,20 +1,20 @@
 {
-  "name": "@baaten/api",
+  "name": "@prodchi/api",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
-    "predev": "pnpm --filter @baaten/shared-types build",
+    "predev": "pnpm --filter @prodchi/shared-types build",
     "dev": "tsx watch src/server.ts",
-    "prebuild": "pnpm --filter @baaten/shared-types build",
+    "prebuild": "pnpm --filter @prodchi/shared-types build",
     "build": "tsc",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@baaten/db": "workspace:*",
-    "@baaten/shared-types": "workspace:*",
+    "@prodchi/db": "workspace:*",
+    "@prodchi/shared-types": "workspace:*",
     "@fastify/cookie": "^9.3.1",
     "@fastify/cors": "^9.0.1",
     "@prisma/client": "^5.12.0",

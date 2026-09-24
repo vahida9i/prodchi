@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import { prisma } from '../lib/prisma.ts'
-import { XP_PER_BEST_CHOICE } from '@baaten/shared-types/challenge-schema'
+import { XP_PER_BEST_CHOICE } from '@prodchi/shared-types/challenge-schema'
 import { startOrResumeSession } from '../services/session-engine.ts'
 import { isLevelPlayable } from '../services/gamification.ts'
 

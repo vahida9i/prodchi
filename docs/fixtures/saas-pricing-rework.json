@@ -18,7 +18,7 @@
         },
         {
           "text": "Interview trial users who churned and users who converted about how they actually decided",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "Churned users rarely mention price itself; they say they 'couldn't tell if it fits our workflow' — value never became visible during the trial.",
           "next": "Q2",
           "quality": "best",
@@ -29,7 +29,7 @@
         },
         {
           "text": "Analyze which pricing-page sections trial users actually visit",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "Most trial users never open the pricing page at all — the decision is being made inside the product, not on the page.",
           "next": "Q3",
           "quality": "reasonable",
@@ -39,7 +39,7 @@
         },
         {
           "text": "Benchmark prices against three competitors",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "Prices sit mid-market — undercutting would cut revenue without touching the real drop-off.",
           "next": "Q2",
           "quality": "reasonable",
@@ -72,7 +72,7 @@
         },
         {
           "text": "Find what converted users did differently in their first week",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "Converted users connected real data in the first three days and built a dashboard; churned users never got past the demo dataset.",
           "next": "Q4",
           "quality": "best",
@@ -101,14 +101,14 @@
         },
         {
           "text": "Add an in-app banner linking to the pricing page",
-          "stage": "EXPLORE",
+          "stage": "DISCOVER",
           "reveal": "Clicks on the banner rise; conversion doesn't — traffic to the page was never the constraint.",
           "next": "Q4",
           "quality": "poor"
         },
         {
           "text": "Email trial users a direct link to the pricing page",
-          "stage": "EXPLORE",
+          "stage": "DISCOVER",
           "reveal": "Open rates are fine, conversion flat — the page explains price but doesn't create the 'fits our workflow' moment.",
           "next": "Q4",
           "quality": "poor"
@@ -177,7 +177,7 @@
       "choices": [
         {
           "text": "Take the evidence back: interview churned and converted users about how they decided",
-          "stage": "INVESTIGATE",
+          "stage": "DISCOVER",
           "reveal": "The interviews show churned users 'couldn't tell if it fits our workflow' — value never became visible; the tier was never the issue.",
           "next": "Q2",
           "quality": "best",
@@ -188,14 +188,14 @@
         },
         {
           "text": "Keep the new tier and re-test with different headline copy",
-          "stage": "EXPLORE",
+          "stage": "DISCOVER",
           "reveal": "Copy variants barely move conversion — the message is fine; the trial never shows the value.",
           "next": "Q2",
           "quality": "poor"
         },
         {
           "text": "Accept the flat result and keep the new page as is",
-          "stage": "EXPLORE",
+          "stage": "DISCOVER",
           "reveal": "The cheaper tier stays live, attracting users who never reach value — support load rises while revenue doesn't.",
           "next": "END",
           "quality": "poor"
@@ -208,7 +208,7 @@
       "choices": [
         {
           "text": "Ship to all new trials and monitor conversion",
-          "stage": "VALIDATE",
+          "stage": "TEST",
           "reveal": "Conversion improves, but without a holdout group finance can't tell onboarding gains from market seasonality.",
           "next": "END",
           "quality": "reasonable",
@@ -218,7 +218,7 @@
         },
         {
           "text": "A/B the guided first-run against the current trial for two weeks, watching trial-to-paid",
-          "stage": "VALIDATE",
+          "stage": "TEST",
           "reveal": {
             "text": "Conversion moves from 4% to 6.5%; with the evidence in hand, the cheaper tier is quietly retired.",
             "table": {

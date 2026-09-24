@@ -40,7 +40,7 @@ async function main() {
   console.log('Created roles:', productDesign.name + ', ' + productManagement.name)
 
   // Create admin user from env vars
-  const adminEmail = process.env.ADMIN_SEED_EMAIL || 'admin@baaten.local'
+  const adminEmail = process.env.ADMIN_SEED_EMAIL || 'admin@prodchi.local'
   const adminPassword = process.env.ADMIN_SEED_PASSWORD || 'admin123'
   const passwordHash = await bcrypt.hash(adminPassword, 12)
 
@@ -64,7 +64,8 @@ async function main() {
     { name: 'Fintech', order: 1 },
     { name: 'Health', order: 2 },
     { name: 'SaaS', order: 3 },
-    { name: 'Productivity', order: 4 }
+    { name: 'Productivity', order: 4 },
+    { name: 'Enterprise', order: 5 }
   ]
 
   const industryByName = new Map<string, { id: string }>()

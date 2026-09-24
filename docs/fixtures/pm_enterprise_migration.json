@@ -1,0 +1,572 @@
+{
+  "id": "pm_enterprise_migration",
+  "title": "The Enterprise Migration Crisis",
+  "role": "Product Management",
+  "difficulty": "hard",
+  "summary": "CloudMigrate is a cloud migration platform for enterprise IT teams.",
+  "start": "Q1",
+  "questions": {
+    "Q1": {
+      "text": "A Fortune 500 client's migration has stalled: assessment shows 200 workloads ready, but the client's IT director says they can only commit to 3 more in Q1. The client threatens to cancel. What do you do first?",
+      "choices": [
+        {
+          "text": "Diagnose whether the bottleneck is internal resourcing or technical readiness",
+          "stage": "DIAGNOSE",
+          "reveal": "Internal resourcing: the client's IT team has 4 engineers split across 3 competing projects. Technical readiness is fine.",
+          "next": "Q2",
+          "quality": "best",
+          "criteria": [
+            "evidence-first"
+          ],
+          "because": "The bottleneck could be headcount or technical issues — diagnosing which saves wasted effort."
+        },
+        {
+          "text": "Escalate to the client's CIO to unblock the IT director",
+          "stage": "STRATEGIZE",
+          "reveal": "The CIO overrules the IT director and commits the full team — but the 3-engineer cap was realistic, not a blocker. The schedule slips when reality hits.",
+          "next": "Q5",
+          "quality": "poor"
+        },
+        {
+          "text": "Offer a 25% discount to extend the contract",
+          "stage": "STRATEGIZE",
+          "reveal": "The discount is accepted — but the client still only commits 3 workloads. Price wasn't the constraint.",
+          "next": "Q5",
+          "quality": "poor"
+        },
+        {
+          "text": "Survey the client's stakeholders about their concerns",
+          "stage": "DIAGNOSE",
+          "reveal": "The survey surfaces 7 different concerns from 7 stakeholders — some want faster migration, some want more testing. Signal is diluted.",
+          "next": "Q3",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q2": {
+      "text": "The bottleneck is internal resourcing — the client has 4 engineers split across 3 projects. What do you do?",
+      "choices": [
+        {
+          "text": "Ask the client to re-prioritize one project to free up engineers",
+          "stage": "STRATEGIZE",
+          "reveal": "The client re-prioritizes — but it delays their security patch rollout, which the security team escalates to the CIO. The migration is saved but creates a new internal conflict.",
+          "next": "Q4",
+          "quality": "best",
+          "criteria": [
+            "customer-impact",
+            "risk-assessment"
+          ],
+          "because": "This is the strongest move based on the evidence available."
+        },
+        {
+          "text": "Propose a co-managed model where your engineers shadow theirs",
+          "stage": "EXECUTE",
+          "reveal": "Two of your engineers are assigned to shadow — but the client's change management process requires internal sign-off, so co-managed doesn't fully unblock.",
+          "next": "Q4",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Reduce scope to match the team's available capacity",
+          "stage": "PLAN",
+          "reveal": "Scope is reduced to 3 workloads — but the client sees this as failure to deliver on the promised 200. Trust erodes.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q3": {
+      "text": "Seven stakeholders have seven different concerns. How do you get clarity?",
+      "choices": [
+        {
+          "text": "Interview the top 3 stakeholders in priority order to understand their core constraint",
+          "stage": "DIAGNOSE",
+          "reveal": "IT director: headcount allocation; security lead: more testing gates; cloud architect: different target architecture. Three distinct concerns, each with a different solution.",
+          "next": "Q4",
+          "quality": "best",
+          "criteria": [
+            "evidence-first"
+          ],
+          "because": "Priority-ordered interviews surface the actual constraints without getting lost in the noise of seven perspectives."
+        },
+        {
+          "text": "Host a workshop with all 7 stakeholders to align on priorities",
+          "stage": "EXECUTE",
+          "reveal": "The workshop runs 4 hours — no alignment emerges. Speed, security, cost, and architecture don't converge in a single room.",
+          "next": "Q4",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Draft a communication plan addressing each stakeholder concern",
+          "stage": "PLAN",
+          "reveal": "The communication plan is thorough — but it addresses concerns without resolving them. The migration schedule still has no additional commitment.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q4": {
+      "text": "The real constraints are: headcount allocation, security testing gates, and architecture mismatch. These pull in different directions. What's your strategy?",
+      "choices": [
+        {
+          "text": "Present a prioritized roadmap: fix headcount first, then security gates, then architecture",
+          "stage": "STRATEGIZE",
+          "reveal": "Headcount frees 3 engineers, security gates add 2-week delays per workload, and architecture rework defers 40 workloads to Q2. The migration accelerates and the client sees the full dependency chain.",
+          "next": "Q6",
+          "quality": "best",
+          "criteria": [
+            "strategic-positioning",
+            "risk-assessment"
+          ],
+          "because": "A prioritized roadmap that addresses each constraint in order and shows downstream delays is the only path that resolves all three."
+        },
+        {
+          "text": "Negotiate a contract amendment to scope down to 100 workloads",
+          "stage": "STRATEGIZE",
+          "reveal": "The amendment is proposed — but the client sees scope reduction as admitting failure. Legal teams spend 3 weeks negotiating, and the schedule doesn't improve.",
+          "next": "Q6",
+          "quality": "poor"
+        },
+        {
+          "text": "Assign your own engineers to handle security testing and architecture",
+          "stage": "EXECUTE",
+          "reveal": "Your engineers handle testing — but the client's security team rejects externally produced artifacts. The work has to be redone internally.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q5": {
+      "text": "You offered a discount and escalated to the CIO — neither worked. The client still commits only 3 workloads. What's the real issue?",
+      "choices": [
+        {
+          "text": "Investigate the client's internal politics and project dependencies",
+          "stage": "DIAGNOSE",
+          "reveal": "The IT director is protecting their team's bandwidth for a concurrent ERP upgrade. The migration isn't a priority because the ERP project has executive sponsorship and the migration doesn't.",
+          "next": "Q6",
+          "quality": "best",
+          "criteria": [
+            "evidence-first"
+          ],
+          "because": "Neither price nor escalation moved the commitment — the real constraint is internal prioritization the client hasn't acknowledged."
+        },
+        {
+          "text": "Present a phased delivery plan with clear milestones",
+          "stage": "PLAN",
+          "reveal": "The phased plan is presented — but without addressing the ERP project's priority, the client still won't commit more workloads.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Bring in a solution architect to re-validate the migration approach",
+          "stage": "STRATEGIZE",
+          "reveal": "The architect re-validates — but the migration approach was never in question. The client knows it will work; they just won't prioritize it.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q6": {
+      "text": "The real issue is internal prioritization — the client's ERP project has executive sponsorship and your migration doesn't. What do you do?",
+      "choices": [
+        {
+          "text": "Help the client build a business case that elevates the migration to executive visibility",
+          "stage": "STRATEGIZE",
+          "reveal": "You help craft a business case showing the migration unlocks $2M in infrastructure savings and reduces risk. The CIO elevates it above the ERP project, and the client commits 10 workloads for Q1.",
+          "next": "Q8",
+          "quality": "best",
+          "criteria": [
+            "strategic-positioning",
+            "customer-impact"
+          ],
+          "because": "Elevating the migration to executive visibility addresses the actual constraint — the client's internal priority imbalance."
+        },
+        {
+          "text": "Accept the 3-workload commitment and optimize the delivery",
+          "stage": "FRAME",
+          "reveal": "You accept 3 workloads — but the business case for the other 197 workloads remains buried. The migration completes 3 workloads and the client renews for a small expansion only.",
+          "next": "Q8",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Pull your engineers off the migration and reallocate to other clients",
+          "stage": "PRIORITIZE",
+          "reveal": "Your engineers are reallocated — but the client sees the reduced engagement as abandonment. The relationship deteriorates and the contract is not renewed.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q8": {
+      "text": "You've secured executive visibility for the migration and the client commits 10 workloads for Q1. But the client's ERP project is still consuming engineering bandwidth. What do you do?",
+      "choices": [
+        {
+          "text": "Negotiate a temporary dedicated engineer from the ERP project for the migration",
+          "stage": "EXECUTE",
+          "reveal": "A dedicated engineer is borrowed from ERP for 4 weeks — the 10 workloads move into the testing phase. But the ERP project slips its deadline by 2 weeks.",
+          "next": "Q9",
+          "quality": "best",
+          "criteria": [
+            "customer-impact",
+            "risk-assessment"
+          ],
+          "because": "A temporary resource loan from the prioritized ERP project is the move that accelerates the migration without a permanent conflict."
+        },
+        {
+          "text": "Wait for the ERP project to finish before starting the migration",
+          "stage": "FRAME",
+          "reveal": "The ERP project runs another 6 weeks — the client's migration commitment window passes. They've moved on to other priorities.",
+          "next": "END",
+          "quality": "poor"
+        },
+        {
+          "text": "Use your own engineers to do the migration work",
+          "stage": "EXECUTE",
+          "reveal": "Your engineers take over — but the client's security team requires internal sign-off on every migration artifact. The external work has to be redone by the client.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q9": {
+      "text": "The migration is in the testing phase with a temporary engineer borrowed from ERP. The client's security team demands additional penetration testing. What do you do?",
+      "choices": [
+        {
+          "text": "Negotiate a fast-track security review in exchange for additional security documentation",
+          "stage": "EXECUTE",
+          "reveal": "The fast-track is negotiated — you produce the documentation, security does a focused review in 3 days. The migration passes testing and goes live on schedule.",
+          "next": "Q10",
+          "quality": "best",
+          "criteria": [
+            "customer-impact",
+            "risk-assessment"
+          ],
+          "because": "Trading documentation for a fast-track review acknowledges the security concern while respecting the timeline — both sides get something."
+        },
+        {
+          "text": "Reject the additional testing as outside the agreed scope",
+          "stage": "EXECUTE",
+          "reveal": "The rejection stands — but the security team withholds sign-off, and the migration is blocked at the final gate. The client escalates to their board.",
+          "next": "END",
+          "quality": "poor"
+        },
+        {
+          "text": "Agree to the full penetration test and extend the timeline",
+          "stage": "PLAN",
+          "reveal": "The full test is scoped at 3 weeks — the migration goes live, but 2 months late. The client questions the timeline discipline.",
+          "next": "Q10",
+          "quality": "reasonable",
+          "criteria": [
+            "outcome-measurement"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q10": {
+      "text": "The migration passes testing and goes live. But the client's internal success metrics are conflicting: engineering says uptime is 99.9% (success), but business users report intermittent slowdowns. What do you measure?",
+      "choices": [
+        {
+          "text": "Break down the uptime metric by the specific workloads that business users rely on",
+          "stage": "MEASURE",
+          "reveal": "The breakdown shows 3 workloads have 2-second+ latency spikes during peak business hours. Those 3 workloads are the ones business users interact with daily. The 99.9% uptime is averaged across workloads that business users never touch.",
+          "next": "Q11",
+          "quality": "best",
+          "criteria": [
+            "evidence-first",
+            "customer-impact"
+          ],
+          "because": "The aggregated uptime metric hides per-workload performance — business users don't care about the average, they care about their workload."
+        },
+        {
+          "text": "Trust the engineering metric of 99.9% uptime and close the project",
+          "stage": "FRAME",
+          "reveal": "The project is closed — but business users continue reporting slowdowns. The client escalates to your VP of Customer Success, and the relationship sours.",
+          "next": "END",
+          "quality": "poor"
+        },
+        {
+          "text": "Run a customer satisfaction survey about the migration",
+          "stage": "MEASURE",
+          "reveal": "The survey shows mixed satisfaction — high on technical reliability, low on user experience. But the survey doesn't pinpoint which workloads cause the slowdown.",
+          "next": "Q11",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q11": {
+      "text": "Three workloads have 2-second latency spikes during peak hours — the ones business users rely on. What do you do?",
+      "choices": [
+        {
+          "text": "Profile those workloads in production to find the bottleneck",
+          "stage": "DIAGNOSE",
+          "reveal": "Profiling shows the bottleneck is shared database queries under concurrent access. The database instance is under-provisioned for concurrent access.",
+          "next": "Q12",
+          "quality": "best",
+          "criteria": [
+            "evidence-first"
+          ],
+          "because": "Production profiling of the specific slow workloads isolates the actual bottleneck — a shared resource, not a code issue."
+        },
+        {
+          "text": "Scale up the database instance immediately",
+          "stage": "EXECUTE",
+          "reveal": "The database scales up — but latency persists because the issue is concurrent query access patterns, not instance size.",
+          "next": "END",
+          "quality": "poor"
+        },
+        {
+          "text": "Add caching to the three workloads",
+          "stage": "EXECUTE",
+          "reveal": "Caching is added — latency drops for 2 workloads but the third has dynamic data that can't be cached.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q12": {
+      "text": "The bottleneck is shared database queries under concurrent access. What's your fix?",
+      "choices": [
+        {
+          "text": "Implement connection pooling and query-level read replicas for those workloads",
+          "stage": "PLAN",
+          "reveal": "Connection pooling is configured and read replicas assigned. Latency drops to under 200ms during peak. Business users confirm the improvement.",
+          "next": "Q13",
+          "quality": "best",
+          "criteria": [
+            "outcome-measurement",
+            "customer-impact"
+          ],
+          "because": "Connection pooling and dedicated read replicas address concurrent-access bottleneck specifically."
+        },
+        {
+          "text": "Re-architect the workloads to avoid shared queries entirely",
+          "stage": "PLAN",
+          "reveal": "The re-architecture is scoped at 8 weeks — but the workloads are live and business users depend on them. A rewrite would cause downtime.",
+          "next": "Q13",
+          "quality": "reasonable",
+          "criteria": [
+            "risk-assessment"
+          ]
+        },
+        {
+          "text": "Schedule a maintenance window to scale the database vertically",
+          "stage": "EXECUTE",
+          "reveal": "Vertical scaling requires downtime, and the client can't afford a 2-hour outage for business-critical workloads.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q13": {
+      "text": "The migration is live, latency is fixed, and the client is satisfied. But you discover the 3 workloads were only 20% of the planned 200-workload migration. What do you recommend?",
+      "choices": [
+        {
+          "text": "Propose a phased plan: batch migrations in groups of 20, with rollback readiness per batch",
+          "stage": "PLAN",
+          "reveal": "The phased plan: 9 batches of 20, each with rollback. Client approves phases 1 and 2, committing to 40 more workloads.",
+          "next": "Q14",
+          "quality": "best",
+          "criteria": [
+            "risk-assessment",
+            "outcome-measurement"
+          ],
+          "because": "This is the strongest move based on the evidence available."
+        },
+        {
+          "text": "Push to commit all 180 workloads at once for efficiency",
+          "stage": "STRATEGIZE",
+          "reveal": "The bulk commitment is pushed — but the client's CFO escalates that a single failure could affect all 180 workloads.",
+          "next": "END",
+          "quality": "poor"
+        },
+        {
+          "text": "Commit to migrating 60 workloads over the next quarter with dedicated engineering support",
+          "stage": "STRATEGIZE",
+          "reveal": "The 60-workload commitment is accepted — a balanced approach. Client signs for 60% of the remaining scope.",
+          "next": "Q14",
+          "quality": "reasonable",
+          "criteria": [
+            "trade-off-clarity",
+            "customer-impact"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q14": {
+      "text": "You're planning the next phase of migrations. The client's ERP project is complete. What does the success framework look like?",
+      "choices": [
+        {
+          "text": "Document the learnings into a repeatable migration checklist",
+          "stage": "PLAN",
+          "reveal": "The checklist captures: pre-migration profiling, resource allocation, security fast-tracking, and post-migration validation. The next 60 workloads migrate 40% faster.",
+          "next": "Q15",
+          "quality": "best",
+          "criteria": [
+            "outcome-measurement",
+            "evidence-first"
+          ],
+          "because": "Codifying learnings into a repeatable checklist turns a one-off recovery into an efficient process."
+        },
+        {
+          "text": "Run a retrospective with all stakeholders",
+          "stage": "MEASURE",
+          "reveal": "The retrospective surfaces 15 feedback points — valuable but broad. Without a checklist, the next phase repeats coordination issues.",
+          "next": "Q15",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Scale the team and migrate all remaining workloads simultaneously",
+          "stage": "EXECUTE",
+          "reveal": "The team scales to 10 engineers — but coordination complexity grows non-linearly. Three workloads fail during cut-over.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q15": {
+      "text": "The checklist made the next 60 workloads 40% faster. The client asks about managed services for ongoing cloud optimization. What's your recommendation?",
+      "choices": [
+        {
+          "text": "Propose a managed services retainer scoped to workloads already migrated",
+          "stage": "STRATEGIZE",
+          "reveal": "The retainer is scoped to 80 workloads with 24/7 monitoring. Client signs a $120K annual contract — the highest-value upsell.",
+          "next": "Q16",
+          "quality": "best",
+          "criteria": [
+            "strategic-positioning",
+            "customer-impact"
+          ],
+          "because": "A scoped retainer on already-migrated workloads is the natural upsell — the client has seen the value and trusts the team."
+        },
+        {
+          "text": "Hand off workloads to the client's operations team",
+          "stage": "STRATEGIZE",
+          "reveal": "The handoff is executed — but without monitoring, two workloads degrade unnoticed for 3 weeks. The client re-engages for incident response.",
+          "next": "Q16",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Offer the entire managed services catalog at a discount",
+          "stage": "STRATEGIZE",
+          "reveal": "The full catalog is offered — but the client is overwhelmed by choices and defers the decision.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q16": {
+      "text": "The client signed the managed services retainer. The contract includes quarterly reviews. What do you establish as the review agenda?",
+      "choices": [
+        {
+          "text": "A scorecard of workload performance, cost optimization, and security compliance — with remediation items per workload",
+          "stage": "MEASURE",
+          "reveal": "The scorecard is presented quarterly — each review identifies 2-3 optimization opportunities. Over the year, cost is reduced 15% and no incidents escape detection.",
+          "next": "END",
+          "quality": "best",
+          "criteria": [
+            "outcome-measurement"
+          ],
+          "because": "A per-workload scorecard with remediation items turns quarterly reviews into continuous optimization, not status reporting."
+        },
+        {
+          "text": "A high-level report on uptime, incidents, and spend — aggregated across all workloads",
+          "stage": "MEASURE",
+          "reveal": "The high-level report is clean — but one workload's cost spike is buried in the aggregate. The client only discovers it during a surprise audit.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "A presentation of new features and services the client should adopt",
+          "stage": "STRATEGIZE",
+          "reveal": "New features are presented — but the client sees them as upsell attempts, not optimization. The managed services relationship becomes transactional.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    }
+  },
+  "assessment": {
+    "criteria": [
+      {
+        "id": "evidence-first",
+        "label": "Letting evidence lead",
+        "guidance": "Identify the actual constraint before pushing the process."
+      },
+      {
+        "id": "customer-impact",
+        "label": "Sizing customer impact",
+        "guidance": "Ground the decision in what changes for the customer."
+      },
+      {
+        "id": "strategic-positioning",
+        "label": "Setting the direction",
+        "guidance": "Decide which customers to serve first."
+      },
+      {
+        "id": "risk-assessment",
+        "label": "Managing risk and trade-offs",
+        "guidance": "Name what each path risks — data, timeline, or credibility."
+      },
+      {
+        "id": "outcome-measurement",
+        "label": "Proving the outcome",
+        "guidance": "Define the measure that separates a real fix from activity."
+      },
+      {
+        "id": "trade-off-clarity",
+        "label": "Trade Off Clarity",
+        "guidance": "Address this criterion in your decision."
+      }
+    ]
+  }
+}

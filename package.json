@@ -1,12 +1,12 @@
 {
-  "name": "baaten",
+  "name": "prodchi",
   "private": true,
   "scripts": {
-    "dev": "pnpm --filter @baaten/shared-types build && pnpm --parallel --filter @baaten/api --filter @baaten/web dev",
-    "dev:api": "pnpm --filter @baaten/api dev",
-    "dev:web": "pnpm --filter @baaten/web dev",
-    "build": "pnpm --filter @baaten/shared-types build && pnpm --filter @baaten/api build && pnpm --filter @baaten/web build",
-    "typecheck": "pnpm --filter @baaten/shared-types typecheck && pnpm --filter @baaten/api typecheck && pnpm --filter @baaten/web typecheck",
+    "dev": "pnpm --filter @prodchi/shared-types build && pnpm --parallel --filter @prodchi/api --filter @prodchi/web dev",
+    "dev:api": "pnpm --filter @prodchi/api dev",
+    "dev:web": "pnpm --filter @prodchi/web dev",
+    "build": "pnpm --filter @prodchi/shared-types build && pnpm --filter @prodchi/api build && pnpm --filter @prodchi/web build",
+    "typecheck": "pnpm --filter @prodchi/shared-types typecheck && pnpm --filter @prodchi/api typecheck && pnpm --filter @prodchi/web typecheck",
     "test": "pnpm -r test",
     "test:e2e": "node test/e2e/e2e-product-design.mjs && node test/e2e/e2e-product-management.mjs",
     "db:generate": "pnpm --filter db db:generate",

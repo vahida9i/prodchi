@@ -1,0 +1,585 @@
+{
+  "id": "pm_growth_plateau",
+  "title": "The Growth Plateau",
+  "role": "Product Management",
+  "difficulty": "hard",
+  "summary": "GrowthFlow is a growth-marketing automation platform for mid-market SaaS companies.",
+  "start": "Q1",
+  "questions": {
+    "Q1": {
+      "text": "Growth has plateaued: monthly new leads are flat for 4 months despite increased ad spend. What do you do first?",
+      "choices": [
+        {
+          "text": "Segment lead growth by acquisition channel and customer segment",
+          "stage": "DIAGNOSE",
+          "reveal": "LinkedIn ads drive 60% of leads at 8% conversion; Google 30% at 22%; organic 10% at 15%. The mix, not volume, explains the plateau.",
+          "next": "Q2",
+          "quality": "best",
+          "criteria": [
+            "evidence-first"
+          ],
+          "because": "The aggregate number hides a channel quality story — volume is up but leads aren't converting."
+        },
+        {
+          "text": "Audit the pricing page for friction in signup flow",
+          "stage": "DIAGNOSE",
+          "reveal": "The pricing page has no friction — but it doesn't explain why LinkedIn leads aren't converting.",
+          "next": "Q2",
+          "quality": "reasonable",
+          "criteria": [
+            "evidence-first"
+          ]
+        },
+        {
+          "text": "Double down on LinkedIn ads since they drive the most volume",
+          "stage": "STRATEGIZE",
+          "reveal": "Lead volume rises 12%, but conversion stays at 8%. The extra leads are still low-quality.",
+          "next": "END",
+          "quality": "poor"
+        },
+        {
+          "text": "Survey 10 recent leads who didn't convert to paid",
+          "stage": "DIAGNOSE",
+          "reveal": "Three cite budget constraints, four mention competing tools, three say the platform doesn't solve their workflow. Suggestive but not conclusive.",
+          "next": "Q3",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q2": {
+      "text": "LinkedIn drives 60% of leads at 8% conversion; Google 30% at 22%; organic 10% at 15%. What do you do next?",
+      "choices": [
+        {
+          "text": "Redesign onboarding to qualify leads before they reach pricing",
+          "stage": "STRATEGIZE",
+          "reveal": "A qualification-first onboarding is scoped — but it adds friction for organic leads who convert well at 15%, potentially hurting that channel.",
+          "next": "Q5",
+          "quality": "best",
+          "criteria": [
+            "trade-off-clarity",
+            "customer-impact"
+          ],
+          "because": "Differential treatment per channel is the move that addresses the root cause without hurting organic."
+        },
+        {
+          "text": "Shift budget from LinkedIn to Google ads",
+          "stage": "STRATEGIZE",
+          "reveal": "Budget shifts — but Google ads are pricier per click, and reducing LinkedIn volume means total leads fall.",
+          "next": "Q5",
+          "quality": "reasonable",
+          "criteria": [
+            "trade-off-clarity"
+          ]
+        },
+        {
+          "text": "Run A/B tests on pricing page copy for LinkedIn traffic",
+          "stage": "EXECUTE",
+          "reveal": "Copy variations improve click-through by 3% but don't move conversion to paid. The issue isn't pricing page copy.",
+          "next": "END",
+          "quality": "poor"
+        },
+        {
+          "text": "Analyze lead quality by company size within each channel",
+          "stage": "DIAGNOSE",
+          "reveal": "Small companies convert at 12%, mid-market 18%, enterprise 35% but only 15% of leads. The enterprise story is clear but the segment is underserved.",
+          "next": "Q4",
+          "quality": "reasonable",
+          "criteria": [
+            "evidence-first",
+            "customer-impact"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q3": {
+      "text": "Survey responses suggest mixed reasons for non-conversion. What do you do to get clearer signal?",
+      "choices": [
+        {
+          "text": "Run a larger survey with a structured decision matrix",
+          "stage": "DIAGNOSE",
+          "reveal": "The larger survey reveals three clusters: budget-constrained SMBs, mid-market evaluating alternatives, enterprises needing custom features.",
+          "next": "Q4",
+          "quality": "best",
+          "criteria": [
+            "evidence-first"
+          ],
+          "because": "A structured survey separates the three use cases so each can get its own strategy."
+        },
+        {
+          "text": "Offer a discount to the surveyed non-converters to recover the signal",
+          "stage": "STRATEGIZE",
+          "reveal": "Discounts are offered — some convert, but the discount cohort's churn rate is 40% higher. You've acquired price-shoppers, not customers.",
+          "next": "END",
+          "quality": "poor"
+        },
+        {
+          "text": "Segment the original 10 responses by company size post-hoc",
+          "stage": "DIAGNOSE",
+          "reveal": "Post-hoc segmentation finds a hint of patterns but the sample is too small to be actionable. More data is needed.",
+          "next": "Q4",
+          "quality": "reasonable",
+          "criteria": [
+            "evidence-first"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q4": {
+      "text": "Enterprise leads convert at 35% but are only 15% of volume. Survey said budget-constrained SMBs, mid-market evaluating alternatives, enterprises needing custom features. What's your strategy?",
+      "choices": [
+        {
+          "text": "Double down on enterprise with a custom-tier offering, accepting lower total volume",
+          "stage": "STRATEGIZE",
+          "reveal": "Enterprise is prioritized — but this means fewer SMB leads convert, and the volume drop means monthly recurring revenue falls 12% while deal size rises.",
+          "next": "Q7",
+          "quality": "best",
+          "criteria": [
+            "strategic-positioning",
+            "trade-off-clarity"
+          ],
+          "because": "This is the strongest move based on the evidence available."
+        },
+        {
+          "text": "Build a self-serve tier for SMBs with limited features and a sales tier for mid-market",
+          "stage": "STRATEGIZE",
+          "reveal": "Two-tier strategy is scoped — but it splits engineering focus across two products, and the SMB tier's low ARPU makes the growth math tight.",
+          "next": "Q6",
+          "quality": "reasonable",
+          "criteria": [
+            "strategic-positioning",
+            "trade-off-clarity"
+          ]
+        },
+        {
+          "text": "Optimize LinkedIn ads to target enterprise decision-makers specifically",
+          "stage": "STRATEGIZE",
+          "reveal": "LinkedIn targeting narrows to enterprise — lead volume drops 70% immediately, but conversion rate on the remaining leads improves. The growth curve inverts.",
+          "next": "Q7",
+          "quality": "poor"
+        },
+        {
+          "text": "Accept the plateau as market saturation and focus on retention",
+          "stage": "STRATEGIZE",
+          "reveal": "Retention focus launches — but it doesn't address the new business stagnation.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q5": {
+      "text": "You're considering onboarding redesign vs budget reallocation. Both affect channel mix. What's your priority?",
+      "choices": [
+        {
+          "text": "Build qualification-first onboarding that segments LinkedIn vs organic leads differently",
+          "stage": "PLAN",
+          "reveal": "The onboarding redesign is scoped at 8 weeks — it qualifies LinkedIn leads with a use-case selector while fast-tracking organic leads. Post-launch, LinkedIn conversion rises to 14%.",
+          "next": "Q7",
+          "quality": "best",
+          "criteria": [
+            "trade-off-clarity",
+            "outcome-measurement"
+          ],
+          "because": "Differential treatment per channel is the move that addresses the root cause without hurting organic."
+        },
+        {
+          "text": "Shift 30% of LinkedIn budget to Google ads and monitor for 30 days",
+          "stage": "MEASURE",
+          "reveal": "The shift runs — Google leads convert at 22% as expected, but the 30% volume drop from LinkedIn offsets the conversion gain. Net MRR is flat.",
+          "next": "Q7",
+          "quality": "reasonable",
+          "criteria": [
+            "outcome-measurement"
+          ]
+        },
+        {
+          "text": "A/B test qualification in onboarding and budget shift in parallel",
+          "stage": "PLAN",
+          "reveal": "Two parallel experiments run — but the team splits focus, and results are harder to attribute.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q6": {
+      "text": "You've scoped a self-serve SMB tier and a sales mid-market tier. What constrains the timeline?",
+      "choices": [
+        {
+          "text": "Engineering capacity — both tiers compete for the same team",
+          "stage": "EXECUTE",
+          "reveal": "Engineering confirms both features hit the same 10-week timeline. Building in parallel extends delivery to 14 weeks. The roadmap choice is real.",
+          "next": "Q7",
+          "quality": "best",
+          "criteria": [
+            "customer-impact"
+          ],
+          "because": "This is the strongest move based on the evidence available."
+        },
+        {
+          "text": "Need to define the feature boundary between tiers",
+          "stage": "PLAN",
+          "reveal": "The feature boundary workshop runs — but defining what's in vs out takes 3 weeks, delaying the launch window by a month.",
+          "next": "Q7",
+          "quality": "reasonable",
+          "criteria": [
+            "trade-off-clarity"
+          ]
+        },
+        {
+          "text": "Need to hire enterprise sales to serve mid-market",
+          "stage": "EXECUTE",
+          "reveal": "A search firm is engaged — but hiring a mid-market sales rep takes 3 months, so the sales tier can't launch until Q3.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q7": {
+      "text": "Three paths have converged: enterprise focus, two-tier strategy, or onboarding redesign. Your lead engineer says the team can only execute two initiatives this quarter. What do you do?",
+      "choices": [
+        {
+          "text": "Rank the initiatives by projected impact and pick a coherent pair",
+          "stage": "PRIORITIZE",
+          "reveal": "Based on projections: onboarding redesign ($41K MRR/month) + two-tier strategy ($38K) beat enterprise focus ($35K). You ship the onboarding redesign and scope the SMB tier, deferring enterprise.",
+          "next": "Q8",
+          "quality": "best",
+          "criteria": [
+            "trade-off-clarity",
+            "strategic-positioning"
+          ],
+          "because": "Ranking by impact and picking a coherent pair — both growth-plays, not an enterprise pivot — keeps the strategy aligned."
+        },
+        {
+          "text": "Run all three in a compressed timeline by adding headcount",
+          "stage": "EXECUTE",
+          "reveal": "Two new engineers are hired — but onboarding is delayed 6 weeks during ramp, the SMB tier ships with bugs, and enterprise focus never launches. Quality suffers.",
+          "next": "END",
+          "quality": "poor"
+        },
+        {
+          "text": "Let engineering pick which two they're most excited about",
+          "stage": "FRAME",
+          "reveal": "Engineering picks the onboarding redesign and the SMB tier — the same choice you would have made, but without the impact rationale. The decision lacks strategic grounding.",
+          "next": "Q8",
+          "quality": "reasonable",
+          "criteria": [
+            "strategic-positioning"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q8": {
+      "text": "You've shipped onboarding redesign and scoped the SMB tier. Month 1 shows MRR growth — but conversion on the redesigned LinkedIn flow is 12%, below the projected 18%. What do you investigate?",
+      "choices": [
+        {
+          "text": "Check whether the qualification criteria are too aggressive for mid-market",
+          "stage": "DIAGNOSE",
+          "reveal": "The qualification screen filters out mid-market leads who would have converted — the 12% reflects only SMB+enterprise, but the SMB tier's features aren't ready yet to serve them.",
+          "next": "Q9",
+          "quality": "best",
+          "criteria": [
+            "evidence-first"
+          ],
+          "because": "The qualification criteria filtered the very segment the SMB tier wasn't ready to serve — onboarding and product aren't aligned."
+        },
+        {
+          "text": "Survey the 12% who did convert to understand their journey",
+          "stage": "DIAGNOSE",
+          "reveal": "The 12% who converted praise the qualification flow — but they're the easiest sells. The survey doesn't explain why the rest didn't convert after passing the same screen.",
+          "next": "Q9",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Attribute the shortfall to the SMB tier not launching yet",
+          "stage": "STRATEGIZE",
+          "reveal": "The shortfall is attributed to the missing SMB tier — but the data shows the qualification flow is filtering mid-market leads who would have converted on the existing product.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q9": {
+      "text": "The qualification flow filters mid-market leads who would have converted on the existing product. The SMB tier is still 4 weeks out. What do you do?",
+      "choices": [
+        {
+          "text": "Tune the qualification criteria to pass more mid-market leads while the SMB tier finishes",
+          "stage": "EXECUTE",
+          "reveal": "The criteria are relaxed — mid-market leads flow through to the existing product tier. Conversion rises to 19%, above projection. Four weeks later, the SMB tier launches and criteria tighten back.",
+          "next": "Q10",
+          "quality": "best",
+          "criteria": [
+            "outcome-measurement"
+          ],
+          "because": "Tuning criteria to match product readiness — loose while waiting, tight when the new tier is ready — captures revenue that would otherwise leak."
+        },
+        {
+          "text": "Wait for the SMB tier to launch before changing the qualification flow",
+          "stage": "EXECUTE",
+          "reveal": "The wait keeps conversion at 12% for 4 weeks — then the SMB tier launches and conversion jumps to 18%. The 4-week low-conversion window costs approximately $28K in foregone MRR.",
+          "next": "Q10",
+          "quality": "reasonable",
+          "criteria": [
+            "outcome-measurement"
+          ]
+        },
+        {
+          "text": "Remove qualification entirely and let the pricing page sort leads",
+          "stage": "EXECUTE",
+          "reveal": "Qualification is removed — lead volume rises but conversion drops to 6%. Without upfront qualification, low-fit leads hit the pricing page and bounce at a higher rate.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q10": {
+      "text": "You've tuned the qualification flow and the SMB tier launched. Three months show MRR up 22%. What do you measure next?",
+      "choices": [
+        {
+          "text": "Run cohort analysis on retention of leads through the new onboarding",
+          "stage": "MEASURE",
+          "reveal": "3-month cohort retention for new SMB-tier leads is 62% — 4 points below the platform average.",
+          "next": "Q11",
+          "quality": "best",
+          "criteria": [
+            "outcome-measurement"
+          ],
+          "because": "Acquisition is validated — but retention tells you whether the leads are good ones, not just more of them."
+        },
+        {
+          "text": "Double down on the winning channel mix and increase ad spend",
+          "stage": "STRATEGIZE",
+          "reveal": "Ad spend increases by 40% — but without a retention check, growing the top line without knowing if the new cohort churns faster.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Declare success and shift the team to new initiatives",
+          "stage": "FRAME",
+          "reveal": "The team shifts — but 62% retention on new SMB leads means the growth is less sustainable than it looks.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q11": {
+      "text": "New SMB-tier lead retention is 62% vs 66% platform average. What do you do?",
+      "choices": [
+        {
+          "text": "Analyze the onboarding completion funnel to find where SMB leads drop off",
+          "stage": "DIAGNOSE",
+          "reveal": "SMB leads drop off 30% more at the feature-discovery step — they see capabilities they don't need and get overwhelmed.",
+          "next": "Q12",
+          "quality": "best",
+          "criteria": [
+            "evidence-first"
+          ],
+          "because": "The drop-off point is specific — feature discovery overwhelms SMB leads who need a simpler activation path."
+        },
+        {
+          "text": "Survey churned SMB leads to understand why they left",
+          "stage": "DIAGNOSE",
+          "reveal": "Surveyed churned SMB leads cite 'too complex for our needs' — but doesn't pinpoint where in onboarding the overwhelm happens.",
+          "next": "Q12",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Assume the retention gap is natural and within acceptable variance",
+          "stage": "FRAME",
+          "reveal": "The gap is accepted — but over the next quarter, churn compounds, and the growth trajectory falls below the plateau line.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q12": {
+      "text": "SMB leads drop off at feature discovery — they're overwhelmed before reaching the aha moment. What do you do?",
+      "choices": [
+        {
+          "text": "Build a simplified activation path for SMB leads with guided feature discovery",
+          "stage": "PLAN",
+          "reveal": "The simplified path is scoped at 6 weeks — it guides SMB leads through the core workflow and defers advanced features until value is proven.",
+          "next": "Q13",
+          "quality": "best",
+          "criteria": [
+            "customer-impact",
+            "trade-off-clarity"
+          ],
+          "because": "A guided path addresses the specific drop-off point — it doesn't remove features, just sequences them for SMB needs."
+        },
+        {
+          "text": "Remove advanced features from the SMB tier entirely",
+          "stage": "PRIORITIZE",
+          "reveal": "Advanced features are removed from SMB — but some growing SMBs need those features to justify an upgrade to mid-market. The tier becomes a dead end.",
+          "next": "Q13",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Add a tutorial video and call it a day",
+          "stage": "EXECUTE",
+          "reveal": "A tutorial video is added — but it adds cognitive load to an already overwhelming screen. Retention stays at 62%.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q13": {
+      "text": "You've built a guided activation path for SMB leads. It's ready for rollout. But engineering raises a concern: the code path diverges from enterprise, creating maintenance debt.",
+      "choices": [
+        {
+          "text": "Ship the SMB path and plan a tech-debt sprint to reconcile the code",
+          "stage": "PLAN",
+          "reveal": "The path ships — SMB retention rises to 68% in the first month. The tech-debt sprint is scheduled for next quarter, documented and tracked.",
+          "next": "Q14",
+          "quality": "best",
+          "criteria": [
+            "trade-off-clarity",
+            "outcome-measurement"
+          ],
+          "because": "Shipping the value with a known debt repayment plan is better than delaying — the benefit is proven before the cost."
+        },
+        {
+          "text": "Block the launch until engineering refactors for a shared code path",
+          "stage": "EXECUTE",
+          "reveal": "The refactor takes 3 weeks — but the SMB retention uplift is delayed, and the extra engineering time pushes the next feature two sprints out.",
+          "next": "Q14",
+          "quality": "reasonable",
+          "criteria": [
+            "trade-off-clarity"
+          ]
+        },
+        {
+          "text": "Ship to 5% of SMB leads as a shadow test",
+          "stage": "MEASURE",
+          "reveal": "The shadow test runs — but 5% sample is too small to detect retention differences.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q14": {
+      "text": "The guided SMB path ships, retention is up to 68%. The board asks: is this sustainable growth or a one-time correction? What do you tell them?",
+      "choices": [
+        {
+          "text": "Lay out the 6-month runway, the next 3 growth levers, and their projected impact",
+          "stage": "STRATEGIZE",
+          "reveal": "The roadmap lays out: (1) SMB retention optimization (+$25K/month), (2) mid-market expansion (+$38K/month), (3) enterprise land-and-expand (+$45K/month).",
+          "next": "Q15",
+          "quality": "best",
+          "criteria": [
+            "strategic-positioning"
+          ],
+          "because": "A 6-month runway with specific levers and projections gives the board confidence that the plateau break is the start of a trend."
+        },
+        {
+          "text": "Report the 22% MRR growth and say the plateau is broken",
+          "stage": "FRAME",
+          "reveal": "The 22% growth is celebrated — but without the roadmap of levers, the board questions whether the next quarters will show the same growth.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Ask for 6 more months before declaring the plateau is broken",
+          "stage": "STRATEGIZE",
+          "reveal": "The request for 6 more months is granted — but the growth team loses momentum, and two competitors ship similar features.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q15": {
+      "text": "You've laid out the 6-month growth roadmap with three levers. But engineering says they can only staff one initiative per quarter. What do you do?",
+      "choices": [
+        {
+          "text": "Rank the three levers by confidence and projected ROI, fund the top one",
+          "stage": "PRIORITIZE",
+          "reveal": "SMB retention (high confidence, $25K/month) leads, mid-market ($38K, lower confidence), enterprise ($45K, highest risk). You fund SMB retention for Q1.",
+          "next": "END",
+          "quality": "best",
+          "criteria": [
+            "trade-off-clarity",
+            "strategic-positioning"
+          ],
+          "because": "Ranking by confidence-adjusted ROI makes the staffing constraint a decision, not a crisis."
+        },
+        {
+          "text": "Insist all three ship in parallel and escalate to the CTO",
+          "stage": "EXECUTE",
+          "reveal": "Two contractors are allocated — but quality issues emerge across all three initiatives, and confidence signals get diluted.",
+          "next": "END",
+          "quality": "poor"
+        },
+        {
+          "text": "Ask engineering which one they'd most enjoy building",
+          "stage": "FRAME",
+          "reveal": "Engineering picks mid-market expansion — but it's the second-ranked lever by confidence and ROI. The roadmap isn't grounded in business impact.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "strategic-positioning"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    }
+  },
+  "assessment": {
+    "criteria": [
+      {
+        "id": "evidence-first",
+        "label": "Letting evidence lead",
+        "guidance": "Name the driver before betting the strategy."
+      },
+      {
+        "id": "customer-impact",
+        "label": "Sizing customer impact",
+        "guidance": "Ground the decision in what changes for the user."
+      },
+      {
+        "id": "trade-off-clarity",
+        "label": "Making the trade-off explicit",
+        "guidance": "Name what each direction costs."
+      },
+      {
+        "id": "strategic-positioning",
+        "label": "Setting the direction",
+        "guidance": "Decide which segment to serve."
+      },
+      {
+        "id": "outcome-measurement",
+        "label": "Proving the outcome",
+        "guidance": "Define the measure that validates the bet."
+      }
+    ]
+  }
+}

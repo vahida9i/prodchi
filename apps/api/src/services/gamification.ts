@@ -1,6 +1,6 @@
 import { prisma } from '../lib/prisma.ts'
-import { levelFromXp } from '@baaten/shared-types/scoring'
-import type { LevelScore } from '@baaten/shared-types/scoring'
+import { levelFromXp } from '@prodchi/shared-types/scoring'
+import type { LevelScore } from '@prodchi/shared-types/scoring'
 
 /**
  * Gamification + level crediting.

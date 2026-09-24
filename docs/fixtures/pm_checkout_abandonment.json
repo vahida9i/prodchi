@@ -1,0 +1,329 @@
+{
+  "id": "pm_checkout_abandonment",
+  "title": "The Checkout Drop-Off",
+  "role": "Product Management",
+  "difficulty": "easy",
+  "summary": "Cartly is a checkout optimization platform for small e-commerce stores — it helps merchants recover abandoned carts and convert hesitant buyers. Its customers are store owners who pay monthly per active store.",
+  "start": "Q1",
+  "questions": {
+    "Q1": {
+      "text": "Checkout abandonment has jumped from 62% to 78% over the last month. What do you do first?",
+      "choices": [
+        {
+          "text": "Break down abandonment by step in the checkout flow",
+          "stage": "DIAGNOSE",
+          "reveal": "Most drop-off now happens at the payment method screen — up from 15% to 45% of all abandonments.",
+          "next": "Q2",
+          "quality": "best",
+          "criteria": [
+            "evidence-first"
+          ],
+          "because": "Breaking the funnel into steps isolates where the move happened — the jump is concentrated, not uniform."
+        },
+        {
+          "text": "Interview three customers who abandoned in the last week",
+          "stage": "DIAGNOSE",
+          "reveal": "Two cited a confusing new payment options screen; one had a technical error. Pattern is forming but sample is thin.",
+          "next": "Q3",
+          "quality": "reasonable",
+          "criteria": [
+            "evidence-first",
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Check whether a recent deployment changed the checkout page",
+          "stage": "DIAGNOSE",
+          "reveal": "No deployment touched checkout in the last month — the change is behavioral, not technical.",
+          "next": "Q2",
+          "quality": "reasonable",
+          "criteria": [
+            "evidence-first"
+          ]
+        },
+        {
+          "text": "Launch an abandoned-cart email re-engagement campaign",
+          "stage": "EXECUTE",
+          "reveal": "The emails go out — but they re-engage the same 18% recovery rate. The drop-off source is untouched.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q2": {
+      "text": "Payment method screen is now where 45% of abandonments happen, up from 15%. What do you investigate next?",
+      "choices": [
+        {
+          "text": "Compare the payment screen before and after the last UI refresh",
+          "stage": "DIAGNOSE",
+          "reveal": "The refresh added a scrolling list of 11 payment icons. Users pause scrolling before choosing.",
+          "next": "Q4",
+          "quality": "best",
+          "criteria": [
+            "evidence-first",
+            "customer-impact"
+          ],
+          "because": "The UI change is dated and the new element is exactly where the drop concentrated."
+        },
+        {
+          "text": "Segment abandonment by device type",
+          "stage": "DIAGNOSE",
+          "reveal": "Mobile shows slightly higher abandonment, but desktop jumped too — the issue is not device-specific.",
+          "next": "Q4",
+          "quality": "reasonable",
+          "criteria": [
+            "evidence-first"
+          ]
+        },
+        {
+          "text": "Survey users who reached the payment screen but didn't complete",
+          "stage": "DIAGNOSE",
+          "reveal": "Surveys mention 'too many options' but the sample is thin.",
+          "next": "Q4",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "A/B test removing regional payment methods",
+          "stage": "EXECUTE",
+          "reveal": "The test runs — but without a hypothesis about why the screen changed behavior, the result is hard to interpret.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q3": {
+      "text": "Two of three interviewed customers mentioned a confusing payment options screen. What do you do next?",
+      "choices": [
+        {
+          "text": "Expand interviews to 10 more recent abandoners to confirm the pattern",
+          "stage": "DIAGNOSE",
+          "reveal": "6 of 10 new interviews mention the payment screen — pattern holds, 4 specifically name the scrolling icon list.",
+          "next": "Q4",
+          "quality": "best",
+          "criteria": [
+            "evidence-first",
+            "customer-impact"
+          ],
+          "because": "More interviews confirm the pattern and isolate the specific element causing friction."
+        },
+        {
+          "text": "Use the three interviews to scope a fix for the payment screen",
+          "stage": "STRATEGIZE",
+          "reveal": "The fix is scoped — but without confirming across more users, the scope may solve the wrong problem.",
+          "next": "Q4",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Drop the interviews and rely on the funnel breakdown instead",
+          "stage": "FRAME",
+          "reveal": "The funnel already showed where the drop happened — but without the 'why', the fix may miss the root cause.",
+          "next": "Q4",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q4": {
+      "text": "The payment screen shows 11 scrolling payment icons, and users pause before choosing. What do you do?",
+      "choices": [
+        {
+          "text": "Prioritize simplifying the payment screen to show the 3 most-used methods first",
+          "stage": "PRIORITIZE",
+          "reveal": "Engineering estimates 3 days. The 3 most-used methods cover 82% of completed checkouts.",
+          "next": "Q5",
+          "quality": "best",
+          "criteria": [
+            "trade-off-clarity"
+          ],
+          "because": "The fix is small in scope and targets the exact screen where behavior changed — cost-benefit is clear."
+        },
+        {
+          "text": "Run a full redesign of the checkout flow",
+          "stage": "STRATEGIZE",
+          "reveal": "The redesign is scoped at 6 weeks and cuts 4 other features — for a payment-screen issue, the cost is disproportionate.",
+          "next": "END",
+          "quality": "poor"
+        },
+        {
+          "text": "Add a tooltip explaining each payment method",
+          "stage": "EXECUTE",
+          "reveal": "Tooltips clarify methods — but users still pause to read them all before choosing.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q5": {
+      "text": "Simplifying the payment screen to 3 methods is estimated at 3 days. How do you validate before full rollout?",
+      "choices": [
+        {
+          "text": "Roll out to 20% of stores and compare payment-screen completion against the prior week",
+          "stage": "MEASURE",
+          "reveal": "The 20% cohort's payment completion rises from 55% to 71% — a clear lift tied to the change.",
+          "next": "Q6",
+          "quality": "best",
+          "criteria": [
+            "outcome-measurement"
+          ],
+          "because": "A staged rollout with before/after comparison isolates the change's effect from other variables."
+        },
+        {
+          "text": "Ship to all stores and monitor overall abandonment next month",
+          "stage": "MEASURE",
+          "reveal": "Next month's abandonment drops — but without a comparison group, you can't tell if it was the payment change or a seasonal shift.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "outcome-measurement"
+          ]
+        },
+        {
+          "text": "Ask 3 interviewed customers to test the simplified screen",
+          "stage": "MEASURE",
+          "reveal": "The 3 customers say the screen is clearer — but this is qualitative, no measurement of actual conversion.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q6": {
+      "text": "The simplified payment screen shows conversion up from 55% to 71%. What's your final validation step?",
+      "choices": [
+        {
+          "text": "A/B test the simplified screen against the original to confirm the lift holds",
+          "stage": "MEASURE",
+          "reveal": "The A/B test confirms: simplified screen at 71% vs original at 55%. The lift is real and stable.",
+          "next": "Q7",
+          "quality": "best",
+          "criteria": [
+            "outcome-measurement"
+          ],
+          "because": "An A/B test against the original confirms the lift is from the change, not other factors."
+        },
+        {
+          "text": "Monitor weekly conversion for the next month",
+          "stage": "MEASURE",
+          "reveal": "Weekly conversion holds at 71% — but without a control, you can't be certain it's not a seasonal pattern.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "outcome-measurement"
+          ]
+        },
+        {
+          "text": "Report success to the client and close the ticket",
+          "stage": "FRAME",
+          "reveal": "The ticket is closed — but without a controlled validation, the success claim is incomplete.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q7": {
+      "text": "You shipped to all stores and monthly abandonment dropped. But you can't isolate the cause. What do you do to understand the lift?",
+      "choices": [
+        {
+          "text": "Run a quick A/B test on 5% of traffic to isolate the payment screen's effect",
+          "stage": "MEASURE",
+          "reveal": "The A/B test on 5% shows the simplified screen converts 68% vs 54% for the control. The lift is from the payment screen change, not seasonality.",
+          "next": "Q8",
+          "quality": "best",
+          "criteria": [
+            "outcome-measurement"
+          ],
+          "because": "A quick A/B test on a small sample isolates the payment screen's effect quickly without delaying the rollout."
+        },
+        {
+          "text": "Attribute the drop to the payment screen change and move on",
+          "stage": "FRAME",
+          "reveal": "The drop is attributed to the payment screen — but without validation, you can't be sure. Next month a regression could be missed.",
+          "next": "END",
+          "quality": "poor"
+        },
+        {
+          "text": "Run a full retrospective analysis of all changes in the last month",
+          "stage": "MEASURE",
+          "reveal": "The retrospective finds the payment screen change plus a seasonal discount period. The analysis can't separate the two effects.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "evidence-first"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q8": {
+      "text": "The A/B test confirms the payment screen change drove a 14-point conversion lift. The client asks if there are more improvements. What do you investigate next?",
+      "choices": [
+        {
+          "text": "Review the next-highest drop-off step in the funnel for similar simplification opportunities",
+          "stage": "DIAGNOSE",
+          "reveal": "The shipping address step has a 12% drop-off — field validation errors appear before submission. Simplifying the form layout could reduce that drop-off.",
+          "next": "END",
+          "quality": "best",
+          "criteria": [
+            "evidence-first"
+          ],
+          "because": "The next-highest drop-off step with a clear friction point is the natural next target for optimization."
+        },
+        {
+          "text": "Survey customers about what else they want improved",
+          "stage": "DIAGNOSE",
+          "reveal": "Survey responses are mixed — some want faster checkout, some want more payment options, some want guest checkout. The signal is fragmented.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Recommend a full checkout redesign to capture all friction points",
+          "stage": "STRATEGIZE",
+          "reveal": "The full redesign is scoped at 8 weeks — but the payment screen fix just delivered, and the address step's friction is isolated and smaller in scope.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    }
+  },
+  "assessment": {
+    "criteria": [
+      {
+        "id": "evidence-first",
+        "label": "Letting evidence lead",
+        "guidance": "Name the driver before betting the fix."
+      },
+      {
+        "id": "customer-impact",
+        "label": "Sizing customer impact",
+        "guidance": "Ground the decision in what changes for the buyer."
+      },
+      {
+        "id": "outcome-measurement",
+        "label": "Proving the outcome",
+        "guidance": "Define the measure that separates the fix's effect from noise."
+      },
+      {
+        "id": "trade-off-clarity",
+        "label": "Making the trade-off explicit",
+        "guidance": "Name what each direction costs — scope, time, or roadmap space."
+      }
+    ]
+  }
+}

@@ -3,7 +3,7 @@
  *   role onboarding → content import (idempotent, validated) →
  *   session play (reveal-once, field-visibility, resume, concurrency) →
  *   level path (gated, progressive, XP/badges) → path ops (retire/reroute) →
- *   the 6-skill Product Design profile
+ *   the 7-skill Product Design profile
  *
  * Every candidate-facing payload of the run is swept for authoring internals.
  * Requires the API running on :4000 and a scratch database (seed applied):
@@ -104,7 +104,7 @@ async function playLevel(levelId, questions, chooseBest = true) {
 // Journey stage 1 — content ops (as the admin): import is the only way
 // content enters, and it is idempotent on `id` so updates never need deletes.
 // ---------------------------------------------------------------------------
-let r = await req('POST', '/auth/login', { email: 'admin@baaten.local', password: 'admin123' })
+let r = await req('POST', '/auth/login', { email: 'admin@prodchi.local', password: 'admin123' })
 check('admin login', r.status === 200, JSON.stringify(r.json))
 
 const fixture = onboarding
@@ -304,7 +304,7 @@ check('bestChoice never appears in any candidate payload (full-run sweep)',
 // ---------------------------------------------------------------------------
 // Journey stage 3 — the level path, as a fresh Product Design candidate:
 // content → levels → gated start → play → score/XP → unlock → replay →
-// rollups → badges. Then path ops, then the six-skill PD profile.
+// rollups → badges. Then path ops, then the seven-skill PD profile.
 // ---------------------------------------------------------------------------
 const singleQuestion = await importFixture(single)
 check('single-question challenge available', Boolean(singleQuestion.challengeId), JSON.stringify(singleQuestion))
@@ -344,7 +344,7 @@ check('duplicate level number → 409 with a reason',
   JSON.stringify(duplicate.json))
 
 // A fresh throwaway candidate, so unlock assertions start from zero.
-const freshEmail = `e2e-pd-${Date.now()}@baaten.local`
+const freshEmail = `e2e-pd-${Date.now()}@prodchi.local`
 r = await req('POST', '/auth/signup', { email: freshEmail, password: PASSWORD })
 check('candidate signup', r.status === 201, JSON.stringify(r.json))
 
@@ -369,9 +369,9 @@ const emptySkills = await req('GET', '/progress/skills')
 check('skill profile endpoint available',
   emptySkills.status === 200 && Array.isArray(emptySkills.json?.skills),
   JSON.stringify(emptySkills.json))
-check('a new player has six unproven skills and no decisions',
+check('a new player has seven unproven skills and no decisions',
   emptySkills.json?.decisions === 0 && emptySkills.json?.scenarios === 0 &&
-  emptySkills.json?.skills?.length === 6 &&
+  emptySkills.json?.skills?.length === 7 &&
   emptySkills.json?.skills?.every(skill => skill.proficiency === 'unproven' && skill.evidence === 'not yet observed'),
   JSON.stringify(emptySkills.json))
 check('the skill payload speaks the public vocabulary only',
@@ -523,7 +523,7 @@ check('summary still returns the readable path', summary.json.path.length === 9,
 // The gate DERIVES from passed rows: a level created after the fact is playable
 // as soon as every active level before it is passed, and retiring a level
 // re-routes the path instead of stranding anyone on a stale unlock row.
-await req('POST', '/auth/login', { email: 'admin@baaten.local', password: 'admin123' })
+await req('POST', '/auth/login', { email: 'admin@prodchi.local', password: 'admin123' })
 
 const clone = { ...single, id: 'permission_copy_single_v2' }
 const third = await importFixture(clone)
@@ -588,14 +588,14 @@ while (cursor3.json && cursor3.json.status !== 'completed' && cursor3.json.quest
 }
 check('level 3 run finishes cleanly', cursor3.json?.status === 'completed', JSON.stringify(cursor3.json))
 
-// The skill profile after real runs: six Product Design skills, real evidence,
+// The skill profile after real runs: seven Product Design skills, real evidence,
 // fixed process order, and still no authoring internals on the wire.
 const skills = await req('GET', '/progress/skills')
 check('skill profile reflects the runs played',
   skills.status === 200 && skills.json?.scenarios >= 3 && skills.json?.decisions >= 10,
   JSON.stringify({ scenarios: skills.json?.scenarios, decisions: skills.json?.decisions }))
-check('all six skills present in process order',
-  skills.json?.skills?.map(skill => skill.id).join(',') === 'framing,research,synthesis,ideation,solution,validation',
+check('all seven skills present in process order',
+  skills.json?.skills?.map(skill => skill.id).join(',') === 'framing,discovery,synthesis,ideation,solution,testing,refinement',
   JSON.stringify(skills.json?.skills?.map(skill => skill.id)))
 const evidenced = (skills.json?.skills ?? []).filter(skill => skill.count > 0)
 check('skills carry evidence in the report line format',
@@ -612,7 +612,7 @@ check('the skill payload exposes no authoring internals', skillLeaks.length === 
 
 // Restore what this suite rearranged, so it never changes the shape of the
 // admin's path as a side effect.
-await req('POST', '/auth/login', { email: 'admin@baaten.local', password: 'admin123' })
+await req('POST', '/auth/login', { email: 'admin@prodchi.local', password: 'admin123' })
 const restore2 = await req('PATCH', `/admin/levels/${level2.json.id}`, { status: 'active' })
 check('level 2 restored', restore2.status === 200 && restore2.json.status === 'active', JSON.stringify(restore2.json))
 

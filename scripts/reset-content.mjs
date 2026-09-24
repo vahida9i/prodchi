@@ -28,7 +28,7 @@ for (const path of [resolve(process.cwd(), '.env'), resolve(process.cwd(), '../.
 }
 
 const BASE = process.env.API_URL ?? `http://localhost:${process.env.PORT ?? 4000}/api/v1`
-const EMAIL = process.env.ADMIN_SEED_EMAIL ?? 'admin@baaten.local'
+const EMAIL = process.env.ADMIN_SEED_EMAIL ?? 'admin@prodchi.local'
 const PASSWORD = process.env.ADMIN_SEED_PASSWORD ?? 'admin123'
 const FIXTURE_DIR = fileURLToPath(new URL('../docs/fixtures', import.meta.url))
 
@@ -39,11 +39,18 @@ const FIXTURE_DIR = fileURLToPath(new URL('../docs/fixtures', import.meta.url))
  * sample the e2e suites import, not path content.
  */
 const PATH = [
+  // Product Design track (existing)
   { file: 'clinic-booking.json', industry: 'Health' },
   { file: 'kyc-drop-off.json', industry: 'Fintech' },
   { file: 'onboarding-drop-off.json', industry: 'E-commerce' },
   { file: 'saas-pricing-rework.json', industry: 'SaaS' },
-  { file: 'pm-feature-cut.json', industry: 'Productivity' }
+  // Product Management track (existing + new)
+  { file: 'pm_checkout_abandonment.json', industry: 'E-commerce' },
+  { file: 'pm_unused_feature.json', industry: 'Productivity' },
+  { file: 'pm_pricing_split.json', industry: 'SaaS' },
+  { file: 'pm-feature-cut.json', industry: 'Productivity' },
+  { file: 'pm_growth_plateau.json', industry: 'Health' },
+  { file: 'pm_enterprise_migration.json', industry: 'Enterprise' }
 ]
 
 let cookie = ''
@@ -101,10 +108,21 @@ for (const [index, entry] of PATH.entries()) {
     fail(`level ${number} is taken by "${occupied.challenge.title}" — ${fixture.title} has no slot`)
     continue
   }
-  const industry = industries.find(row => row.name === entry.industry)
+  // `let`, not `const`: the recovery branch below reassigns it when a missing
+  // industry is re-fetched, so a const here throws on exactly that path.
+  let industry = industries.find(row => row.name === entry.industry)
   if (!industry) {
-    fail(`industry "${entry.industry}" is not seeded — run pnpm db:seed first`)
-    continue
+    // Try re-fetching industries in case they were just seeded
+    console.log(`  ⚠ Industry "${entry.industry}" not found, re-fetching...`)
+    const refreshedIndustries = (await req('GET', '/admin/industries')).json?.industries ?? []
+    const refreshed = refreshedIndustries.find(row => row.name === entry.industry)
+    if (refreshed) {
+      industries.push(refreshed) // Add to cache
+      industry = refreshed // Use the refreshed one
+    } else {
+      fail(`industry "${entry.industry}" is not seeded — run pnpm db:seed first`)
+      continue
+    }
   }
 
   const created = await req('POST', '/admin/levels', {

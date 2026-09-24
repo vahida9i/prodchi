@@ -155,7 +155,7 @@ export default function SessionSummaryPage() {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Baaten</h1>
+          <h1 className="text-2xl font-bold">Prodchi</h1>
           <Button variant="outline" size="sm" onClick={() => router.push("/home")}>
             Back to library
           </Button>

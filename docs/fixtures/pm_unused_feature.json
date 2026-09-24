@@ -1,0 +1,314 @@
+{
+  "id": "pm_unused_feature",
+  "title": "The Feature That Nobody Used",
+  "role": "Product Management",
+  "difficulty": "easy",
+  "summary": "Flowboard is a collaborative whiteboard tool for remote teams — teams sketch ideas, run retrospectives, and brainstorm together in real time.",
+  "start": "Q1",
+  "questions": {
+    "Q1": {
+      "text": "A feature launched six weeks ago — infinite canvas zoom — has near-zero adoption. Only 3% of active teams have tried it. What do you do first?",
+      "choices": [
+        {
+          "text": "Check whether the feature is discoverable in the UI",
+          "stage": "DIAGNOSE",
+          "reveal": "The zoom controls are nested two menus deep — users have to click View, then Canvas, then Zoom. Most never reach it.",
+          "next": "Q2",
+          "quality": "best",
+          "criteria": [
+            "evidence-first",
+            "customer-impact"
+          ],
+          "because": "A feature that's hard to find will look unused even when people want it — discoverability comes first."
+        },
+        {
+          "text": "Survey users who never tried the feature",
+          "stage": "DIAGNOSE",
+          "reveal": "Response is mixed — some don't know it exists, some tried and didn't see the point. The survey doesn't separate the two cleanly.",
+          "next": "Q3",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Analyze usage patterns of teams that did try zoom",
+          "stage": "DIAGNOSE",
+          "reveal": "The 3% who tried it use it heavily — but the sample is too small for conclusions about the other 97%.",
+          "next": "Q2",
+          "quality": "reasonable",
+          "criteria": [
+            "evidence-first"
+          ]
+        },
+        {
+          "text": "Deprecate the feature and reallocate engineering time",
+          "stage": "PRIORITIZE",
+          "reveal": "The feature is removed — but the discovery problem that hid it from 97% of users goes unaddressed.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q2": {
+      "text": "The zoom controls are nested two menus deep. What do you do next?",
+      "choices": [
+        {
+          "text": "Move zoom controls to the primary toolbar and re-measure discovery",
+          "stage": "EXECUTE",
+          "reveal": "The controls move to the toolbar in a single sprint — the next week, 28% of active teams use zoom, up from 3%.",
+          "next": "Q4",
+          "quality": "best",
+          "criteria": [
+            "outcome-measurement",
+            "customer-impact"
+          ],
+          "because": "A discoverability fix is cheap and testable — moving the control and measuring the lift confirms the diagnosis."
+        },
+        {
+          "text": "Run a full UX research study on toolbar layout",
+          "stage": "DIAGNOSE",
+          "reveal": "The study confirms the zoom controls are buried — but it also surfaces three other navigation issues, muddying the priority.",
+          "next": "Q4",
+          "quality": "reasonable",
+          "criteria": [
+            "evidence-first"
+          ]
+        },
+        {
+          "text": "Add an onboarding tooltip for new users explaining zoom",
+          "stage": "EXECUTE",
+          "reveal": "The tooltip shows for new users — but existing users, who make up most of the active base, never see it.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q3": {
+      "text": "Survey responses are mixed — some don't know the feature exists, some tried and didn't see the point. What do you do?",
+      "choices": [
+        {
+          "text": "Segment the responses by whether users found the feature",
+          "stage": "DIAGNOSE",
+          "reveal": "70% of respondents never found the feature in the UI; among the 30% who did, half didn't see the value. Two separate problems.",
+          "next": "Q4",
+          "quality": "best",
+          "criteria": [
+            "evidence-first"
+          ],
+          "because": "Segmenting the mixed signal separates discoverability from value — each needs a different fix."
+        },
+        {
+          "text": "Conclude the feature has low value and deprioritize it",
+          "stage": "PRIORITIZE",
+          "reveal": "The feature is deprioritized — but the 70% who never found it never got the chance to judge its value.",
+          "next": "END",
+          "quality": "poor"
+        },
+        {
+          "text": "Plan a marketing push to promote the feature",
+          "stage": "STRATEGIZE",
+          "reveal": "The marketing push runs — but it drives traffic to a feature that's buried two menus deep. Awareness rises, usage doesn't.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q4": {
+      "text": "The zoom controls are now discoverable, and usage jumped to 28%. But half the users who found it didn't see the value. What do you do?",
+      "choices": [
+        {
+          "text": "Add an example template that demonstrates a zoom-based workflow",
+          "stage": "STRATEGIZE",
+          "reveal": "The template ships with a pre-built brainstorming board at 5 zoom levels — teams using it learn zoom by doing, and 40% keep using it.",
+          "next": "Q5",
+          "quality": "best",
+          "criteria": [
+            "customer-impact",
+            "outcome-measurement"
+          ],
+          "because": "A template demonstrates value through use — users who experience a zoom workflow understand what it's for."
+        },
+        {
+          "text": "Write better documentation explaining when to use zoom",
+          "stage": "EXECUTE",
+          "reveal": "The docs improve — but users who didn't see the value don't read docs.",
+          "next": "END",
+          "quality": "poor"
+        },
+        {
+          "text": "Add a feature tour that walks new users through zoom",
+          "stage": "EXECUTE",
+          "reveal": "The tour shows zoom for new users — but established teams, who are most of the base, skip it.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q5": {
+      "text": "The template improved adoption. What do you measure to confirm the improvement?",
+      "choices": [
+        {
+          "text": "Track zoom usage among teams who used the template vs those who didn't",
+          "stage": "MEASURE",
+          "reveal": "Template users zoom 3x more in their first week and 40% keep using it after. Non-template users who discover zoom independently show 12% retention.",
+          "next": "Q6",
+          "quality": "best",
+          "criteria": [
+            "outcome-measurement"
+          ],
+          "because": "Comparing template users against non-users isolates the template's effect on adoption."
+        },
+        {
+          "text": "Monitor overall platform engagement for the next month",
+          "stage": "MEASURE",
+          "reveal": "Overall engagement rises — but without a template-specific segment, you can't isolate the template's contribution from general growth.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Count how many teams viewed the template",
+          "stage": "MEASURE",
+          "reveal": "View count is high — but views don't correlate with zoom usage. The metric captures curiosity, not adoption.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q6": {
+      "text": "Template users zoom 3x more and 40% retain. Non-template users who discover zoom independently show 12% retention. What do you do?",
+      "choices": [
+        {
+          "text": "Add template suggestions to the zoom control when users first open the toolbar",
+          "stage": "EXECUTE",
+          "reveal": "The suggestion shows when users click the zoom control for the first time — a tooltip with a preview of the brainstorming board at 5 zoom levels. New-user zoom adoption rises 35%.",
+          "next": "Q7",
+          "quality": "best",
+          "criteria": [
+            "customer-impact"
+          ],
+          "because": "Proactive suggestion at the moment of discovery intercepts users before they abandon zoom."
+        },
+        {
+          "text": "Send an email campaign highlighting the available templates",
+          "stage": "STRATEGIZE",
+          "reveal": "The email campaign runs — but users who were already overwhelmed by the UI don't engage with feature emails. Open rates are 4%.",
+          "next": "END",
+          "quality": "poor"
+        },
+        {
+          "text": "Add a video tutorial showing a template-driven workflow",
+          "stage": "EXECUTE",
+          "reveal": "The video is added — but users scrolling through it see a lot of content they don't need. The video adds complexity rather than reducing it.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q7": {
+      "text": "The proactive tooltip improved new-user zoom adoption by 35%. But the support team reports that some users complain they can't turn it off. What do you do?",
+      "choices": [
+        {
+          "text": "Add a 'dismiss' option to the tooltip and track dismissal rate",
+          "stage": "EXECUTE",
+          "reveal": "The dismiss option is added — dismissal rate is 12%. Those who dismiss don't adopt zoom, which is expected — some users don't want it.",
+          "next": "Q8",
+          "quality": "best",
+          "criteria": [
+            "customer-impact"
+          ],
+          "because": "A dismiss option respects user choice and the low dismissal rate suggests the tooltip is helpful for most users."
+        },
+        {
+          "text": "Leave the tooltip as-is — it helps most users and dismissals are rare",
+          "stage": "FRAME",
+          "reveal": "The tooltip stays — but the support tickets persist at low volume. The support team flags them as 'feature complaints' in the NPS survey, which drops 2 points.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Remove the tooltip — it causes support friction",
+          "stage": "PRIORITIZE",
+          "reveal": "The tooltip is removed — but new-user zoom adoption drops back to 24%. The simple UX change was effective for the majority.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    },
+    "Q8": {
+      "text": "The dismiss option is added and new-user zoom adoption stays at 59%. The team asks: is this feature a success now? What do you report?",
+      "choices": [
+        {
+          "text": "Report adoption (59% new users try zoom) and retention (40% active after template), and identify the remaining 60% as the next opportunity",
+          "stage": "MEASURE",
+          "reveal": "The report is clear: 28% of all active teams use zoom (up from 3%), and of those, 40% are retained month-over-month. The remaining opportunity is a simpler onboarding path for the 60% who try once and churn.",
+          "next": "END",
+          "quality": "best",
+          "criteria": [
+            "outcome-measurement"
+          ],
+          "because": "An honest report that acknowledges both the win and the remaining opportunity gives the team direction for the next iteration."
+        },
+        {
+          "text": "Report the 28% adoption as a major success and close the feature as complete",
+          "stage": "MEASURE",
+          "reveal": "The win is celebrated — 28% adoption is a 9x improvement. But the 60% who tried and left represent ongoing churn risk that the team may miss.",
+          "next": "END",
+          "quality": "reasonable",
+          "criteria": [
+            "customer-impact"
+          ]
+        },
+        {
+          "text": "Celebrate the win and move the team to the next feature request backlog",
+          "stage": "PRIORITIZE",
+          "reveal": "The team moves on — but the 60% one-time zoom users are a segment that could be nurtured into regular users with the right follow-up.",
+          "next": "END",
+          "quality": "poor"
+        }
+      ],
+      "bestChoice": 0
+    }
+  },
+  "assessment": {
+    "criteria": [
+      {
+        "id": "evidence-first",
+        "label": "Letting evidence lead",
+        "guidance": "Name the barrier before judging the feature."
+      },
+      {
+        "id": "customer-impact",
+        "label": "Sizing customer impact",
+        "guidance": "Ground the decision in what changes for the user."
+      },
+      {
+        "id": "outcome-measurement",
+        "label": "Proving the outcome",
+        "guidance": "Define the measure that shows the fix worked."
+      }
+    ]
+  }
+}

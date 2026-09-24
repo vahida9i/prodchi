@@ -22,7 +22,7 @@
         },
         {
           "text": "Escalate the permission screen to the design-system team for a redesign",
-          "stage": "VALIDATE",
+          "stage": "TEST",
           "reveal": "The design-system team confirms the pattern is fine; the problem is where in the flow the prompt appears, not how it looks.",
           "next": "END"
         }
