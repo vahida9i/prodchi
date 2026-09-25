@@ -29,7 +29,7 @@ export default function LoginPage() {
       router.push("/home")
       router.refresh()
     } catch (err: any) {
-      setError(err.message || t.auth.errorInvalidCredentials)
+      setError(t.auth.errorInvalidCredentials)
     } finally {
       setIsLoading(false)
     }

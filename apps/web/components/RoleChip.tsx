@@ -4,11 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { api } from "@/lib/api-client"
 import { getTranslations } from "@/lib/i18n"
-
-const ROLE_EMOJI: Record<string, string> = {
-  'Product Design': '🎨',
-  'Product Management': '📊'
-}
+import { Briefcase, ChevronLeft, AlertCircle } from "lucide-react"
 
 /**
  * Header chip showing the account's CURRENT role track, linking to /role (the
@@ -54,7 +50,7 @@ export function RoleChip() {
         aria-busy
         className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm text-muted-foreground"
       >
-        <span className="animate-pulse">Role…</span>
+        <span className="animate-pulse">در حال بارگذاری نقش…</span>
       </span>
     )
   }
@@ -64,10 +60,11 @@ export function RoleChip() {
       <Link
         href="/role"
         className="inline-flex items-center gap-2 rounded-full border border-destructive/40 px-3 py-1.5 text-sm hover:bg-muted transition-colors"
-        title="Couldn't load role — pick again"
+        title="بارگذاری نقش ناموفق بود؛ دوباره انتخاب کنید"
       >
-        <span aria-hidden>⚠️</span>
-        <span className="font-medium">Role unavailable · retry</span>
+        <AlertCircle size={16} aria-hidden />
+        <span className="font-medium">انتخاب نقش</span>
+        <ChevronLeft size={14} aria-hidden />
       </Link>
     )
   }
@@ -75,14 +72,14 @@ export function RoleChip() {
   return (
     <Link
       href="/role"
-      className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm hover:bg-muted transition-colors"
+      className="touch-target inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-sm transition-colors hover:bg-muted"
       title={t.nav.switchTrack}
     >
-      <span aria-hidden>{ROLE_EMOJI[roleName] ?? '🧭'}</span>
+      <Briefcase size={16} className="text-primary" aria-hidden />
       <span className="font-medium">
-        {t.roles.byName[roleName as keyof typeof t.roles.byName]?.name ?? roleName}
+      {t.roles.byName[roleName as keyof typeof t.roles.byName]?.name ?? t.profile.roleLabel}
       </span>
-      <span aria-hidden className="text-muted-foreground">· {t.nav.switchTrack}</span>
+      <ChevronLeft size={14} className="text-muted-foreground" aria-hidden />
     </Link>
   )
 }

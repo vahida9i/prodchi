@@ -1,6 +1,6 @@
 export type Locale = 'en' | 'fa'
 
-export const DEFAULT_LOCALE: Locale = 'en'
+export const DEFAULT_LOCALE: Locale = 'fa'
 
 export function getLocale(): Locale {
   const envLocale =
@@ -8,7 +8,7 @@ export function getLocale(): Locale {
     process.env.APP_LOCALE ||
     DEFAULT_LOCALE
 
-  return envLocale === 'fa' ? 'fa' : 'en'
+  return envLocale === 'en' ? 'en' : 'fa'
 }
 
 export function isRtl(locale: Locale): boolean {

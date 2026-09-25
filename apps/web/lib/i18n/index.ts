@@ -9,7 +9,12 @@ const dictionaries: Record<Locale, Translations> = {
 
 export function getTranslations(locale?: Locale): Translations {
   const currentLocale = locale ?? getLocale()
-  return dictionaries[currentLocale] ?? dictionaries.en
+  return dictionaries[currentLocale] ?? dictionaries.fa
+}
+
+/** Format visible counts with Persian numerals while keeping API values numeric. */
+export function digits(value: string | number): string {
+  return String(value).replace(/[0-9]/g, digit => '۰۱۲۳۴۵۶۷۸۹'[Number(digit)])
 }
 
 /**

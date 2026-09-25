@@ -20,7 +20,7 @@ import {
   overallWeakness
 } from "@/lib/run-report"
 import type { Tone } from "@/lib/run-report"
-import { fmt, getTranslations } from "@/lib/i18n"
+import { digits, fmt, getTranslations } from "@/lib/i18n"
 
 type Summary = Awaited<ReturnType<typeof api.getSessionSummary>>
 type Feedback = NonNullable<Summary['feedback']>
@@ -50,7 +50,7 @@ function RunReport({ feedback }: { feedback: Feedback }) {
         <Badge variant={feedback.headline === 'strong' ? 'default' : 'secondary'}>
           {getHeadlineText(feedback.headline)}
         </Badge>
-        <Badge variant="outline">{Math.round(feedback.rate * 100)}% {t.summary.accuracy}</Badge>
+          <Badge variant="outline">{digits(Math.round(feedback.rate * 100))}٪ {t.summary.accuracy}</Badge>
       </div>
 
       {rows.length > 0 && (
@@ -128,7 +128,7 @@ export default function SessionSummaryPage() {
         setError(
           err?.status === 409
             ? t.summary.notCompletedYet
-            : err.message || t.summary.loadError
+            : t.summary.loadError
         )
       } finally {
         setLoading(false)
@@ -139,7 +139,7 @@ export default function SessionSummaryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-[60vh] items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     )
@@ -147,7 +147,7 @@ export default function SessionSummaryPage() {
 
   if (error || !summary) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-[60vh] items-center justify-center">
         <Card>
           <CardContent className="py-12 text-center">
             <h2 className="text-xl font-semibold mb-2">{error || t.summary.notFound}</h2>
@@ -159,38 +159,32 @@ export default function SessionSummaryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">{t.appName}</h1>
-          <Button variant="outline" size="sm" onClick={() => router.push("/home")}>
-            {t.summary.continuePath}
-          </Button>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8 max-w-3xl space-y-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-3">
+        <div><p className="text-sm text-muted-foreground">نتیجه‌ی مرحله</p><h1 className="mt-1 text-2xl font-extrabold">{t.summary.cardTitle}</h1></div>
+        <Button variant="outline" className="touch-target" onClick={() => router.push("/home")}>{t.summary.continuePath}</Button>
+      </div>
         <Card>
           <CardHeader className="space-y-2">
             <CardTitle className="text-xl">{t.summary.cardTitle}</CardTitle>
             <p className="text-muted-foreground">{summary.challengeTitle}</p>
             <div className="flex flex-wrap items-center gap-2">
-              {summary.levelNumber != null && <Badge>{fmt(t.summary.levelBadge, { n: summary.levelNumber })}</Badge>}
+              {summary.levelNumber != null && <Badge>{fmt(t.summary.levelBadge, { n: digits(summary.levelNumber) })}</Badge>}
               {summary.score && (
                 <>
                   <Badge variant="secondary" className="text-yellow-600">
                     {"★".repeat(summary.score.stars)}{"☆".repeat(Math.max(0, 3 - summary.score.stars))}
                   </Badge>
                   <Badge variant="secondary">
-                    {fmt(t.summary.bestCallsBadge, { hits: summary.score.hits, answered: summary.score.answered })}
+                    {fmt(t.summary.bestCallsBadge, { hits: digits(summary.score.hits), answered: digits(summary.score.answered) })}
                   </Badge>
-                  <Badge variant="secondary">{fmt(t.summary.xpBadge, { xp: summary.score.xp })}</Badge>
+                  <Badge variant="secondary">{fmt(t.summary.xpBadge, { xp: digits(summary.score.xp) })}</Badge>
                 </>
               )}
               {!summary.score && <Badge variant="secondary">{t.summary.reasoningRecord}</Badge>}
             </div>
             <p className="text-xs text-muted-foreground">
-              {fmt(t.summary.completedAt, { date: new Date(summary.completedAt).toLocaleString() })}
+              {fmt(t.summary.completedAt, { date: new Date(summary.completedAt).toLocaleString("fa-IR") })}
             </p>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -207,7 +201,7 @@ export default function SessionSummaryPage() {
             ) : (
               <details className="rounded-lg border p-4">
                 <summary className="cursor-pointer text-sm font-medium">
-                  {fmt(t.summary.pathRecap, { n: summary.path.length })}
+                  {fmt(t.summary.pathRecap, { n: digits(summary.path.length) })}
                 </summary>
                 <ol className="mt-4 space-y-4">
                   {summary.path.map((entry, i) => (
@@ -222,7 +216,6 @@ export default function SessionSummaryPage() {
             )}
           </CardContent>
         </Card>
-      </main>
     </div>
   )
 }

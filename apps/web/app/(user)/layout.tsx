@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getServerSessionUser } from '@/lib/server-auth'
+import { PersianUserShell } from '@/components/user/PersianUserShell'
 
 /**
  * Gate for every user-facing screen: authentication plus the one-time role
@@ -17,5 +18,5 @@ export default async function UserLayout({ children }: { children: React.ReactNo
     redirect('/onboarding')
   }
 
-  return <>{children}</>
+  return <PersianUserShell>{children}</PersianUserShell>
 }

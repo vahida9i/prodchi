@@ -7,8 +7,8 @@ export const fa: Translations = {
 
   // Navigation & User Shell
   nav: {
-    home: 'مسیر مراحل',
-    progress: 'مهارت‌ها و نشان‌ها',
+    home: 'مسیر',
+    progress: 'پیشرفت',
     profile: 'پروفایل',
     admin: 'مدیریت',
     signOut: 'خروج از حساب',
@@ -42,12 +42,12 @@ export const fa: Translations = {
     defaultDescription: 'تصمیم‌گیری‌های واقعی که هر روز در نقش خود با آن‌ها روبرو می‌شوید را تمرین کنید.',
     byName: {
       'Product Design': {
-        name: 'طراحی محصول (Product Design)',
-        description: 'پژوهش کاربر، وایرفریمینگ، طراحی بصری، تست کاربردپذیری و حل مسائل تجربه کاربری.',
+        name: 'طراحی محصول',
+        description: 'پژوهش کاربر، طرح‌واره، طراحی بصری، آزمون کاربردپذیری و حل مسئله تجربه کاربری.',
       },
       'Product Management': {
-        name: 'مدیریت محصول (Product Management)',
-        description: 'ریشه‌یابی و تشخیص مسئله، استراتژی محصول، اولویت‌بندی، نقشه راه و متریک‌های کسب‌وکار.',
+        name: 'مدیریت محصول',
+        description: 'تشخیص مسئله، راهبرد محصول، اولویت‌بندی، نقشه راه و سنجه‌های کسب‌وکار.',
       },
     },
   },

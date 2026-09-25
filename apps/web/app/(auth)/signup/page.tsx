@@ -25,12 +25,12 @@ export default function SignupPage() {
     setError('')
 
     if (password !== confirmPassword) {
-      setError(t.auth.password !== 'رمز عبور' ? 'Passwords do not match' : 'رمزهای عبور با یکدیگر مطابقت ندارند')
+      setError('رمزهای عبور با یکدیگر مطابقت ندارند')
       return
     }
 
     if (password.length < 8) {
-      setError(t.auth.password !== 'رمز عبور' ? 'Password must be at least 8 characters' : 'رمز عبور باید حداقل ۸ کاراکتر باشد')
+      setError('رمز عبور باید حداقل ۸ کاراکتر باشد')
       return
     }
 
@@ -41,7 +41,7 @@ export default function SignupPage() {
       router.push("/onboarding")
       router.refresh()
     } catch (err: any) {
-      setError(err.message || t.auth.errorGeneral)
+      setError(t.auth.errorGeneral)
     } finally {
       setIsLoading(false)
     }

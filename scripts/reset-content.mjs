@@ -70,7 +70,25 @@ const PATH_EN = [
  */
 const PATH_FA = [
   { file: 'fa_search_empty_state.json', industry: 'خرده‌فروشی آنلاین' },
-  { file: 'fa_infra_cost_squeeze.json', industry: 'سرویس ابری' }
+  { file: 'fa_telehealth_booking.json', industry: 'سلامت' },
+  { file: 'fa_focus_mode.json', industry: 'بهره‌وری' },
+  { file: 'fa_cart_recovery.json', industry: 'خرده‌فروشی آنلاین' },
+  { file: 'fa_subscription_pause.json', industry: 'سرویس ابری' },
+  { file: 'fa_checkout_confusion.json', industry: 'خرده‌فروشی آنلاین' },
+  { file: 'fa_insurance_claim_flow.json', industry: 'فین‌تک' },
+  { file: 'fa_clinic_no_show.json', industry: 'سلامت' },
+  { file: 'fa_cloud_admin_alerts.json', industry: 'سرویس ابری' },
+  { file: 'fa_delivery_tracking.json', industry: 'خرده‌فروشی آنلاین' },
+  { file: 'fa_usage_retention.json', industry: 'سرویس ابری' },
+  { file: 'fa_calendar_growth.json', industry: 'بهره‌وری' },
+  { file: 'fa_clinic_followup.json', industry: 'سلامت' },
+  { file: 'fa_infra_cost_squeeze.json', industry: 'سرویس ابری' },
+  { file: 'fa_contract_renewal.json', industry: 'سازمانی' },
+  { file: 'fa_wallet_transfer_trust.json', industry: 'فین‌تک' },
+  { file: 'fa_enterprise_permissions.json', industry: 'سازمانی' },
+  { file: 'fa_fraud_review_queue.json', industry: 'فین‌تک' },
+  { file: 'fa_team_collaboration.json', industry: 'بهره‌وری' },
+  { file: 'fa_procurement_adoption.json', industry: 'سازمانی' }
 ]
 
 const PATH = LOCALE === 'fa' ? PATH_FA : PATH_EN

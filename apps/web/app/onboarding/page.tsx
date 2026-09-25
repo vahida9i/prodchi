@@ -53,7 +53,7 @@ export default function OnboardingPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {checking ? (
-            <p className="text-sm text-muted-foreground text-center">Loading…</p>
+            <p className="text-sm text-muted-foreground text-center">در حال بارگذاری…</p>
           ) : (
             <RoleSelect />
           )}
