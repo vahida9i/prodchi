@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { api } from "@/lib/api-client"
 import { RoleSelect } from "@/components/RoleSelect"
+import { getTranslations } from "@/lib/i18n"
 
 /**
  * The role-select page, revisitable at any time (entry point: the RoleChip in
@@ -16,6 +17,7 @@ import { RoleSelect } from "@/components/RoleSelect"
  */
 export default function RolePage() {
   const router = useRouter()
+  const t = getTranslations()
   const [currentRoleId, setCurrentRoleId] = useState<string | null | undefined>(undefined) // undefined = loading
   const [error, setError] = useState('')
   const [retrying, setRetrying] = useState(false)
@@ -30,7 +32,7 @@ export default function RolePage() {
         router.push("/login")
         return
       }
-      setError('Failed to load your session')
+      setError(t.auth.errorGeneral)
       setCurrentRoleId(null)
     } finally {
       setRetrying(false)
@@ -45,10 +47,9 @@ export default function RolePage() {
     <div className="min-h-screen flex items-center justify-center bg-muted/50 px-4 py-12">
       <Card className="w-full max-w-2xl">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Choose your role</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">{t.auth.onboardingTitle}</CardTitle>
           <CardDescription className="text-center">
-            Your path, skills and progress all follow this track — everything switches with it.
-            You can come back here any time.
+            {t.auth.onboardingSubtitle}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

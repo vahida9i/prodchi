@@ -1,13 +1,18 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Inter, Vazirmatn } from "next/font/google"
 import { MonitoringProvider } from "@/components/monitoring-provider"
+import { getLocale, getTranslations, isRtl } from "@/lib/i18n"
 import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
+const vazirmatn = Vazirmatn({ subsets: ["arabic", "latin"] })
 
-export const metadata: Metadata = {
-  title: "Prodchi - Product Skill Practice",
-  description: "Work through product design scenarios, one decision at a time",
+export async function generateMetadata(): Promise<Metadata> {
+  const t = getTranslations()
+  return {
+    title: t.appTitle,
+    description: t.appDescription,
+  }
 }
 
 /**
@@ -19,8 +24,12 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const locale = getLocale()
+  const dir = isRtl(locale) ? "rtl" : "ltr"
+  const fontClass = locale === "fa" ? vazirmatn.className : inter.className
+
   return (
-    <html lang="en" className={inter.className}>
+    <html lang={locale} dir={dir} className={fontClass}>
       <body className="min-h-screen bg-background font-sans antialiased">
         <MonitoringProvider>{children}</MonitoringProvider>
       </body>

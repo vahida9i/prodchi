@@ -65,9 +65,34 @@ const STAGE_LABELS: Record<Role, Record<string, string>> = {
     MEASURE: 'Measuring the outcome'
   }
 }
+const STAGE_LABELS_FA: Record<Role, Record<string, string>> = {
+  'Product Design': {
+    FRAME: 'صورت‌بندی چالش',
+    DISCOVER: 'اکتشاف نیازها و شواهد',
+    DEFINE: 'تعریف دقیق مسئله',
+    IDEATE: 'ایده‌پردازی و گزینه‌ها',
+    DESIGN: 'طراحی راه‌حل',
+    TEST: 'تست با کاربران',
+    REFINE: 'بهبود و بازآفرینی'
+  },
+  'Product Management': {
+    FRAME: 'تعریف و چارچوب مسئله',
+    DIAGNOSE: 'ریشه‌یابی و تحلیل علل',
+    STRATEGIZE: 'تعیین جهت و استراتژی',
+    PRIORITIZE: 'اولویت‌بندی اقدامات',
+    PLAN: 'برنامه‌ریزی نقشه راه',
+    EXECUTE: 'اجرا و تحویل',
+    MEASURE: 'سنجش و اندازه‌گیری نتایج'
+  }
+}
+
 
 export function stageLabel(role: Role, stage: Stage): string {
-  return STAGE_LABELS[role][stage] ?? stage
+  const isFa = (process.env.APP_LOCALE === 'fa' || process.env.NEXT_PUBLIC_APP_LOCALE === 'fa')
+  if (isFa) {
+    return STAGE_LABELS_FA[role]?.[stage] ?? STAGE_LABELS[role]?.[stage] ?? stage
+  }
+  return STAGE_LABELS[role]?.[stage] ?? stage
 }
 
 /**

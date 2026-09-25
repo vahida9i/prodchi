@@ -184,6 +184,123 @@ const PM_SKILLS: readonly SkillDefinition[] = [
     growthNote: 'Define the success metric before launch — an unmeasured launch teaches nothing.'
   }
 ]
+const PD_SKILLS_FA: readonly SkillDefinition[] = [
+  {
+    id: 'framing',
+    name: 'صورت‌بندی مسئله',
+    shortName: 'صورت‌بندی',
+    stage: 'FRAME',
+    blurb: 'شما یک وضعیت مبهم کسب‌وکار را به مسئله‌ای شفاف با هدف قابل‌اندازه‌گیری تبدیل می‌کنید.',
+    growthNote: 'پیش از اقدام برای راه‌حل، مسئله را به زبان خود کاربر بازتعریف کنید.'
+  },
+  {
+    id: 'discovery',
+    name: 'اکتشاف و شواهد',
+    shortName: 'اکتشاف',
+    stage: 'DISCOVER',
+    blurb: 'شما پرسش کلیدی مناسب و شواهدی که می‌تواند به آن پاسخ دهد را انتخاب می‌کنید.',
+    growthNote: 'ابتدا مشخص کنید مهم‌ترین چیزی که باید یاد بگیرید چیست، سپس تصمیمی بگیرید که آن را بیاموزید.'
+  },
+  {
+    id: 'synthesis',
+    name: 'ترکیب و تعریف',
+    shortName: 'ترکیب',
+    stage: 'DEFINE',
+    blurb: 'شما داده‌های پراکنده را به بیانیه شفاف مسئله و معیار موفقیت تبدیل می‌کنید.',
+    growthNote: 'یافته‌ها را در یک جمله خلاصه کنید: چه کسی با چه مشکلی مواجه است و چگونه آن را اندازه می‌گیریم.'
+  },
+  {
+    id: 'ideation',
+    name: 'ایده‌پردازی و گزینه‌ها',
+    shortName: 'ایده‌پردازی',
+    stage: 'IDEATE',
+    blurb: 'به جای تکیه بر اولین ایده، گزینه‌ها و راه‌حل‌های واقعی متعددی خلق می‌کنید.',
+    growthNote: 'قبل از انتخاب نهایی، گزینه ساده، جسورانه و کم‌هزینه را جداگانه ترسیم نمایید.'
+  },
+  {
+    id: 'solution',
+    name: 'طراحی راه‌حل و ترید‌آف',
+    shortName: 'طراحی راه‌حل',
+    stage: 'DESIGN',
+    blurb: 'شما راه‌حل را شکل داده و از مواردی که آگاهانه فدا کرده‌اید دفاع می‌کنید.',
+    growthNote: 'تریدآف را با صدای بلند بیان کنید: این انتخاب چه هزینه‌ای دارد و چرا پرداخت آن ارزش دارد؟'
+  },
+  {
+    id: 'testing',
+    name: 'تست با کاربران',
+    shortName: 'تست کاربر',
+    stage: 'TEST',
+    blurb: 'پرخطرترین فرض‌ها را پیش از تعهد به ساخت کامل محصول اعتبارسنجی می‌کنید.',
+    growthNote: 'فرضی را پیدا کنید که در صورت اشتباه بودن کل طرح را با شکست روبرو می‌کند؛ ابتدا آن را تست کنید.'
+  },
+  {
+    id: 'refinement',
+    name: 'بهبود و بازآفرینی',
+    shortName: 'بهبود مستمر',
+    stage: 'REFINE',
+    blurb: 'به جای انتشار اولین نسخه، راه‌حل را بر اساس شواهد حاصل از آزمون کاربر ارتقا می‌دهید.',
+    growthNote: 'شواهد آزمون کاربر را دست‌کم نگیرید — بر اساس داده‌های مشاهده‌شده تغییرات را اعمال کنید.'
+  }
+]
+
+const PM_SKILLS_FA: readonly SkillDefinition[] = [
+  {
+    id: 'framing',
+    name: 'تعریف و شفاف‌سازی مسئله',
+    shortName: 'تعریف مسئله',
+    stage: 'FRAME',
+    blurb: 'شما سیگنال‌های مبهم تجاری را به هدفی شفاف و قابل‌سنجش تبدیل می‌کنید.',
+    growthNote: 'روی چرایی مسئله و ارزش تجاری حل آن تمرکز کنید.'
+  },
+  {
+    id: 'diagnosis',
+    name: 'ریشه‌یابی و تحلیل علت',
+    shortName: 'ریشه‌یابی',
+    stage: 'DIAGNOSE',
+    blurb: 'علل اصلی و محرک‌های اساسی مسئله را قبل از ارائه راه‌حل شناسایی می‌کنید.',
+    growthNote: 'علت‌های ریشه‌ای را از علائم و نشانه‌های سطحی تفکیک کنید.'
+  },
+  {
+    id: 'strategy',
+    name: 'استراتژی و جهت‌گیری',
+    shortName: 'استراتژی',
+    stage: 'STRATEGIZE',
+    blurb: 'مسیر و فرضیه راهبردی مشخصی برای دستیابی به خروجی مطلوب تعیین می‌کنید.',
+    growthNote: 'مشخص کنید چه کارهایی را آگاهانه نباید انجام دهیم.'
+  },
+  {
+    id: 'prioritization',
+    name: 'اولویت‌بندی و انتخاب',
+    shortName: 'اولویت‌بندی',
+    stage: 'PRIORITIZE',
+    blurb: 'فرصت‌ها و امکانات را بر مبنای ارزش و اثر واقعی رتبه‌بندی می‌کنید.',
+    growthNote: 'از شاخص‌های شفاف برای سنجش هزینه و فایده استفاده نمایید.'
+  },
+  {
+    id: 'planning',
+    name: 'برنامه‌ریزی و نقشه راه',
+    shortName: 'نقشه راه',
+    stage: 'PLAN',
+    blurb: 'توالی منطقی و انتشار فازبندی‌شده را برای محصول تدوین می‌کنید.',
+    growthNote: 'انتشار تدریجی و یادگیری سریع در هر فاز را مدنظر قرار دهید.'
+  },
+  {
+    id: 'execution',
+    name: 'اجرا و تحویل',
+    shortName: 'اجرا',
+    stage: 'EXECUTE',
+    blurb: 'موانع اجرا را رفع کرده و هماهنگی میان تیم‌ها را حفظ می‌کنید.',
+    growthNote: 'کیفیت و زمان‌بندی را همزمان با رضایت کاربر متعادل نگه دارید.'
+  },
+  {
+    id: 'measurement',
+    name: 'سنجش و یادگیری',
+    shortName: 'سنجش',
+    stage: 'MEASURE',
+    blurb: 'نتایج را با داده‌های معتبر ارزیابی کرده و درباره ادامه یا توقف تصمیم می‌گیرید.',
+    growthNote: 'پیش از عرضه محصول، شاخص‌های کلیدی موفقیت (KPI) را به وضوح مشخص کنید.'
+  }
+]
 
 /** Per-role skill sets, each in that role's process order. */
 export const SKILLS_BY_ROLE: Record<Role, readonly SkillDefinition[]> = {
@@ -192,6 +309,10 @@ export const SKILLS_BY_ROLE: Record<Role, readonly SkillDefinition[]> = {
 }
 
 export function skillsForRole(role: Role): readonly SkillDefinition[] {
+  const isFa = (process.env.APP_LOCALE === 'fa' || process.env.NEXT_PUBLIC_APP_LOCALE === 'fa')
+  if (isFa) {
+    return role === 'Product Management' ? PM_SKILLS_FA : PD_SKILLS_FA
+  }
   return SKILLS_BY_ROLE[role]
 }
 
@@ -261,7 +382,7 @@ function proficiencyFor(rate: number, count: number): Proficiency {
  * exists in the graph (retired or re-imported content) simply do not score.
  */
 export function buildSkillProfile(runs: readonly SkillRun[], role: Role = 'Product Design'): SkillProfile {
-  const definitions = SKILLS_BY_ROLE[role]
+  const definitions = skillsForRole(role)
   const roleStages = new Set(definitions.map(definition => definition.stage))
   const byStage = new Map<Stage, ReturnType<typeof emptyStat>>()
   let totalWeight = 0

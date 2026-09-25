@@ -1,0 +1,181 @@
+# Prodchi — base Compose stack (prod-shaped).
+#
+#   make up-prod   runs this file as-is (built images, next start / node dist)
+#   make up        layers docker-compose.dev.yml on top for HMR + bind mounts
+#
+# The project name is pinned so both invocations address the same containers,
+# volumes and network — `make psql` works whichever stack is up.
+#
+# Values come from .env.docker (`--env-file`), with inline fallbacks so the file
+# is optional. NOTE: localhost inside these URLs means "inside the container",
+# so inter-service traffic uses service names (db, api).
+name: prodchi
+
+services:
+  # -------------------------------------------------------------------------
+  # Postgres
+  # -------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-prodchi}
+    ports:
+      # 5433 on the host by default: a locally installed Postgres usually owns 5432.
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-prodchi}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+
+  # -------------------------------------------------------------------------
+  # API — Fastify
+  # -------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+      target: prod
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/prodchi}
+      SESSION_SECRET: ${SESSION_SECRET:-dev-secret-change-in-production}
+      ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-admin@prodchi.local}
+      ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-admin123}
+      # CORS origin for browser -> API calls.
+      WEB_URL: ${WEB_URL:-http://localhost:3000}
+      PORT: "4000"
+      NODE_ENV: ${API_NODE_ENV:-production}
+      # False on plain http://localhost, where a Secure cookie is never sent back.
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      # UI locale ('en' | 'fa') — read by shared-types (feedback stage labels,
+      # skill names) on the server. Keep in sync with the web build args.
+      APP_LOCALE: ${APP_LOCALE:-en}
+    ports:
+      - "${API_PORT:-4000}:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      # node rather than curl: the slim image ships no curl.
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:4000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+
+  # -------------------------------------------------------------------------
+  # Web — Next.js
+  # -------------------------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+      target: prod
+      args:
+        # Baked into the client bundle at build time — must be reachable from the
+        # BROWSER, hence localhost rather than the `api` service name.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api/v1}
+        NEXT_PUBLIC_ASHKAR_DSN: ${NEXT_PUBLIC_ASHKAR_DSN:-}
+        NEXT_PUBLIC_ASHKAR_PROJECT_KEY: ${NEXT_PUBLIC_ASHKAR_PROJECT_KEY:-}
+        NEXT_PUBLIC_ASHKAR_ENVIRONMENT: ${NEXT_PUBLIC_ASHKAR_ENVIRONMENT:-staging}
+        # UI locale ('en' | 'fa') — baked into the client bundle at build time.
+        NEXT_PUBLIC_APP_LOCALE: ${NEXT_PUBLIC_APP_LOCALE:-en}
+        APP_LOCALE: ${APP_LOCALE:-en}
+    restart: unless-stopped
+    environment:
+      # Runtime, container-side: the SSR session lookup reaches the API by
+      # service name (see apps/web/lib/server-auth.ts).
+      SERVER_API_URL: ${SERVER_API_URL:-http://api:4000/api/v1}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api/v1}
+      NEXT_PUBLIC_ASHKAR_DSN: ${NEXT_PUBLIC_ASHKAR_DSN:-}
+      NEXT_PUBLIC_ASHKAR_PROJECT_KEY: ${NEXT_PUBLIC_ASHKAR_PROJECT_KEY:-}
+      NEXT_PUBLIC_ASHKAR_ENVIRONMENT: ${NEXT_PUBLIC_ASHKAR_ENVIRONMENT:-staging}
+      APP_LOCALE: ${APP_LOCALE:-en}
+      NEXT_PUBLIC_APP_LOCALE: ${NEXT_PUBLIC_APP_LOCALE:-en}
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_started
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/login').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # -------------------------------------------------------------------------
+  # One-shot maintenance containers (`--profile tools`).
+  #
+  # They build the `dev` stage because that is the stage carrying the Prisma CLI
+  # and tsx, and — crucially — they run with NO bind mount, so no repo .env file
+  # exists inside them. packages/db/seed.ts loads .env with process.loadEnvFile,
+  # which overrides real environment variables; in a bind-mounted container the
+  # host's packages/db/.env would win and seed the wrong database.
+  # -------------------------------------------------------------------------
+  migrate:
+    profiles: ["tools"]
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+      target: dev
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/prodchi}
+    command: ["pnpm", "--filter", "db", "exec", "prisma", "migrate", "deploy"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  seed:
+    profiles: ["tools"]
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+      target: dev
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/prodchi}
+      ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-admin@prodchi.local}
+      ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-admin123}
+      # Locale picks the language of seeded content (e.g. badge names).
+      APP_LOCALE: ${APP_LOCALE:-en}
+    command: ["pnpm", "--filter", "db", "db:seed"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  reset-content:
+    profiles: ["tools"]
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+      target: dev
+    environment:
+      # Talks to the API over the Compose network, not the host-published port.
+      API_URL: http://api:4000/api/v1
+      ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-admin@prodchi.local}
+      ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-admin123}
+      # Picks the content set: docs/fixtures (en) or docs/fixtures/fa (fa).
+      APP_LOCALE: ${APP_LOCALE:-en}
+    command: ["node", "scripts/reset-content.mjs"]
+    depends_on:
+      api:
+        condition: service_started
+
+volumes:
+  db-data:
+

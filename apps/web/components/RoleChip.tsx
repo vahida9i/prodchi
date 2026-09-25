@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { api } from "@/lib/api-client"
+import { getTranslations } from "@/lib/i18n"
 
 const ROLE_EMOJI: Record<string, string> = {
   'Product Design': '🎨',
@@ -16,6 +17,7 @@ const ROLE_EMOJI: Record<string, string> = {
  * with the new track.
  */
 export function RoleChip() {
+  const t = getTranslations()
   const [roleName, setRoleName] = useState<string | null>(null)
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
 
@@ -74,11 +76,13 @@ export function RoleChip() {
     <Link
       href="/role"
       className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm hover:bg-muted transition-colors"
-      title="Change role"
+      title={t.nav.switchTrack}
     >
       <span aria-hidden>{ROLE_EMOJI[roleName] ?? '🧭'}</span>
-      <span className="font-medium">{roleName}</span>
-      <span aria-hidden className="text-muted-foreground">· change</span>
+      <span className="font-medium">
+        {t.roles.byName[roleName as keyof typeof t.roles.byName]?.name ?? roleName}
+      </span>
+      <span aria-hidden className="text-muted-foreground">· {t.nav.switchTrack}</span>
     </Link>
   )
 }

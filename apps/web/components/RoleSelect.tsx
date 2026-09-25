@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { api } from "@/lib/api-client"
+import { getTranslations } from "@/lib/i18n"
 
 /**
  * The role-track selector: both seeded tracks as cards, the current one
@@ -30,6 +31,7 @@ const roleDescription = (name: string) => ROLE_DESCRIPTION[name] ?? 'Practice th
 
 export function RoleSelect({ currentRoleId = null }: { currentRoleId?: string | null }) {
   const router = useRouter()
+  const t = getTranslations()
   const [roles, setRoles] = useState<Array<{ id: string; name: string }>>([])
   // The current track pre-selects its own card so "Continue" without a click
   // is a harmless no-op re-pick.
@@ -101,21 +103,23 @@ export function RoleSelect({ currentRoleId = null }: { currentRoleId?: string | 
           <Button
             key={role.id}
             variant={selectedRole === role.id ? "default" : "outline"}
-            className="h-24 w-full justify-start text-left gap-4"
+            className="h-24 w-full justify-start text-left rtl:text-right gap-4"
             onClick={() => setSelectedRole(role.id)}
           >
             <div className="text-4xl">{roleEmoji(role.name)}</div>
             <div>
-              <p className="font-medium">{role.name}</p>
+              <p className="font-medium">
+                {t.roles.byName[role.name as keyof typeof t.roles.byName]?.name ?? role.name}
+              </p>
               <p className="text-sm text-muted-foreground">
-                {roleDescription(role.name)}
+                {t.roles.byName[role.name as keyof typeof t.roles.byName]?.description ?? roleDescription(role.name)}
               </p>
             </div>
           </Button>
         ))}
       </div>
       <Button onClick={handleSubmit} disabled={isLoading || rolesLoading || !selectedRole} className="w-full">
-        {isLoading ? 'Saving...' : 'Continue'}
+        {isLoading ? t.auth.continue + '...' : t.auth.continue}
       </Button>
     </div>
   )

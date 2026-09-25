@@ -11,12 +11,16 @@ import {
   HEADLINE_TEXT,
   TONE_TEXT,
   TRAJECTORY_TEXT,
+  getHeadlineText,
+  getToneText,
+  getTrajectoryText,
   assessmentRows,
   nextSteps,
   overallStrength,
   overallWeakness
 } from "@/lib/run-report"
 import type { Tone } from "@/lib/run-report"
+import { fmt, getTranslations } from "@/lib/i18n"
 
 type Summary = Awaited<ReturnType<typeof api.getSessionSummary>>
 type Feedback = NonNullable<Summary['feedback']>
@@ -35,17 +39,18 @@ const TONE_VARIANT: Record<Tone, 'default' | 'secondary' | 'outline'> = {
  * try next. The recorded path stays available — collapsed — below it.
  */
 function RunReport({ feedback }: { feedback: Feedback }) {
+  const t = getTranslations()
   const rows = assessmentRows(feedback)
   const steps = nextSteps(rows, feedback)
 
   return (
     <section className="space-y-6">
       <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-sm font-semibold">Your run, assessed</h2>
+        <h2 className="text-sm font-semibold">{t.summary.title}</h2>
         <Badge variant={feedback.headline === 'strong' ? 'default' : 'secondary'}>
-          {HEADLINE_TEXT[feedback.headline]}
+          {getHeadlineText(feedback.headline)}
         </Badge>
-        <Badge variant="outline">{Math.round(feedback.rate * 100)}% weighted</Badge>
+        <Badge variant="outline">{Math.round(feedback.rate * 100)}% {t.summary.accuracy}</Badge>
       </div>
 
       {rows.length > 0 && (
@@ -56,7 +61,7 @@ function RunReport({ feedback }: { feedback: Feedback }) {
               className="flex flex-col gap-1 rounded-md border p-3 sm:flex-row sm:items-center sm:gap-3"
             >
               <Badge variant={TONE_VARIANT[row.tone]} className="w-fit shrink-0">
-                {TONE_TEXT[row.tone]}
+                {getToneText(row.tone)}
               </Badge>
               <span className="text-sm font-medium">{row.label}</span>
               <span className="text-sm text-muted-foreground">{row.result}</span>
@@ -66,26 +71,27 @@ function RunReport({ feedback }: { feedback: Feedback }) {
       )}
 
       <p className="text-sm text-muted-foreground">
-        {feedback.traversal.earlyExit
-          ? `Your walk: ${feedback.traversal.steps} steps · the strongest run takes ${feedback.traversal.strongestRunSteps} — you wrapped up early. `
-          : `Your walk: ${feedback.traversal.steps} steps · the strongest run takes ${feedback.traversal.strongestRunSteps}. `}
-        {TRAJECTORY_TEXT[feedback.trajectory]}
+        {fmt(
+          feedback.traversal.earlyExit ? t.summary.walkEarly : t.summary.walk,
+          { steps: feedback.traversal.steps, strongest: feedback.traversal.strongestRunSteps }
+        )}{" "}
+        {getTrajectoryText(feedback.trajectory)}
       </p>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1 rounded-lg border p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Overall strength</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t.summary.overallStrength}</p>
           <p className="text-sm leading-relaxed">{overallStrength(rows, feedback)}</p>
         </div>
         <div className="space-y-1 rounded-lg border p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Overall weakness</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t.summary.overallWeakness}</p>
           <p className="text-sm leading-relaxed">{overallWeakness(rows, feedback)}</p>
         </div>
       </div>
 
       <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">What to try next time</p>
-        <ol className="list-decimal space-y-1 pl-5 text-sm leading-relaxed">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t.summary.whatToTryNext}</p>
+        <ol className="list-decimal space-y-1 pl-5 rtl:pr-5 text-sm leading-relaxed">
           {steps.map((step, i) => (
             <li key={i}>{step}</li>
           ))}
@@ -104,6 +110,7 @@ function RunReport({ feedback }: { feedback: Feedback }) {
 export default function SessionSummaryPage() {
   const params = useParams()
   const router = useRouter()
+  const t = getTranslations()
   const sessionId = params.id as string
   const [summary, setSummary] = useState<Summary | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -120,8 +127,8 @@ export default function SessionSummaryPage() {
         }
         setError(
           err?.status === 409
-            ? "This session is not completed yet."
-            : err.message || "Failed to load summary"
+            ? t.summary.notCompletedYet
+            : err.message || t.summary.loadError
         )
       } finally {
         setLoading(false)
@@ -143,8 +150,8 @@ export default function SessionSummaryPage() {
       <div className="min-h-screen flex items-center justify-center">
         <Card>
           <CardContent className="py-12 text-center">
-            <h2 className="text-xl font-semibold mb-2">{error || "Summary not found"}</h2>
-            <Button variant="link" onClick={() => router.push("/home")}>Back to library</Button>
+            <h2 className="text-xl font-semibold mb-2">{error || t.summary.notFound}</h2>
+            <Button variant="link" onClick={() => router.push("/home")}>{t.summary.backToLibrary}</Button>
           </CardContent>
         </Card>
       </div>
@@ -155,9 +162,9 @@ export default function SessionSummaryPage() {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Prodchi</h1>
+          <h1 className="text-2xl font-bold">{t.appName}</h1>
           <Button variant="outline" size="sm" onClick={() => router.push("/home")}>
-            Back to library
+            {t.summary.continuePath}
           </Button>
         </div>
       </header>
@@ -165,25 +172,25 @@ export default function SessionSummaryPage() {
       <main className="container mx-auto px-4 py-8 max-w-3xl space-y-6">
         <Card>
           <CardHeader className="space-y-2">
-            <CardTitle className="text-xl">Session Summary</CardTitle>
+            <CardTitle className="text-xl">{t.summary.cardTitle}</CardTitle>
             <p className="text-muted-foreground">{summary.challengeTitle}</p>
             <div className="flex flex-wrap items-center gap-2">
-              {summary.levelNumber != null && <Badge>Level {summary.levelNumber}</Badge>}
+              {summary.levelNumber != null && <Badge>{fmt(t.summary.levelBadge, { n: summary.levelNumber })}</Badge>}
               {summary.score && (
                 <>
                   <Badge variant="secondary" className="text-yellow-600">
                     {"★".repeat(summary.score.stars)}{"☆".repeat(Math.max(0, 3 - summary.score.stars))}
                   </Badge>
                   <Badge variant="secondary">
-                    {summary.score.hits}/{summary.score.answered} best calls
+                    {fmt(t.summary.bestCallsBadge, { hits: summary.score.hits, answered: summary.score.answered })}
                   </Badge>
-                  <Badge variant="secondary">+{summary.score.xp} XP</Badge>
+                  <Badge variant="secondary">{fmt(t.summary.xpBadge, { xp: summary.score.xp })}</Badge>
                 </>
               )}
-              {!summary.score && <Badge variant="secondary">A record of your reasoning path</Badge>}
+              {!summary.score && <Badge variant="secondary">{t.summary.reasoningRecord}</Badge>}
             </div>
             <p className="text-xs text-muted-foreground">
-              Completed {new Date(summary.completedAt).toLocaleString()}
+              {fmt(t.summary.completedAt, { date: new Date(summary.completedAt).toLocaleString() })}
             </p>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -191,22 +198,22 @@ export default function SessionSummaryPage() {
               <RunReport feedback={summary.feedback} />
             ) : (
               <p className="text-sm text-muted-foreground">
-                This run has no assessment attached — the path below is the whole record.
+                {t.summary.noAssessment}
               </p>
             )}
 
             {summary.path.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No steps recorded.</p>
+              <p className="text-sm text-muted-foreground">{t.summary.noSteps}</p>
             ) : (
               <details className="rounded-lg border p-4">
                 <summary className="cursor-pointer text-sm font-medium">
-                  Your path, step by step ({summary.path.length})
+                  {fmt(t.summary.pathRecap, { n: summary.path.length })}
                 </summary>
                 <ol className="mt-4 space-y-4">
                   {summary.path.map((entry, i) => (
                     <li key={i} className="space-y-2 border-l-2 pl-3">
                       <p className="text-sm font-medium leading-relaxed">{entry.questionText}</p>
-                      <p className="text-sm text-muted-foreground">You chose: {entry.choiceText}</p>
+                      <p className="text-sm text-muted-foreground">{fmt(t.summary.youChose, { text: entry.choiceText })}</p>
                       <RevealBlock reveal={entry.reveal} variant="compact" />
                     </li>
                   ))}

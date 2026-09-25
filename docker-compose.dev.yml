@@ -1,0 +1,50 @@
+# Prodchi — development overlay: source bind mounts + hot reload.
+#
+# Layered on top of the base file, never used alone:
+#   make up        -> -f docker-compose.yml -f docker-compose.dev.yml
+#
+# The whole repo is mounted at /app so edits land inside the containers. That
+# mount would also hide every node_modules tree the image installed (and leak the
+# host's macOS binaries into Linux containers), so each install directory and the
+# compiled shared-types/dist get a named volume instead. Docker seeds a fresh
+# named volume from the image's content, so the first `up` starts fully installed.
+services:
+  api:
+    build:
+      target: dev
+    environment:
+      NODE_ENV: development
+    command: ["pnpm", "--filter", "@prodchi/api", "dev"]
+    volumes:
+      - ./:/app
+      - node_modules-root:/app/node_modules
+      - node_modules-api:/app/apps/api/node_modules
+      - node_modules-db:/app/packages/db/node_modules
+      - node_modules-shared:/app/packages/shared-types/node_modules
+      - shared-dist:/app/packages/shared-types/dist
+
+  web:
+    build:
+      target: dev
+    environment:
+      NODE_ENV: development
+      # macOS bind mounts do not reliably emit inotify events into the VM, so
+      # polling is what keeps HMR honest here.
+      WATCHPACK_POLLING: "true"
+    command: ["pnpm", "--filter", "@prodchi/web", "exec", "next", "dev", "-H", "0.0.0.0", "-p", "3000"]
+    volumes:
+      - ./:/app
+      - node_modules-root:/app/node_modules
+      - node_modules-web:/app/apps/web/node_modules
+      # Build cache + compiled output: kept off the host (root-owned files would
+      # otherwise litter the working tree).
+      - next-cache:/app/apps/web/.next
+
+volumes:
+  node_modules-root:
+  node_modules-api:
+  node_modules-web:
+  node_modules-db:
+  node_modules-shared:
+  shared-dist:
+  next-cache:

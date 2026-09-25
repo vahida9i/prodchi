@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { StepOptionList } from "@/components/challenge/StepOptionList"
 import { RevealBlock } from "@/components/challenge/RevealBlock"
 import { api, AuthoredReveal, SanitizedQuestion, SessionHistoryEntry, LevelCompletion, RevealBlock as RevealBlockData } from "@/lib/api-client"
+import { fmt, getTranslations } from "@/lib/i18n"
 
 /**
  * A step with no revealed content renders nothing, so the path list drops it
@@ -28,6 +29,7 @@ function hasReveal(reveal: AuthoredReveal | RevealBlockData | null | undefined):
 export default function SessionPage() {
   const params = useParams()
   const router = useRouter()
+  const t = getTranslations()
   const sessionId = params.id as string
 
   const [loading, setLoading] = useState(true)
@@ -57,14 +59,14 @@ export default function SessionPage() {
         setQuestion(data.question)
         setHistory(data.history)
         if (data.status === "in_progress" && !data.question) {
-          setError("This session is in an invalid state. Start the challenge again from the library.")
+          setError(t.session.invalidState)
         }
       } catch (err: any) {
         if (err?.status === 401) {
           router.push("/login")
           return
         }
-        setError(err.message || "Failed to load session")
+        setError(err.message || t.session.loadError)
       } finally {
         setLoading(false)
       }
@@ -129,7 +131,7 @@ export default function SessionPage() {
           // Fall through to the generic error below.
         }
       }
-      setError(err.message || "Failed to submit answer")
+      setError(err.message || t.session.submitError)
     } finally {
       setAnswering(false)
     }
@@ -158,11 +160,11 @@ export default function SessionPage() {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Prodchi</h1>
+          <h1 className="text-2xl font-bold">{t.appName}</h1>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">{answeredCount} answered</span>
+            <span className="text-sm text-muted-foreground">{fmt(t.session.answered, { n: answeredCount })}</span>
             <Button variant="outline" size="sm" onClick={() => router.push("/home")}>
-              Leave
+              {t.session.leave}
             </Button>
           </div>
         </div>
@@ -188,7 +190,7 @@ export default function SessionPage() {
         {question && reveal === null && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base text-muted-foreground">Question {answeredCount + 1}</CardTitle>
+              <CardTitle className="text-base text-muted-foreground">{fmt(t.session.questionNumber, { n: answeredCount + 1 })}</CardTitle>
             </CardHeader>
             <CardContent>
               <StepOptionList question={question} onAnswer={handleAnswer} disabled={answering} />
@@ -199,7 +201,7 @@ export default function SessionPage() {
         {reveal !== null && (
           <Card>
             <CardHeader>
-              <CardTitle>{finished ? "Session complete" : "What you found"}</CardTitle>
+              <CardTitle>{finished ? t.session.sessionComplete : t.session.whatYouFound}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <RevealBlock reveal={reveal} />
@@ -209,27 +211,29 @@ export default function SessionPage() {
                     <div className="flex items-center justify-between">
                       <p className="font-semibold">
                         {result.firstPass
-                          ? `Level ${result.levelNumber} passed`
-                          : `Level ${result.levelNumber} — attempt ${result.attempts}`}
+                          ? fmt(t.session.levelPassed, { n: result.levelNumber })
+                          : fmt(t.session.levelAttempt, { n: result.levelNumber, m: result.attempts })}
                       </p>
                       <span className="text-sm text-yellow-500">
                         {"★".repeat(result.bestStars)}{"☆".repeat(Math.max(0, 3 - result.bestStars))}
                       </span>
                     </div>
                     <p className="text-sm">
-                      {result.hits}/{result.answered} best calls ·{" "}
-                      {result.firstPass ? `+${result.xpGained} XP` : `no new XP (best run ${result.bestXp} XP)`} ·{" "}
-                      {result.totalXp} XP total
+                      {fmt(t.session.bestCalls, { hits: result.hits, answered: result.answered })} ·{" "}
+                      {result.firstPass
+                        ? fmt(t.session.xpAwarded, { xp: result.xpGained })
+                        : fmt(t.session.noNewXp, { xp: result.bestXp })} ·{" "}
+                      {fmt(t.session.xpTotal, { xp: result.totalXp })}
                     </p>
                     {result.leveledUp && (
                       <p className="text-sm font-medium text-primary">
-                        You reached player level {result.playerLevel}!
+                        {fmt(t.session.leveledUp, { n: result.playerLevel })}
                       </p>
                     )}
                     {result.newBadges.length > 0 && (
                       <div className="space-y-1">
                         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          New badges
+                          {t.session.newBadges}
                         </p>
                         {result.newBadges.map(badge => (
                           <p key={badge.id} className="text-sm">
@@ -240,27 +244,27 @@ export default function SessionPage() {
                     )}
                     {result.nextLevelNumber != null && (
                       <p className="text-sm text-muted-foreground">
-                        Level {result.nextLevelNumber} is unlocked — find it on your path.
+                        {fmt(t.session.nextLevelUnlocked, { n: result.nextLevelNumber })}
                       </p>
                     )}
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    Your full reasoning path is on the summary.
+                    {t.session.fullPathOnSummary}
                   </p>
                 )
               ) : (
-                <p className="text-sm text-muted-foreground">Take your time — continue when you are ready.</p>
+                <p className="text-sm text-muted-foreground">{t.session.takeYourTime}</p>
               )}
               {finished ? (
                 <div className="flex gap-2">
-                  <Button onClick={handleContinue}>View summary</Button>
+                  <Button onClick={handleContinue}>{t.session.viewSummary}</Button>
                   <Button variant="outline" onClick={() => router.push("/home")}>
-                    Back to path
+                    {t.session.backToPath}
                   </Button>
                 </div>
               ) : (
-                <Button onClick={handleContinue}>Continue</Button>
+                <Button onClick={handleContinue}>{t.session.continue}</Button>
               )}
             </CardContent>
           </Card>
@@ -269,7 +273,7 @@ export default function SessionPage() {
         {pathReveals.length > 0 && (
           <details open className="rounded-lg border p-4">
             <summary className="text-sm font-medium cursor-pointer">
-              What you have found
+              {t.session.findingsRecap}
             </summary>
             {/* One block per step, carrying only what that choice revealed — no
                 question text, no "you chose" — so the evidence the run produced

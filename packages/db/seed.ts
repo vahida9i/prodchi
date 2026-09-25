@@ -59,14 +59,28 @@ async function main() {
   console.log('Created admin user:', admin.email)
 
   // Industries are the path's content dimension — every level is tagged with one.
-  const industries = [
-    { name: 'E-commerce', order: 0 },
-    { name: 'Fintech', order: 1 },
-    { name: 'Health', order: 2 },
-    { name: 'SaaS', order: 3 },
-    { name: 'Productivity', order: 4 },
-    { name: 'Enterprise', order: 5 }
-  ]
+  // Seeded once per deployment in the active locale's language: the name is both
+  // the unique key (upsert) and the label candidates see on the path and in
+  // reset-content's PATH layout — so switching APP_LOCALE on an existing
+  // database requires a re-seed (pnpm db:seed && pnpm db:reset-content).
+  const isFa = (process.env.APP_LOCALE === 'fa' || process.env.NEXT_PUBLIC_APP_LOCALE === 'fa')
+  const industries = isFa
+    ? [
+        { name: 'خرده‌فروشی آنلاین', order: 0 },
+        { name: 'فین‌تک', order: 1 },
+        { name: 'سلامت', order: 2 },
+        { name: 'سرویس ابری', order: 3 },
+        { name: 'بهره‌وری', order: 4 },
+        { name: 'سازمانی', order: 5 }
+      ]
+    : [
+        { name: 'E-commerce', order: 0 },
+        { name: 'Fintech', order: 1 },
+        { name: 'Health', order: 2 },
+        { name: 'SaaS', order: 3 },
+        { name: 'Productivity', order: 4 },
+        { name: 'Enterprise', order: 5 }
+      ]
 
   const industryByName = new Map<string, { id: string }>()
   for (const industry of industries) {
@@ -82,51 +96,96 @@ async function main() {
 
   // Badges key off the path model (levels / stars / streak / industry). The v1
   // `skillScoreAbove` condition is gone along with the skill tree.
-  const ecommerce = industryByName.get('E-commerce')!
-  const badges = [
-    {
-      id: 'first-level',
-      name: 'First Steps',
-      description: 'Pass your first level',
-      iconRef: '🎯',
-      unlockCondition: { type: 'levelsPassedAbove', threshold: 1 }
-    },
-    {
-      id: 'sharp-eye',
-      name: 'Sharp Eye',
-      description: 'Pass 3 levels picking every best choice',
-      iconRef: '🔍',
-      unlockCondition: { type: 'perfectLevelsAbove', threshold: 3 }
-    },
-    {
-      id: 'star-collector',
-      name: 'Star Collector',
-      description: 'Collect 15 stars across the path',
-      iconRef: '⭐',
-      unlockCondition: { type: 'starsAbove', threshold: 15 }
-    },
-    {
-      id: 'streak-7',
-      name: 'Week Warrior',
-      description: 'Maintain a 7-day streak',
-      iconRef: '🔥',
-      unlockCondition: { type: 'streakAbove', threshold: 7 }
-    },
-    {
-      id: 'path-pioneer',
-      name: 'Path Pioneer',
-      description: 'Pass 10 levels',
-      iconRef: '🏆',
-      unlockCondition: { type: 'levelsPassedAbove', threshold: 10 }
-    },
-    {
-      id: 'industry-explorer',
-      name: 'Industry Explorer',
-      description: 'Pass every level in the E-commerce path',
-      iconRef: '🧭',
-      unlockCondition: { type: 'industryCompleted', industryId: ecommerce.id }
-    }
-  ]
+  const ecommerce = industryByName.get(isFa ? 'خرده‌فروشی آنلاین' : 'E-commerce')!
+  const badges = isFa
+    ? [
+        {
+          id: 'first-level',
+          name: 'گام نخست',
+          description: 'اولین مرحله خود را با موفقیت پشت سر بگذارید',
+          iconRef: '🎯',
+          unlockCondition: { type: 'levelsPassedAbove', threshold: 1 }
+        },
+        {
+          id: 'sharp-eye',
+          name: 'دید دقیق',
+          description: '۳ مرحله را با انتخاب تمام گزینه‌های ایده‌آل سپری کنید',
+          iconRef: '🔍',
+          unlockCondition: { type: 'perfectLevelsAbove', threshold: 3 }
+        },
+        {
+          id: 'star-collector',
+          name: 'شکارچی ستاره‌ها',
+          description: '۱۵ ستاره در طول مسیر مراحل به دست آورید',
+          iconRef: '⭐',
+          unlockCondition: { type: 'starsAbove', threshold: 15 }
+        },
+        {
+          id: 'streak-7',
+          name: 'تعهد هفتگی',
+          description: 'یک زنجیره ۷ روزه فعال را حفظ کنید',
+          iconRef: '🔥',
+          unlockCondition: { type: 'streakAbove', threshold: 7 }
+        },
+        {
+          id: 'path-pioneer',
+          name: 'پیشگام مسیر',
+          description: '۱۰ مرحله را به پایان برسانید',
+          iconRef: '🏆',
+          unlockCondition: { type: 'levelsPassedAbove', threshold: 10 }
+        },
+        {
+          id: 'industry-explorer',
+          name: 'کاوشگر صنایع',
+          description: 'همه مراحل مسیر تجارت الکترونیک را پشت سر بگذارید',
+          iconRef: '🧭',
+          unlockCondition: { type: 'industryCompleted', industryId: ecommerce.id }
+        }
+      ]
+    : [
+        {
+          id: 'first-level',
+          name: 'First Steps',
+          description: 'Pass your first level',
+          iconRef: '🎯',
+          unlockCondition: { type: 'levelsPassedAbove', threshold: 1 }
+        },
+        {
+          id: 'sharp-eye',
+          name: 'Sharp Eye',
+          description: 'Pass 3 levels picking every best choice',
+          iconRef: '🔍',
+          unlockCondition: { type: 'perfectLevelsAbove', threshold: 3 }
+        },
+        {
+          id: 'star-collector',
+          name: 'Star Collector',
+          description: 'Collect 15 stars across the path',
+          iconRef: '⭐',
+          unlockCondition: { type: 'starsAbove', threshold: 15 }
+        },
+        {
+          id: 'streak-7',
+          name: 'Week Warrior',
+          description: 'Maintain a 7-day streak',
+          iconRef: '🔥',
+          unlockCondition: { type: 'streakAbove', threshold: 7 }
+        },
+        {
+          id: 'path-pioneer',
+          name: 'Path Pioneer',
+          description: 'Pass 10 levels',
+          iconRef: '🏆',
+          unlockCondition: { type: 'levelsPassedAbove', threshold: 10 }
+        },
+        {
+          id: 'industry-explorer',
+          name: 'Industry Explorer',
+          description: 'Pass every level in the E-commerce path',
+          iconRef: '🧭',
+          unlockCondition: { type: 'industryCompleted', industryId: ecommerce.id }
+        }
+      ]
 
   for (const badge of badges) {
     await prisma.badge.upsert({

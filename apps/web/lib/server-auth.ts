@@ -1,6 +1,20 @@
 import { cookies } from 'next/headers'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'
+/**
+ * Base URL for the SERVER-SIDE session lookup.
+ *
+ * This fetch runs inside the Next.js server, not the browser, so it needs a URL
+ * that resolves from wherever that server runs. In Docker the container's own
+ * localhost is not the API: NEXT_PUBLIC_API_URL is the browser-facing address
+ * (http://localhost:4000), and pointing the in-container fetch at it makes every
+ * gated layout bounce to /login. SERVER_API_URL carries the internal address
+ * (http://api:4000/api/v1 under Compose); NEXT_PUBLIC_API_URL stays the fallback,
+ * so nothing changes outside a container.
+ */
+const API_BASE =
+  process.env.SERVER_API_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://localhost:4000/api/v1'
 
 export interface SessionUser {
   id: string

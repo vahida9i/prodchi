@@ -5,6 +5,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { getTranslations } from "@/lib/i18n"
 
 interface StepOptionListProps {
   question: {
@@ -22,6 +23,7 @@ interface StepOptionListProps {
  * submitting — a stray click cannot commit an irreversible choice.
  */
 export function StepOptionList({ question, onAnswer, disabled }: StepOptionListProps) {
+  const t = getTranslations()
   const [selected, setSelected] = useState<number | null>(null)
 
   // New question, clean slate — the previous selection must not carry over.
@@ -60,7 +62,7 @@ export function StepOptionList({ question, onAnswer, disabled }: StepOptionListP
           if (selected !== null) onAnswer(selected)
         }}
       >
-        {disabled ? "Submitting…" : "Submit choice"}
+        {disabled ? t.session.submitting : t.session.confirmChoice}
       </Button>
     </div>
   )

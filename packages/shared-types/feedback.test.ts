@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { evaluateRun, qualityOf, strongestRunSteps } from './feedback'
+import { evaluateRun, qualityOf, stageLabel, strongestRunSteps } from './feedback'
 import type { RunChallenge } from './feedback'
 
 const REVEAL = { text: 'what you learn' }
@@ -105,11 +105,12 @@ test('a miss carries the strongest move, its because, and the mismatch flag', ()
   assert.equal(first.mismatch, true) // IDEATE move where DISCOVER was needed
   assert.equal(first.strongest?.text, 'Split by device')
   assert.equal(first.strongest?.because, 'The pattern is device-dependent.')
-  const growth = report.growth.find(g => g.area === 'Discovering needs & evidence')
+  // Stage labels are locale-aware, so the expected area is resolved the same way.
+  const growth = report.growth.find(g => g.area === stageLabel('Product Design', 'DISCOVER'))
   assert.ok(growth, 'expected the DISCOVER area in growth')
   assert.equal(growth.atQuestion, 'Q1')
   assert.equal(growth.strongest.because, 'The pattern is device-dependent.')
-  assert.ok(report.strengths.some(s => s.area === 'Testing with users'))
+  assert.ok(report.strengths.some(s => s.area === stageLabel('Product Design', 'TEST')))
 })
 
 test('reasonable moves count half and surface as defensible in evidence', () => {

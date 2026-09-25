@@ -7,6 +7,7 @@ import { api } from "@/lib/api-client"
 import type { LevelOnPath } from "@/lib/api-client"
 import { PathMap } from "@/components/challenge/PathMap"
 import { RoleChip } from "@/components/RoleChip"
+import { getTranslations } from "@/lib/i18n"
 
 /**
  * The candidate home: the one level path OF THE SELECTED TRACK. Pass a level by
@@ -24,10 +25,11 @@ const ROLE_DESCRIPTION: Record<string, string> = {
 }
 
 const roleDescription = (name: string | null) =>
-  (name && ROLE_DESCRIPTION[name]) ?? 'Practice the decisions your role makes every day.'
+  (name && ROLE_DESCRIPTION[name]) ?? getTranslations().roles.defaultDescription
 
 export default function HomePage() {
   const router = useRouter()
+  const t = getTranslations()
   const [levels, setLevels] = useState<LevelOnPath[]>([])
   const [roleName, setRoleName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -72,7 +74,7 @@ export default function HomePage() {
         return
       }
       // 403 = locked server-side; everything else is surfaced as-is.
-      alert(err.message || "Failed to start level")
+      alert(err.message || t.auth.errorGeneral)
     } finally {
       setStartingId(null)
     }
@@ -105,17 +107,17 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Prodchi</h1>
+          <h1 className="text-2xl font-bold">{t.appName}</h1>
           <div className="flex items-center gap-2">
             <RoleChip />
             <Button variant="outline" size="sm" onClick={() => router.push("/profile")}>
-              Profile
+              {t.nav.profile}
             </Button>
             <Button variant="outline" size="sm" onClick={() => router.push("/progress")}>
-              Progress
+              {t.nav.progress}
             </Button>
             <Button variant="outline" size="sm" onClick={handleLogout}>
-              Log out
+              {t.nav.signOut}
             </Button>
           </div>
         </div>
@@ -123,25 +125,28 @@ export default function HomePage() {
 
       <main className="container mx-auto px-4 py-8 space-y-10">
         <section className="space-y-2">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Current track</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">{t.profile.roleLabel}</p>
           <div className="flex flex-wrap items-center gap-3">
-            <h2 className="text-xl font-semibold">{roleName ?? 'Your role'}</h2>
+            <h2 className="text-xl font-semibold">
+              {roleName ? (t.roles.byName[roleName as keyof typeof t.roles.byName]?.name ?? roleName) : t.nav.switchTrack}
+            </h2>
             <Button variant="outline" size="sm" onClick={() => router.push("/role")}>
-              Change role
+              {t.nav.switchTrack}
             </Button>
           </div>
-          <p className="text-sm text-muted-foreground">{roleDescription(roleName)}</p>
+          <p className="text-sm text-muted-foreground">
+            {roleName ? (t.roles.byName[roleName as keyof typeof t.roles.byName]?.description ?? roleDescription(roleName)) : t.roles.defaultDescription}
+          </p>
         </section>
         <section className="space-y-4">
           <div>
-            <h2 className="text-xl font-semibold">Your path</h2>
+            <h2 className="text-xl font-semibold">{t.path.title}</h2>
             <p className="text-sm text-muted-foreground">
-              Pass a level by reaching the end of the scenario. Every best call earns 10 XP —
-              replays can improve your best run but never add XP.
+              {t.path.subtitle}
             </p>
           </div>
           {levels.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No levels in this track yet.</p>
+            <p className="text-sm text-muted-foreground">{t.path.empty}</p>
           ) : (
           <PathMap
             levels={levels}

@@ -26,7 +26,80 @@ prodchi/
     └── reset-content.mjs  # wipes authored content/progress for a clean level path
 ```
 
-## Getting Started
+## Running with Docker & Make
+
+A dual development (HMR) and production-style Docker Compose setup is included, driven by the root `Makefile`.
+
+### Prerequisites
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) or [Colima](https://github.com/abiosoft/colima) (with Docker Compose v2)
+- GNU Make (preinstalled on macOS)
+
+Run the preflight check to verify your Docker installation and check for host port conflicts:
+
+```bash
+make doctor
+```
+
+### Quickstart (Development with HMR)
+
+```bash
+# Start Postgres, API, and Web with hot reload + bind mounts
+make up
+
+# Apply migrations to the container Postgres
+make migrate
+
+# Seed roles, badges, and the default admin
+make seed
+
+# Import scenario fixtures and lay out the level path (runs against the live API)
+make reset-content
+```
+
+- **Web app**: [http://localhost:3000](http://localhost:3000)
+- **API server**: [http://localhost:4000](http://localhost:4000) (health: `http://localhost:4000/health`)
+- **Postgres**: mapped to host port `5433` by default (avoids colliding with any host Postgres on 5432)
+
+### Common Make Targets
+
+| Target | Description |
+|--------|-------------|
+| `make help` | Show all available targets with descriptions |
+| `make doctor` | Check Docker daemon, Compose, env file, and host port availability |
+| `make up` | Start dev stack in background (HMR enabled, source mounted) |
+| `make up-prod` | Start production-style stack (built images, no host mounts) |
+| `make down` | Stop and remove stack containers (data volumes preserved) |
+| `make restart` | Restart all stack containers |
+| `make logs` | Tail logs (`make logs SVC=api` or `make logs SVC=web`) |
+| `make ps` | Show container status and health |
+| `make build` | Rebuild images |
+| `make migrate` | Apply Prisma migrations (one-shot container) |
+| `make seed` | Seed database (roles, badges, admin user) |
+| `make reset-content` | Import fixtures and lay out level path |
+| `make db-reset` | Drop + recreate DB, re-migrate and re-seed (destructive) |
+| `make psql` | Interactive `psql` shell inside the database container |
+| `make shell-api` | Interactive shell inside the API container |
+| `make shell-web` | Interactive shell inside the Web container |
+| `make typecheck` | Run TypeScript checks across all workspace packages (host) |
+| `make test` | Run the unit test suite (host) |
+| `make e2e` | Run e2e tests against the stack API on port 4000 (host) |
+| `make clean` | Stop containers and delete built local images |
+| `make nuke` | Stop containers AND delete persistent volumes (database + node_modules) |
+
+### Configuration
+
+Docker environment defaults are configured in `.env.docker`. Compose automatically picks this file up.
+
+Key settings in `.env.docker`:
+- `DB_PORT=5433` — host port for container Postgres (leave at 5433 to avoid conflicting with a local Postgres.app on 5432).
+- `API_PORT=4000` / `WEB_PORT=3000` — published ports.
+- `SERVER_API_URL=http://api:4000/api/v1` — internal Docker network URL used by Next.js SSR inside the `web` container.
+- `COOKIE_SECURE=false` — ensures session cookies work when developing over plain `http://localhost`.
+
+---
+
+## Local Development (without Docker)
 
 ### Prerequisites
 
@@ -81,6 +154,29 @@ easiest first, one scenario per industry. Re-running it refreshes content in pla
 never overwrites a level slot it cannot claim. `single-question-sample.json` is left out
 deliberately: it is the quick-call sample the e2e suites import, not path content.
 
+### Content locale
+
+`APP_LOCALE` selects the UI language **and** the challenge content set:
+
+- `APP_LOCALE=en` → `docs/fixtures/` (English scenarios), English industry names.
+- `APP_LOCALE=fa` → `docs/fixtures/fa/` — a **completely separate** fixture set: its own
+  files, ids (`fa_*`) and `PATH_FA` layout, independently authored Farsi scenarios
+  (never translations of the English ones), with Farsi industry names seeded by
+  `packages/db/seed.ts`.
+
+There is no cross-locale fallback: `pnpm db:reset-content` aborts before touching the
+network if the active locale's directory or any file in its path layout is missing — a
+Farsi deployment can never silently serve English content, and vice versa. Structural
+fields stay English in both sets (`role`, `stage`, `difficulty`, criterion ids) since
+those are enum keys, not display copy. Because industries and content are keyed per
+locale, switching `APP_LOCALE` on an existing database requires a re-seed:
+
+```bash
+pnpm db:seed && pnpm db:reset-content
+```
+
+The e2e suites always run against the English fixtures.
+
 For a clean slate first, wipe and re-seed:
 
 ```bash
@@ -97,6 +193,8 @@ pnpm db:seed && pnpm db:reset-content
 | `ADMIN_SEED_EMAIL` | Initial admin email |
 | `ADMIN_SEED_PASSWORD` | Initial admin password |
 | `NEXT_PUBLIC_API_URL` | API URL for frontend |
+| `APP_LOCALE` | UI language, `en` or `fa` (server-side: SSR, seed, shared-types). Decided once — there is no runtime switch |
+| `NEXT_PUBLIC_APP_LOCALE` | Same value as `APP_LOCALE`; inlined into the client bundle at build time (set both) |
 | `WEB_URL` | Frontend URL for CORS |
 | `PORT` | API server port (default: 4000) |
 | `NEXT_PUBLIC_ASHKAR_DSN` | AshkarHQ monitoring DSN (optional — monitoring is disabled when empty) |

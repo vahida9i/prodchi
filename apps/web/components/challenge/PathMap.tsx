@@ -5,12 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DIFFICULTY_STYLES } from "@/lib/constants"
 import { cn } from "@/lib/utils"
+import { fmt, getTranslations } from "@/lib/i18n"
 import type { LevelOnPath } from "@/lib/api-client"
-
-const TYPE_LABEL: Record<string, string> = {
-  challenge: "Scenario",
-  single_question: "Quick call"
-}
 
 function starString(count: number): string {
   return "★".repeat(count) + "☆".repeat(Math.max(0, 3 - count))
@@ -39,11 +35,13 @@ export function PathMap({
   /** Opens the recap of the level's latest finished run. */
   onViewSummary?: (level: LevelOnPath) => void
 }) {
+  const t = getTranslations()
+
   if (levels.length === 0) {
     return (
       <Card>
         <CardContent className="py-12 text-center">
-          <p className="text-muted-foreground">No levels on the path yet. Check back soon!</p>
+          <p className="text-muted-foreground">{t.path.empty}</p>
         </CardContent>
       </Card>
     )
@@ -84,6 +82,7 @@ function LevelNode({
   onStart: (level: LevelOnPath) => void
   onViewSummary?: (level: LevelOnPath) => void
 }) {
+  const t = getTranslations()
   const locked = level.progress.status === "locked"
   const passed = level.progress.status === "passed"
 
@@ -113,7 +112,7 @@ function LevelNode({
               ? "border-primary bg-primary/10 text-primary ring-4 ring-primary/15"
               : "border-primary/40 bg-primary/5 text-primary/70")
         )}
-        aria-label={locked ? "Locked level" : `Level ${level.number}`}
+        aria-label={locked ? t.path.lockedLevelAria : fmt(t.path.levelAria, { n: level.number })}
       >
         {passed ? "✓" : locked ? "🔒" : level.number}
       </span>
@@ -127,10 +126,16 @@ function LevelNode({
                 variant="outline"
                 className={cn("capitalize", DIFFICULTY_STYLES[level.difficulty] ?? DIFFICULTY_STYLES.easy)}
               >
-                {level.difficulty}
+                {t.path.difficulties[level.difficulty] ?? level.difficulty}
               </Badge>
               <Badge variant="outline">{level.industry.name}</Badge>
-              <Badge variant="secondary">{TYPE_LABEL[level.type] ?? level.type}</Badge>
+              <Badge variant="secondary">
+                {level.type === "single_question"
+                  ? t.path.singleQuestionBadge
+                  : level.type === "challenge"
+                    ? t.path.scenarioBadge
+                    : level.type}
+              </Badge>
             </div>
             {/* The authored brief: what the company is and who its customers are.
                 Clamped so a long summary cannot make this node outgrow the rest. */}
@@ -139,21 +144,21 @@ function LevelNode({
             )}
             <p className={cn("text-sm text-muted-foreground", level.summary && "mt-1")}>
               {passed
-                ? `Passed — best ${level.progress.bestStars}★ · ${level.progress.bestXp} XP`
+                ? `${t.path.completed} — ${level.progress.bestStars}★ · ${level.progress.bestXp} ${t.nav.xp}`
                 : locked
-                  ? "Pass the previous level to unlock"
+                  ? t.path.locked
                   : level.progress.attempts > 0
-                    ? "Unlocked — replay to improve your best"
-                    : `+${level.xpPerBest} XP per best call`}
+                    ? t.path.resumeLevel
+                    : `+${level.xpPerBest} ${t.nav.xp}`}
             </p>
           </div>
 
-          <div className="shrink-0 text-right">
+          <div className="shrink-0 text-right rtl:text-left">
             {passed && <div className="mb-1 text-sm text-yellow-500">{starString(level.progress.bestStars)}</div>}
             <div className="flex flex-wrap items-center justify-end gap-2">
               {level.progress.lastSessionId && (
                 <Button size="sm" variant="outline" onClick={() => onViewSummary?.(level)}>
-                  Review your run
+                  {t.summary.reviewPath}
                 </Button>
               )}
               <Button
@@ -161,7 +166,7 @@ function LevelNode({
                 disabled={locked || startingId === level.id}
                 onClick={() => onStart(level)}
               >
-                {startingId === level.id ? "Starting…" : passed ? "Replay" : locked ? "Locked" : "Play"}
+                {startingId === level.id ? t.session.submitting : passed ? t.summary.retry : locked ? t.path.locked : t.path.startLevel}
               </Button>
             </div>
           </div>

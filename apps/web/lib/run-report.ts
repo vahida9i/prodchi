@@ -1,4 +1,5 @@
 import type { FeedbackReport } from './api-client'
+import { fmt, getTranslations } from './i18n'
 
 /**
  * Presentation layer for the end-of-run report (plan Feature 4) — pure and
@@ -13,6 +14,11 @@ import type { FeedbackReport } from './api-client'
  */
 
 /** Candidate-facing label for the engine's headline verdict. */
+export function getHeadlineText(headline: FeedbackReport['headline']): string {
+  const t = getTranslations()
+  return t.summary.headlines[headline] ?? headline
+}
+
 export const HEADLINE_TEXT: Record<FeedbackReport['headline'], string> = {
   strong: 'Strong run',
   solid: 'Solid, with gaps',
@@ -21,6 +27,11 @@ export const HEADLINE_TEXT: Record<FeedbackReport['headline'], string> = {
 }
 
 /** Candidate-facing label for how the run moved over its length. */
+export function getTrajectoryText(trajectory: FeedbackReport['trajectory']): string {
+  const t = getTranslations()
+  return t.summary.trajectories[trajectory] ?? trajectory
+}
+
 export const TRAJECTORY_TEXT: Record<FeedbackReport['trajectory'], string> = {
   'finished-stronger': 'You finished stronger than you started.',
   steady: 'Steady throughout.',
@@ -33,6 +44,11 @@ export const TRAJECTORY_TEXT: Record<FeedbackReport['trajectory'], string> = {
  * the run never exercised is information, not a weakness.
  */
 export type Tone = 'strength' | 'growth' | 'steady' | 'unused'
+
+export function getToneText(tone: Tone): string {
+  const t = getTranslations()
+  return t.summary.tones[tone] ?? tone
+}
 
 export const TONE_TEXT: Record<Tone, string> = {
   strength: 'strength',
@@ -74,6 +90,7 @@ export function assessmentRows(feedback: FeedbackReport): AssessmentRow[] {
   }
 
   // Unrubriced content: the engine's reasoning areas are the whole assessment.
+  const t = getTranslations()
   return [
     ...feedback.strengths.map(s => ({
       key: `strength-${s.area}`,
@@ -86,40 +103,57 @@ export function assessmentRows(feedback: FeedbackReport): AssessmentRow[] {
       label: g.area,
       result: g.evidence,
       tone: 'growth' as const,
-      advice: `The strongest move was: ${g.strongest.text}${g.strongest.because ? ` — ${g.strongest.because}` : ''}`
+      advice: g.strongest.because
+        ? fmt(t.summary.report.strongestMoveBecause, { text: g.strongest.text, because: g.strongest.because })
+        : fmt(t.summary.report.strongestMove, { text: g.strongest.text })
     }))
   ]
 }
 
 export function listLabels(labels: string[]): string {
+  const t = getTranslations()
   if (labels.length <= 1) return labels[0] ?? ''
-  return `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`
+  return `${labels.slice(0, -1).join(t.summary.report.listSeparator)}${t.summary.report.listJoin}${labels[labels.length - 1]}`
 }
 
 /** The run's upside in one sentence, built only from what was actually scored. */
 export function overallStrength(rows: AssessmentRow[], feedback: FeedbackReport): string {
+  const t = getTranslations()
+  const report = t.summary.report
   const strengths = rows.filter(r => r.tone === 'strength')
   if (strengths.length > 0) {
     const [lead, ...rest] = strengths
-    const restText = rest.length > 0 ? `; ${listLabels(rest.map(r => r.label.toLowerCase()))} held up too` : ''
-    return `Your strongest ground was ${lead.label.toLowerCase()} (${lead.result.toLowerCase()})${restText}.`
+    if (rest.length > 0) {
+      return fmt(report.strengthLeadWithRest, {
+        lead: lead.label.toLowerCase(),
+        result: lead.result.toLowerCase(),
+        rest: listLabels(rest.map(r => r.label.toLowerCase()))
+      })
+    }
+    return fmt(report.strengthLead, {
+      lead: lead.label.toLowerCase(),
+      result: lead.result.toLowerCase()
+    })
   }
+  const rate = Math.round(feedback.rate * 100)
   if (feedback.rate >= 0.5) {
-    return `No single strand stood out, but you kept the run defensible end to end (${Math.round(feedback.rate * 100)}% weighted).`
+    return fmt(report.strengthNoStandout, { rate })
   }
-  return `No strand came through as a strength on this run (${Math.round(feedback.rate * 100)}% weighted).`
+  return fmt(report.strengthNone, { rate })
 }
 
 /** The run's downside in one sentence — no question-by-question listing. */
 export function overallWeakness(rows: AssessmentRow[], feedback: FeedbackReport): string {
+  const t = getTranslations()
+  const report = t.summary.report
   const gaps = rows.filter(r => r.tone === 'growth')
   if (gaps.length > 0) {
-    return `The weak ground was ${listLabels(gaps.map(r => r.label.toLowerCase()))} — where a defensible call was available and the run took it instead of the strongest move.`
+    return fmt(report.weaknessGaps, { labels: listLabels(gaps.map(r => r.label.toLowerCase())) })
   }
   if (feedback.rate >= 0.75) {
-    return 'No clear weak spot: the calls open to you were the strongest ones.'
+    return report.weaknessNoneHigh
   }
-  return 'Nothing fell apart, but no strand locked in — the run stayed in the middle.'
+  return report.weaknessNoneMid
 }
 
 /**
@@ -127,16 +161,21 @@ export function overallWeakness(rows: AssessmentRow[], feedback: FeedbackReport)
  * one line about the walk itself when the run wrapped up early or faded.
  */
 export function nextSteps(rows: AssessmentRow[], feedback: FeedbackReport): string[] {
+  const t = getTranslations()
+  const report = t.summary.report
   const steps = rows.filter(r => r.tone === 'growth' && r.advice).map(r => r.advice as string)
   if (feedback.traversal.earlyExit) {
     steps.push(
-      `You finished in ${feedback.traversal.steps} steps where the strongest run takes ${feedback.traversal.strongestRunSteps} — the steps you skipped are usually the diagnostic ones.`
+      fmt(report.earlyExit, {
+        steps: feedback.traversal.steps,
+        strongest: feedback.traversal.strongestRunSteps
+      })
     )
   } else if (feedback.trajectory === 'faded') {
-    steps.push('Your later calls were weaker than your opening ones — give the end of the run the same care as the start.')
+    steps.push(report.faded)
   }
   if (steps.length === 0) {
-    steps.push('Nothing to fix on this run — replay it for stars, or take the next level.')
+    steps.push(report.nothingToFix)
   }
   return steps.slice(0, 4)
 }

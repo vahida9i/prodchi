@@ -1,0 +1,32 @@
+# Keep the build context small, and — more importantly — correct.
+
+# --- Installed dependencies (reinstalled inside the image) ---
+# Copying the host's node_modules in would drag macOS binaries into a Linux
+# image, and the pnpm symlink farm would be rebuilt anyway.
+node_modules
+**/node_modules
+.pnpm-store
+
+# --- Build output (regenerated inside the image) ---
+**/.next
+**/dist
+*.tsbuildinfo
+
+# --- Environment files: must never reach an image ---
+# packages/db/seed.ts loads .env with process.loadEnvFile, which OVERRIDES real
+# environment variables. A stray .env in the image would therefore beat the
+# container's DATABASE_URL and point seeding at the wrong database host.
+# `.env.docker` is read by Compose from the host via --env-file, never copied.
+.env
+.env.*
+
+# --- VCS / editor / OS noise ---
+.git
+.gitignore
+**/.DS_Store
+*.log
+
+# --- Host-side orchestration (not needed inside an image) ---
+docker-compose*.yml
+Makefile
+README.md

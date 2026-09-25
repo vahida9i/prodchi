@@ -21,6 +21,27 @@ const onboardingSchema = z.object({
   roleId: z.string().uuid()
 })
 
+/**
+ * Session cookie options, shared by every place a session is issued.
+ *
+ * `secure` must be true only when the browser reaches the API over HTTPS: a
+ * Secure cookie sent over plain http:// is silently dropped, which looks exactly
+ * like a failed login. NODE_ENV=production is the right default, but a
+ * containerized stack served over http://localhost is also a production build,
+ * so COOKIE_SECURE lets that deployment state its transport explicitly.
+ */
+const COOKIE_SECURE = process.env.COOKIE_SECURE
+  ? process.env.COOKIE_SECURE === 'true'
+  : process.env.NODE_ENV === 'production'
+
+const SESSION_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: COOKIE_SECURE,
+  sameSite: 'lax' as const,
+  maxAge: 60 * 60 * 24 * 30, // 30 days
+  path: '/'
+}
+
 export async function authRoutes(fastify: FastifyInstance) {
   // POST /api/v1/auth/signup
   fastify.post('/signup', async (request, reply) => {
@@ -43,13 +64,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     })
 
     const token = createSessionToken(toAuthUser(user))
-    reply.setCookie('session', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-      path: '/'
-    })
+    reply.setCookie('session', token, SESSION_COOKIE_OPTIONS)
 
     return reply.status(201).send({ userId: user.id })
   })
@@ -75,13 +90,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
     const token = createSessionToken(toAuthUser(user))
 
-    reply.setCookie('session', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30,
-      path: '/'
-    })
+    reply.setCookie('session', token, SESSION_COOKIE_OPTIONS)
 
     return reply.send({ userId: user.id })
   })
@@ -141,13 +150,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         })
 
     const newToken = createSessionToken(toAuthUser(updatedUser))
-    reply.setCookie('session', newToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30,
-      path: '/'
-    })
+    reply.setCookie('session', newToken, SESSION_COOKIE_OPTIONS)
 
     return reply.send({ success: true })
   })

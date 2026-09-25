@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { api } from "@/lib/api-client"
 import type { ProgressSummary, BadgeInfo, Leaderboard } from "@/lib/api-client"
 import { RoleChip } from "@/components/RoleChip"
+import { fmt, getTranslations } from "@/lib/i18n"
 
 /**
  * Progress + gamification reads: XP/player level, stars, levels passed,
@@ -16,6 +17,7 @@ import { RoleChip } from "@/components/RoleChip"
  */
 export default function ProgressPage() {
   const router = useRouter()
+  const t = getTranslations()
   const [progress, setProgress] = useState<ProgressSummary | null>(null)
   const [roleName, setRoleName] = useState<string | null>(null)
   const [badges, setBadges] = useState<BadgeInfo[]>([])
@@ -48,7 +50,7 @@ export default function ProgressPage() {
           router.push("/login")
           return
         }
-        setError(err.message || "Failed to load progress")
+        setError(err.message || t.progress.loadError)
       } finally {
         setLoading(false)
       }
@@ -77,14 +79,14 @@ export default function ProgressPage() {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Prodchi</h1>
+          <h1 className="text-2xl font-bold">{t.appName}</h1>
           <div className="flex items-center gap-2">
             <RoleChip />
             <Button variant="outline" size="sm" onClick={() => router.push("/home")}>
-              Back to path
+              {t.nav.home}
             </Button>
             <Button variant="outline" size="sm" onClick={handleLogout}>
-              Log out
+              {t.nav.signOut}
             </Button>
           </div>
         </div>
@@ -101,20 +103,20 @@ export default function ProgressPage() {
           <>
             <p className="text-sm text-muted-foreground">
               {roleName
-                ? `Showing ${roleName} progress — XP, streak, badges and leaderboard are per-track.`
-                : 'Showing your current track — XP, streak, badges and leaderboard are per-track.'}
+                ? fmt(t.progress.scopeWithRole, { role: roleName })
+                : t.progress.scopeDefault}
             </p>
             <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
               <Card>
                 <CardContent className="py-4 text-center">
                   <p className="text-3xl font-bold">{progress.totalXp}</p>
-                  <p className="text-xs text-muted-foreground">Total XP · level {progress.playerLevel}</p>
+                  <p className="text-xs text-muted-foreground">{fmt(t.progress.totalXPWithLevel, { level: progress.playerLevel })}</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="py-4 text-center">
                   <p className="text-3xl font-bold text-yellow-500">{progress.totalStars}</p>
-                  <p className="text-xs text-muted-foreground">Stars</p>
+                  <p className="text-xs text-muted-foreground">{t.nav.stars}</p>
                 </CardContent>
               </Card>
               <Card>
@@ -122,32 +124,35 @@ export default function ProgressPage() {
                   <p className="text-3xl font-bold">
                     {progress.levelsPassed}/{progress.levelsTotal}
                   </p>
-                  <p className="text-xs text-muted-foreground">Levels passed</p>
+                  <p className="text-xs text-muted-foreground">{t.progress.levelsPassed}</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="py-4 text-center">
                   <p className="text-3xl font-bold">{Math.round(progress.accuracy * 100)}%</p>
-                  <p className="text-xs text-muted-foreground">Best-call accuracy</p>
+                  <p className="text-xs text-muted-foreground">{t.progress.accuracyLabel}</p>
                 </CardContent>
               </Card>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mb-3">Streak</h2>
+              <h2 className="text-xl font-semibold mb-3">{t.progress.streakTitle}</h2>
               <Card>
                 <CardContent className="py-4">
-                  <p className="text-lg font-semibold">🔥 {progress.streak.currentStreak}-day streak</p>
+                  <p className="text-lg font-semibold">🔥 {fmt(t.progress.dayStreak, { n: progress.streak.currentStreak })}</p>
                   <p className="text-sm text-muted-foreground">
-                    Longest: {progress.streak.longestStreak} day
-                    {progress.streak.longestStreak === 1 ? "" : "s"} — a day counts when a level is passed.
+                    {fmt(t.progress.longestLabel, {
+                      n: progress.streak.longestStreak,
+                      unit: progress.streak.longestStreak === 1 ? t.progress.day : t.progress.days
+                    })}{" "}
+                    — {t.progress.streakNote}
                   </p>
                 </CardContent>
               </Card>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mb-3">Industries</h2>
+              <h2 className="text-xl font-semibold mb-3">{t.progress.industriesTitle}</h2>
               <div className="space-y-3">
                 {progress.industries.map(industry => (
                   <Card key={industry.id}>
@@ -156,7 +161,7 @@ export default function ProgressPage() {
                         <p className="font-medium">{industry.name}</p>
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-yellow-500">{industry.stars}★</span>
-                          {industry.completed && <Badge>Completed</Badge>}
+                          {industry.completed && <Badge>{t.path.completed}</Badge>}
                         </div>
                       </div>
                       <div className="h-2 overflow-hidden rounded bg-muted">
@@ -168,7 +173,7 @@ export default function ProgressPage() {
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {industry.levelsPassed}/{industry.levelsTotal} levels passed
+                        {fmt(t.progress.levelsPassedOf, { passed: industry.levelsPassed, total: industry.levelsTotal })}
                       </p>
                     </CardContent>
                   </Card>
@@ -177,7 +182,7 @@ export default function ProgressPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mb-3">Weekly leaderboard</h2>
+              <h2 className="text-xl font-semibold mb-3">{t.progress.leaderboardTitle}</h2>
               <Card>
                 <CardContent className="py-4">
                   {leaderboard && leaderboard.leaderboard.length > 0 ? (
@@ -188,18 +193,18 @@ export default function ProgressPage() {
                             <span className="mr-2 font-semibold">#{row.rank}</span>
                             {row.player}
                           </span>
-                          <span className="font-medium">{row.weeklyXp} XP</span>
+                          <span className="font-medium">{fmt(t.progress.leaderboardRowXp, { xp: row.weeklyXp })}</span>
                         </div>
                       ))}
                       {leaderboard.userRank && (
                         <p className="pt-2 text-sm text-muted-foreground">
-                          You: #{leaderboard.userRank.rank} with {leaderboard.userRank.weeklyXp} XP this week
+                          {fmt(t.progress.leaderboardYou, { rank: leaderboard.userRank.rank, xp: leaderboard.userRank.weeklyXp })}
                         </p>
                       )}
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground">
-                      No XP earned in your cohort this week yet.
+                      {t.progress.leaderboardEmpty}
                     </p>
                   )}
                 </CardContent>
@@ -207,7 +212,7 @@ export default function ProgressPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mb-3">Badges</h2>
+              <h2 className="text-xl font-semibold mb-3">{t.progress.badgesTitle}</h2>
               <div className="grid gap-3 md:grid-cols-2">
                 {badges.map(badge => (
                   <Card key={badge.id} className={badge.earned ? "" : "opacity-60"}>
@@ -216,12 +221,12 @@ export default function ProgressPage() {
                       <div className="min-w-0">
                         <p className="font-medium">
                           {badge.name}
-                          {badge.earned && <span className="ml-2 text-xs text-primary">earned</span>}
+                          {badge.earned && <span className="ml-2 text-xs text-primary">{t.progress.earned}</span>}
                         </p>
                         <p className="text-sm text-muted-foreground">{badge.description}</p>
                         {badge.earnedAt && (
                           <p className="text-xs text-muted-foreground">
-                            Earned {new Date(badge.earnedAt).toLocaleDateString()}
+                            {fmt(t.progress.earnedOn, { date: new Date(badge.earnedAt).toLocaleDateString() })}
                           </p>
                         )}
                       </div>

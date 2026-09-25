@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { RoleSelect } from "@/components/RoleSelect"
 import { api } from "@/lib/api-client"
+import { getTranslations } from "@/lib/i18n"
 
 /**
  * First-run role selection (post-signup, and the redirect target of the (user)
@@ -15,6 +16,7 @@ import { api } from "@/lib/api-client"
  */
 export default function OnboardingPage() {
   const router = useRouter()
+  const t = getTranslations()
   const [checking, setChecking] = useState(true)
 
   useEffect(() => {
@@ -44,10 +46,9 @@ export default function OnboardingPage() {
     <div className="min-h-screen flex items-center justify-center bg-muted/50 px-4 py-12">
       <Card className="w-full max-w-2xl">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Choose your role</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">{t.auth.onboardingTitle}</CardTitle>
           <CardDescription className="text-center">
-            This determines which skills and challenges you'll see. You can change it later
-            from the role button in the header.
+            {t.auth.onboardingSubtitle}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

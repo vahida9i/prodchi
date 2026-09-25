@@ -9,6 +9,7 @@ import { api } from "@/lib/api-client"
 import type { SkillProfile, SkillScore } from "@/lib/api-client"
 import { SkillRadar } from "@/components/profile/SkillRadar"
 import { RoleChip } from "@/components/RoleChip"
+import { fmt, getTranslations } from "@/lib/i18n"
 
 /**
  * The candidate's skill profile — what they are good at as a designer, read
@@ -18,11 +19,13 @@ import { RoleChip } from "@/components/RoleChip"
  * finished run's report.
  */
 
-const PROFICIENCY_LABEL: Record<SkillScore["proficiency"], string> = {
-  strong: "Strong",
-  developing: "Developing",
-  emerging: "Emerging",
-  unproven: "Not yet observed"
+/** Localized proficiency wording; keys live in the progress/profile sections. */
+function proficiencyLabel(proficiency: SkillScore["proficiency"]): string {
+  const t = getTranslations()
+  if (proficiency === "strong") return t.progress.proficiencies.strong
+  if (proficiency === "developing") return t.progress.proficiencies.developing
+  if (proficiency === "emerging") return t.progress.proficiencies.emerging
+  return t.profile.unprovenLabel
 }
 
 function percent(rate: number) {
@@ -38,12 +41,13 @@ function barClass(skill: SkillScore) {
 
 /** One row of the role's skill breakdown. */
 function SkillRow({ skill }: { skill: SkillScore }) {
+  const t = getTranslations()
   return (
     <div className="space-y-1">
       <div className="flex items-baseline justify-between gap-2">
         <p className="text-sm font-medium">{skill.name}</p>
         <p className={`text-sm ${skill.count === 0 ? "text-muted-foreground" : "font-medium"}`}>
-          {skill.count === 0 ? "not yet observed" : percent(skill.rate)}
+          {skill.count === 0 ? t.profile.notYetObserved : percent(skill.rate)}
         </p>
       </div>
       <div className="h-2 overflow-hidden rounded bg-muted">
@@ -54,8 +58,8 @@ function SkillRow({ skill }: { skill: SkillScore }) {
       </div>
       <p className="text-xs text-muted-foreground">
         {skill.evidence}
-        {skill.thinEvidence ? " · needs more evidence" : ""}
-        {skill.count > 0 ? ` — ${PROFICIENCY_LABEL[skill.proficiency]}` : ""}
+        {skill.thinEvidence ? ` · ${t.profile.needsMoreEvidence}` : ""}
+        {skill.count > 0 ? ` — ${proficiencyLabel(skill.proficiency)}` : ""}
       </p>
     </div>
   )
@@ -63,6 +67,7 @@ function SkillRow({ skill }: { skill: SkillScore }) {
 
 export default function ProfilePage() {
   const router = useRouter()
+  const t = getTranslations()
   const [profile, setProfile] = useState<SkillProfile | null>(null)
   const [roleName, setRoleName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -86,7 +91,7 @@ export default function ProfilePage() {
           router.push("/login")
           return
         }
-        setError(err.message || "Failed to load your profile")
+        setError(err.message || t.profile.loadError)
       } finally {
         setLoading(false)
       }
@@ -124,14 +129,14 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Prodchi</h1>
+          <h1 className="text-2xl font-bold">{t.appName}</h1>
           <div className="flex items-center gap-2">
             <RoleChip />
             <Button variant="outline" size="sm" onClick={() => router.push("/home")}>
-              Back to path
+              {t.nav.home}
             </Button>
             <Button variant="outline" size="sm" onClick={handleLogout}>
-              Log out
+              {t.nav.signOut}
             </Button>
           </div>
         </div>
@@ -145,15 +150,13 @@ export default function ProfilePage() {
         )}
 
         <section className="space-y-1">
-          <h2 className="text-xl font-semibold">Your skill profile</h2>
+          <h2 className="text-xl font-semibold">{t.profile.skillProfileTitle}</h2>
           {hasData ? (
             <p className="text-sm text-muted-foreground">
-              Based on {profile!.decisions} decisions across {profile!.scenarios} finished{" "}
-              {profile!.scenarios === 1 ? "scenario" : "scenarios"} — every number is how
-              consistently your calls were the strongest ones.
+              {fmt(t.profile.statsLine, { decisions: profile!.decisions, scenarios: profile!.scenarios })}
             </p>
           ) : (
-            <p className="text-sm text-muted-foreground">Your profile builds as you play.</p>
+            <p className="text-sm text-muted-foreground">{t.profile.buildsAsYouPlay}</p>
           )}
         </section>
 
@@ -161,10 +164,9 @@ export default function ProfilePage() {
           <Card>
             <CardContent className="py-10 text-center space-y-4">
               <p className="text-sm text-muted-foreground">
-                Complete a level to see your first capabilities. Your choices are graded against
-                the scenario&apos;s answer key — the profile grows one honest decision at a time.
+                {t.profile.emptyPrompt}
               </p>
-              <Button onClick={() => router.push("/home")}>Go to your path</Button>
+              <Button onClick={() => router.push("/home")}>{t.profile.goToPath}</Button>
             </CardContent>
           </Card>
         ) : (
@@ -173,36 +175,39 @@ export default function ProfilePage() {
               <Card>
                 <CardContent className="py-4 text-center">
                   <p className="text-3xl font-bold">{percent(profile!.overallRate)}</p>
-                  <p className="text-xs text-muted-foreground">strong-call rate</p>
+                  <p className="text-xs text-muted-foreground">{t.profile.strongCallRate}</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="py-4 text-center">
                   <p className="text-3xl font-bold">{profile!.decisions}</p>
-                  <p className="text-xs text-muted-foreground">decisions graded</p>
+                  <p className="text-xs text-muted-foreground">{t.profile.decisionsGraded}</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="py-4 text-center">
                   <p className="text-3xl font-bold">{profile!.scenarios}</p>
-                  <p className="text-xs text-muted-foreground">scenarios finished</p>
+                  <p className="text-xs text-muted-foreground">{t.profile.scenariosFinished}</p>
                 </CardContent>
               </Card>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mb-3">{roleName ? `${roleName} skills` : "Your role's skills"}</h2>
+              <h2 className="text-xl font-semibold mb-3">
+                {roleName
+                  ? fmt(t.profile.skillsTitleWithRole, { role: roleName })
+                  : t.profile.skillsTitleDefault}
+              </h2>
               <p className="mb-3 text-sm text-muted-foreground">
                 {roleName
-                  ? `Scoped to ${roleName} — switching tracks switches this profile.`
-                  : 'Scoped to your current track — switching tracks switches this profile.'}
+                  ? fmt(t.profile.scopedWithRole, { role: roleName })
+                  : t.profile.scopedDefault}
               </p>
               <Card>
                 <CardContent className="py-6">
                   <SkillRadar skills={skills} />
                   <p className="mt-4 text-center text-xs text-muted-foreground">
-                    Each axis is one skill; the filled shape is how consistently your calls were
-                    the strongest ones. Skills with no decisions yet sit at the center.
+                    {t.profile.radarCaption}
                   </p>
                 </CardContent>
               </Card>
@@ -210,13 +215,13 @@ export default function ProfilePage() {
 
             {strengths.length > 0 && (
               <section className="space-y-3">
-                <h2 className="text-xl font-semibold">Strengths</h2>
+                <h2 className="text-xl font-semibold">{t.profile.strengthsTitle}</h2>
                 {strengths.map(skill => (
                   <Card key={skill.id}>
                     <CardContent className="py-4 space-y-1">
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{skill.name}</p>
-                        <Badge>Strong</Badge>
+                        <Badge>{t.progress.proficiencies.strong}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">{skill.evidence}</p>
                       <p className="text-sm">{skill.blurb}</p>
@@ -228,13 +233,13 @@ export default function ProfilePage() {
 
             {growth.length > 0 && (
               <section className="space-y-3">
-                <h2 className="text-xl font-semibold">Where you lose ground</h2>
+                <h2 className="text-xl font-semibold">{t.profile.growthTitle}</h2>
                 {growth.map(skill => (
                   <Card key={skill.id}>
                     <CardContent className="py-4 space-y-2">
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{skill.name}</p>
-                        <Badge variant="outline">Emerging</Badge>
+                        <Badge variant="outline">{t.progress.proficiencies.emerging}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">{skill.evidence}</p>
                       <p className="text-sm rounded-lg border bg-muted/30 p-3">
@@ -247,7 +252,7 @@ export default function ProfilePage() {
             )}
 
             <section>
-              <h2 className="text-xl font-semibold mb-3">All skills</h2>
+              <h2 className="text-xl font-semibold mb-3">{t.profile.allSkillsTitle}</h2>
               <Card>
                 <CardContent className="py-4 space-y-4">
                   {skills.map(skill => (
