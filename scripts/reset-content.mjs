@@ -88,7 +88,13 @@ const PATH_FA = [
   { file: 'fa_enterprise_permissions.json', industry: 'سازمانی' },
   { file: 'fa_fraud_review_queue.json', industry: 'فین‌تک' },
   { file: 'fa_team_collaboration.json', industry: 'بهره‌وری' },
-  { file: 'fa_procurement_adoption.json', industry: 'سازمانی' }
+  { file: 'fa_procurement_adoption.json', industry: 'سازمانی' },
+  // Tech Lead track — technical judgment, incident leadership and team growth
+  { file: 'fa_techlead_incident_response.json', industry: 'سرویس ابری' },
+  { file: 'fa_techlead_architecture.json', industry: 'سازمانی' },
+  { file: 'fa_techlead_technical_debt.json', industry: 'بهره‌وری' },
+  { file: 'fa_techlead_cross_team.json', industry: 'سرویس ابری' },
+  { file: 'fa_techlead_team_growth.json', industry: 'سازمانی' }
 ]
 
 const PATH = LOCALE === 'fa' ? PATH_FA : PATH_EN

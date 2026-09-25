@@ -5,7 +5,7 @@ import { z } from 'zod'
  * JSON's `role` against this list, and each role carries its own internal
  * stage set and skill profile (see ROLE_STAGES and skills.ts).
  */
-export const ROLES = ['Product Design', 'Product Management'] as const
+export const ROLES = ['Product Design', 'Product Management', 'Tech Lead'] as const
 export type Role = (typeof ROLES)[number]
 
 /**
@@ -18,9 +18,11 @@ export type Role = (typeof ROLES)[number]
  *
  * PD (7): FRAME, DISCOVER, DEFINE, IDEATE, DESIGN, TEST, REFINE
  * PM (7): FRAME, DIAGNOSE, STRATEGIZE, PRIORITIZE, PLAN, EXECUTE, MEASURE
+ * TL (7): FRAME, INVESTIGATE, ARCHITECT, PRIORITIZE, RESPOND, COORDINATE, COACH
  */
 export const PD_STAGES = ['FRAME', 'DISCOVER', 'DEFINE', 'IDEATE', 'DESIGN', 'TEST', 'REFINE'] as const
 export const PM_STAGES = ['FRAME', 'DIAGNOSE', 'STRATEGIZE', 'PRIORITIZE', 'PLAN', 'EXECUTE', 'MEASURE'] as const
+export const TL_STAGES = ['FRAME', 'INVESTIGATE', 'ARCHITECT', 'PRIORITIZE', 'RESPOND', 'COORDINATE', 'COACH'] as const
 
 /** Kept as the PD list under its historical name for existing call sites. */
 export const STAGES = PD_STAGES
@@ -28,7 +30,8 @@ export const STAGES = PD_STAGES
 /** Stage sets per role, in process order. */
 export const ROLE_STAGES: Record<Role, readonly Stage[]> = {
   'Product Design': PD_STAGES,
-  'Product Management': PM_STAGES
+  'Product Management': PM_STAGES,
+  'Tech Lead': TL_STAGES
 }
 
 export function stagesForRole(role: Role): readonly Stage[] {
@@ -36,7 +39,7 @@ export function stagesForRole(role: Role): readonly Stage[] {
 }
 
 /** The full stage union across roles (validation bound for `choice.stage`). FRAME is shared. */
-export const ALL_STAGES = ['FRAME', 'DISCOVER', 'DEFINE', 'IDEATE', 'DESIGN', 'TEST', 'REFINE', 'DIAGNOSE', 'STRATEGIZE', 'PRIORITIZE', 'PLAN', 'EXECUTE', 'MEASURE'] as const
+export const ALL_STAGES = ['FRAME', 'DISCOVER', 'DEFINE', 'IDEATE', 'DESIGN', 'TEST', 'REFINE', 'DIAGNOSE', 'STRATEGIZE', 'PRIORITIZE', 'PLAN', 'EXECUTE', 'MEASURE', 'INVESTIGATE', 'ARCHITECT', 'RESPOND', 'COORDINATE', 'COACH'] as const
 
 export const StageSchema = z.enum(ALL_STAGES)
 export const RoleSchema = z.enum(ROLES)

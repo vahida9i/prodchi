@@ -35,6 +35,7 @@ export interface Translations {
     byName: {
       'Product Design': { name: string; description: string }
       'Product Management': { name: string; description: string }
+      'Tech Lead': { name: string; description: string }
     }
   }
   path: {
@@ -254,6 +255,10 @@ export const en: Translations = {
         name: 'Product Management',
         description: 'Diagnosis, product strategy, prioritization, roadmapping, and business metrics.',
       },
+      'Tech Lead': {
+        name: 'Tech Lead',
+        description: 'Technical direction, architecture trade-offs, incident response, and team growth.',
+      },
     },
   },
 
@@ -454,4 +459,3 @@ export const en: Translations = {
     successImport: 'Challenge imported successfully!',
   },
 }
-

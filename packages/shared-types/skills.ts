@@ -11,7 +11,9 @@ import { qualityOf } from './feedback'
  * on a CV: for Product Design the seven design skills (framing, discovery,
  * synthesis, ideation, solution design, testing, refinement); for Product
  * Management the seven management skills (framing, diagnosis, strategy,
- * planning, execution, measurement). The profile groups every recorded
+ * planning, execution, measurement); and for Tech Lead the seven leadership
+ * skills (framing, investigation, architecture, prioritization, incident
+ * response, coordination, coaching). The profile groups every recorded
  * decision by the stage of the move the candidate *chose* (not the ideal one)
  * and credits it with the same deterministic weights as the run feedback
  * (best = 1, reasonable = 0.5, poor = 0).
@@ -184,6 +186,45 @@ const PM_SKILLS: readonly SkillDefinition[] = [
     growthNote: 'Define the success metric before launch — an unmeasured launch teaches nothing.'
   }
 ]
+
+/** The Tech Lead skills, in the order a technical leader moves from signal to team learning. */
+const TL_SKILLS: readonly SkillDefinition[] = [
+  {
+    id: 'framing', name: 'Leadership problem framing', shortName: 'Framing', stage: 'FRAME',
+    blurb: 'You turn a noisy technical situation into a clear outcome, boundary, and decision to own.',
+    growthNote: 'Name the customer or team impact before choosing the technical move.'
+  },
+  {
+    id: 'investigation', name: 'Investigation & diagnosis', shortName: 'Investigate', stage: 'INVESTIGATE',
+    blurb: 'You find the evidence that separates a symptom from the failure mode that matters.',
+    growthNote: 'Build the smallest evidence trail that can rule out the most expensive assumption.'
+  },
+  {
+    id: 'architecture', name: 'Architecture & technical direction', shortName: 'Architecture', stage: 'ARCHITECT',
+    blurb: 'You choose a technical direction that fits the product need, constraints, and future cost.',
+    growthNote: 'Make the important trade-off explicit: what complexity are you accepting and why now?'
+  },
+  {
+    id: 'prioritization', name: 'Risk prioritization', shortName: 'Prioritize', stage: 'PRIORITIZE',
+    blurb: 'You decide which reliability, quality, and delivery risks deserve attention first.',
+    growthNote: 'Rank risk by impact and reversibility instead of by whoever is asking loudest.'
+  },
+  {
+    id: 'incident-response', name: 'Incident response', shortName: 'Respond', stage: 'RESPOND',
+    blurb: 'You stabilize the system, create clear ownership, and keep the team learning during incidents.',
+    growthNote: 'Separate containment from root-cause work and give each one a visible owner.'
+  },
+  {
+    id: 'coordination', name: 'Technical coordination', shortName: 'Coordinate', stage: 'COORDINATE',
+    blurb: 'You make decisions legible across engineering, product, design, and operations.',
+    growthNote: 'Write down the decision, the trade-off, and the person who owns the next move.'
+  },
+  {
+    id: 'coaching', name: 'Coaching & team growth', shortName: 'Coach', stage: 'COACH',
+    blurb: 'You grow the team through delegation, feedback, and stronger technical ownership.',
+    growthNote: 'Use the next decision as a coaching opportunity instead of becoming the permanent bottleneck.'
+  }
+]
 const PD_SKILLS_FA: readonly SkillDefinition[] = [
   {
     id: 'framing',
@@ -302,16 +343,55 @@ const PM_SKILLS_FA: readonly SkillDefinition[] = [
   }
 ]
 
+const TL_SKILLS_FA: readonly SkillDefinition[] = [
+  {
+    id: 'framing', name: 'صورت‌بندی چالش رهبری', shortName: 'صورت‌بندی', stage: 'FRAME',
+    blurb: 'وضعیت فنی مبهم را به نتیجه، دامنه و تصمیمی روشن تبدیل می‌کنید.',
+    growthNote: 'پیش از انتخاب راه‌حل فنی، اثر مسئله بر کاربر یا تیم را شفاف کنید.'
+  },
+  {
+    id: 'investigation', name: 'بررسی و ریشه‌یابی', shortName: 'ریشه‌یابی', stage: 'INVESTIGATE',
+    blurb: 'شواهدی پیدا می‌کنید که نشانه را از حالت خرابی واقعی جدا می‌کند.',
+    growthNote: 'کوچک‌ترین مسیر شواهدی را بسازید که پرهزینه‌ترین فرض را محک بزند.'
+  },
+  {
+    id: 'architecture', name: 'معماری و جهت فنی', shortName: 'معماری', stage: 'ARCHITECT',
+    blurb: 'جهت فنی را با نیاز محصول، محدودیت‌ها و هزینهٔ آینده هماهنگ می‌کنید.',
+    growthNote: 'بده‌بستان اصلی را روشن کنید: چه پیچیدگی‌ای را می‌پذیرید و چرا؟'
+  },
+  {
+    id: 'prioritization', name: 'اولویت‌بندی ریسک', shortName: 'اولویت‌بندی', stage: 'PRIORITIZE',
+    blurb: 'ریسک‌های پایداری، کیفیت و تحویل را بر اساس اثر واقعی رتبه‌بندی می‌کنید.',
+    growthNote: 'ریسک را با اثر و برگشت‌پذیری رتبه‌بندی کنید، نه با صدای بلندتر افراد.'
+  },
+  {
+    id: 'incident-response', name: 'مدیریت رخداد', shortName: 'رخداد', stage: 'RESPOND',
+    blurb: 'سیستم را پایدار می‌کنید، مالکیت روشن می‌سازید و از رخداد یاد می‌گیرید.',
+    growthNote: 'مهار فوری را از ریشه‌یابی جدا کنید و برای هرکدام مالک مشخص بگذارید.'
+  },
+  {
+    id: 'coordination', name: 'هماهنگی فنی', shortName: 'هماهنگی', stage: 'COORDINATE',
+    blurb: 'تصمیم‌های فنی را برای مهندسی، محصول، طراحی و عملیات قابل‌فهم می‌کنید.',
+    growthNote: 'تصمیم، بده‌بستان و مالک قدم بعدی را مکتوب کنید.'
+  },
+  {
+    id: 'coaching', name: 'کوچینگ و رشد تیم', shortName: 'کوچینگ', stage: 'COACH',
+    blurb: 'با واگذاری، بازخورد و مالکیت فنی قوی‌تر، ظرفیت تیم را بالا می‌برید.',
+    growthNote: 'هر تصمیم را فرصتی برای رشد دیگران بدانید، نه دلیلی برای تبدیل‌شدن به گلوگاه.'
+  }
+]
+
 /** Per-role skill sets, each in that role's process order. */
 export const SKILLS_BY_ROLE: Record<Role, readonly SkillDefinition[]> = {
   'Product Design': PD_SKILLS,
-  'Product Management': PM_SKILLS
+  'Product Management': PM_SKILLS,
+  'Tech Lead': TL_SKILLS
 }
 
 export function skillsForRole(role: Role): readonly SkillDefinition[] {
   const isFa = (process.env.APP_LOCALE === 'fa' || process.env.NEXT_PUBLIC_APP_LOCALE === 'fa')
   if (isFa) {
-    return role === 'Product Management' ? PM_SKILLS_FA : PD_SKILLS_FA
+    return role === 'Product Management' ? PM_SKILLS_FA : role === 'Tech Lead' ? TL_SKILLS_FA : PD_SKILLS_FA
   }
   return SKILLS_BY_ROLE[role]
 }

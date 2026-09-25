@@ -63,6 +63,15 @@ const STAGE_LABELS: Record<Role, Record<string, string>> = {
     PLAN: 'Planning the roadmap',
     EXECUTE: 'Executing and shipping',
     MEASURE: 'Measuring the outcome'
+  },
+  'Tech Lead': {
+    FRAME: 'Framing the leadership challenge',
+    INVESTIGATE: 'Investigating the signal',
+    ARCHITECT: 'Shaping the technical direction',
+    PRIORITIZE: 'Prioritizing risk and impact',
+    RESPOND: 'Responding to incidents',
+    COORDINATE: 'Coordinating across the team',
+    COACH: 'Coaching and growing the team'
   }
 }
 const STAGE_LABELS_FA: Record<Role, Record<string, string>> = {
@@ -83,6 +92,15 @@ const STAGE_LABELS_FA: Record<Role, Record<string, string>> = {
     PLAN: 'برنامه‌ریزی نقشه راه',
     EXECUTE: 'اجرا و تحویل',
     MEASURE: 'سنجش و اندازه‌گیری نتایج'
+  },
+  'Tech Lead': {
+    FRAME: 'صورت‌بندی چالش رهبری',
+    INVESTIGATE: 'بررسی و ریشه‌یابی نشانه',
+    ARCHITECT: 'تعیین جهت فنی و معماری',
+    PRIORITIZE: 'اولویت‌بندی ریسک و اثر',
+    RESPOND: 'واکنش به رخدادها',
+    COORDINATE: 'هماهنگی میان تیم',
+    COACH: 'کوچینگ و رشد تیم'
   }
 }
 

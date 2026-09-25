@@ -37,7 +37,13 @@ async function main() {
     create: { name: 'Product Management' }
   })
 
-  console.log('Created roles:', productDesign.name + ', ' + productManagement.name)
+  const techLead = await prisma.role.upsert({
+    where: { name: 'Tech Lead' },
+    update: {},
+    create: { name: 'Tech Lead' }
+  })
+
+  console.log('Created roles:', [productDesign.name, productManagement.name, techLead.name].join(', '))
 
   // Create admin user from env vars
   const adminEmail = process.env.ADMIN_SEED_EMAIL || 'admin@prodchi.local'

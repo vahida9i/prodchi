@@ -4,6 +4,7 @@ import { levelFromXp } from '@prodchi/shared-types/scoring'
 import { buildSkillProfile } from '@prodchi/shared-types/skills'
 import type { SkillPathEntry } from '@prodchi/shared-types/skills'
 import type { Question } from '@prodchi/shared-types/challenge-schema'
+import { ROLES } from '@prodchi/shared-types/challenge-schema'
 
 /**
  * Candidate progress + gamification reads.
@@ -22,7 +23,7 @@ export async function progressRoutes(fastify: FastifyInstance) {
       select: { roleTrack: { select: { name: true } } }
     })
     const name = account?.roleTrack?.name
-    return name === 'Product Design' || name === 'Product Management' ? name : null
+    return ROLES.find(role => role === name) ?? null
   }
 
   // GET /api/v1/progress
@@ -87,8 +88,8 @@ export async function progressRoutes(fastify: FastifyInstance) {
   })
 
   // GET /api/v1/progress/skills — the real-world skill profile (the role's own
-  // skills: the seven design skills for Product Design, the seven management
-  // skills for Product Management), aggregated on read
+  // skills: the seven role-specific skills for Product Design, Product
+  // Management, or Tech Lead, aggregated on read
   // from the caller's completed runs: each recorded decision is classified by
   // the authored stage of the move the candidate actually chose and weighted
   // best = 1, reasonable = 0.5, poor = 0. Same aggregate-on-read philosophy as
@@ -111,8 +112,8 @@ export async function progressRoutes(fastify: FastifyInstance) {
 
     // The role track decides which skill set the decisions are read against —
     // onboarding sets it once, before any run can exist, so it is always here.
-    const roleName = account?.roleTrack?.name
-    if (roleName !== 'Product Design' && roleName !== 'Product Management') {
+    const roleName = ROLES.find(role => role === account?.roleTrack?.name)
+    if (!roleName) {
       return reply.status(400).send({ error: 'Role not selected. Complete onboarding first.' })
     }
 

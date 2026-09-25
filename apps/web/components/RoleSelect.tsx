@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type CSSProperties } from "react"
 import { useRouter } from "next/navigation"
-import { BarChart3, Check, Loader2, Palette, Sparkles } from "lucide-react"
+import { BarChart3, Check, Cpu, Loader2, Palette, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { api } from "@/lib/api-client"
 import { getTranslations } from "@/lib/i18n"
@@ -24,6 +24,13 @@ const ROLE_META: Record<string, RoleMeta> = {
     soft: "bg-sky-50 border-sky-200",
     focus: ["تشخیص مسئله", "اولویت‌بندی", "راهبرد و سنجه"],
     promise: "تمرین می‌کنی با داده و محدودیت‌های واقعی، تصمیم‌های محصولی دقیق‌تری بگیری.",
+  },
+  "Tech Lead": {
+    icon: Cpu,
+    accent: "text-emerald-700",
+    soft: "bg-emerald-50 border-emerald-200",
+    focus: ["معماری و ریسک", "مدیریت رخداد", "رشد تیم"],
+    promise: "تصمیم می‌گیری چه زمانی عمیق شوی، چه چیزی را ساده نگه داری و چطور تیم را همراه کنی.",
   },
 }
 
