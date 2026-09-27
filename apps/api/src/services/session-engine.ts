@@ -1,6 +1,6 @@
 import { prisma } from '../lib/prisma.ts'
 import type { Prisma } from '@prisma/client'
-import type { Question, RevealBlock } from '@prodchi/shared-types/challenge-schema'
+import type { Question, QuestionMaterial, RevealBlock } from '@prodchi/shared-types/challenge-schema'
 import { normalizeReveal } from '@prodchi/shared-types/challenge-schema'
 
 /**
@@ -18,6 +18,7 @@ export interface PathEntry {
   choiceText: string
   reveal: RevealBlock
   at: string
+  assessment?: { score: number; strength: string; weakness: string }
 }
 
 /**
@@ -40,6 +41,8 @@ export function revealOf(choice: { reveal: unknown }): RevealBlock {
 export interface SanitizedQuestion {
   key: string
   text: string
+  answerMode: 'choice' | 'text'
+  material?: QuestionMaterial
   choices: Array<{ index: number; text: string }>
 }
 
@@ -74,7 +77,9 @@ export function sanitizeQuestion(key: string, question: Question): SanitizedQues
   return {
     key,
     text: question.text,
-    choices: question.choices.map((choice, index) => ({ index, text: choice.text }))
+    answerMode: question.answerMode ?? 'choice',
+    ...(question.material ? { material: question.material } : {}),
+    choices: question.answerMode === 'text' ? [] : question.choices.map((choice, index) => ({ index, text: choice.text }))
   }
 }
 
@@ -84,7 +89,8 @@ export function toHistory(session: { path: unknown }) {
     return {
       questionText: stored.questionText ?? '',
       choiceText: stored.choiceText ?? '',
-      reveal: normalizeReveal(stored.reveal ?? stored.revealText)
+      reveal: normalizeReveal(stored.reveal ?? stored.revealText),
+      ...('assessment' in stored ? { assessment: (stored as PathEntry).assessment } : {})
     }
   })
 }
@@ -102,9 +108,9 @@ function resumePayload(
 /**
  * Start a session, or resume the caller's existing in-progress one.
  *
- * One in-progress session per challenge per user is enforced by the partial
- * unique index `sessions_one_in_progress`, so a parallel start converges on the
- * session that won rather than forking a second path.
+ * One in-progress session per challenge, level context and user is enforced by
+ * the partial unique index `sessions_one_in_progress`. A daily run (null level)
+ * must never resume a path run of the same challenge.
  */
 export async function startOrResumeSession(
   userId: string,
@@ -114,7 +120,7 @@ export async function startOrResumeSession(
   const questions = getQuestions(challenge)
 
   const existing = await prisma.session.findFirst({
-    where: { userId, challengeId: challenge.id, status: 'in_progress' }
+    where: { userId, challengeId: challenge.id, levelId, status: 'in_progress' }
   })
   if (existing) {
     const resumed = resumePayload(existing, questions)
@@ -128,7 +134,7 @@ export async function startOrResumeSession(
 
   const startQuestion = questions[challenge.startKey]
   if (!startQuestion) {
-    throw new Error('Challenge has no valid start question')
+    throw new Error('سناریو سؤال آغازین معتبری ندارد')
   }
 
   try {
@@ -146,7 +152,7 @@ export async function startOrResumeSession(
     if (err?.code === 'P2002') {
       // Lost a race against a parallel start (the partial unique index fired).
       const winner = await prisma.session.findFirst({
-        where: { userId, challengeId: challenge.id, status: 'in_progress' }
+        where: { userId, challengeId: challenge.id, levelId, status: 'in_progress' }
       })
       if (winner) {
         return resumePayload(winner, questions)

@@ -6,7 +6,7 @@ import { validateChallengeImport } from './validator'
 import { MAX_SUMMARY } from './challenge-schema'
 import type { ChallengeImport, ChallengeImportInput, RevealBlock } from './challenge-schema'
 
-const FIXTURE_PATH = fileURLToPath(new URL('../../docs/fixtures/onboarding-drop-off.json', import.meta.url))
+const FIXTURE_PATH = fileURLToPath(new URL('../../test/fixtures/schema/onboarding-drop-off.json', import.meta.url))
 const fixture = JSON.parse(readFileSync(FIXTURE_PATH, 'utf-8')) as ChallengeImport
 
 function mutate(fn: (challenge: ChallengeImport) => void): unknown {
@@ -21,6 +21,30 @@ test('accepts the traced end-to-end fixture', () => {
   assert.deepEqual(result.errors, [])
   assert.ok(result.parsed)
   assert.equal(result.parsed!.id, 'onboarding_drop_off')
+})
+
+test('accepts a question with candidate-visible evidence and a written answer', () => {
+  const result = validateChallengeImport(mutate(c => {
+    const question = c.questions.Q1 as typeof c.questions.Q1 & {
+      answerMode: 'text'
+      material: { table: { columns: string[]; rows: string[][] }; image: { src: string; alt: string } }
+    }
+    question.answerMode = 'text'
+    question.material = {
+      table: { columns: ['گروه', 'نگهداشت'], rows: [['جدید', '۲۹٪']] },
+      image: { src: '/scenario-assets/onboarding.svg', alt: 'صفحه آغاز عضویت' }
+    }
+  }))
+  assert.equal(result.valid, true, JSON.stringify(result.errors))
+  assert.equal(result.parsed?.questions.Q1.answerMode, 'text')
+})
+
+test('rejects an external image URL in a question', () => {
+  const result = validateChallengeImport(mutate(c => {
+    ;(c.questions.Q1 as any).material = { image: { src: 'https://example.com/pixel.png', alt: 'تصویر' } }
+  }))
+  assert.equal(result.valid, false)
+  assert.ok(result.errors.some(e => e.path === 'questions.Q1.material.image.src'))
 })
 
 test('rejects a start key that does not exist in questions', () => {
@@ -95,7 +119,7 @@ test('accepts a Product Management challenge whose stages speak the PM vocabular
   const { readFileSync } = await import('node:fs')
   const { fileURLToPath } = await import('node:url')
   const pmFixture = JSON.parse(readFileSync(
-    fileURLToPath(new URL('../../docs/fixtures/pm-feature-cut.json', import.meta.url)), 'utf-8'
+    fileURLToPath(new URL('../../test/fixtures/schema/pm-feature-cut.json', import.meta.url)), 'utf-8'
   ))
   const result = validateChallengeImport(pmFixture)
   assert.equal(result.valid, true, `expected no errors, got: ${JSON.stringify(result.errors)}`)
@@ -105,7 +129,7 @@ test('rejects a Product Management challenge using a Product Design stage', asyn
   const { readFileSync } = await import('node:fs')
   const { fileURLToPath } = await import('node:url')
   const pmFixture = JSON.parse(readFileSync(
-    fileURLToPath(new URL('../../docs/fixtures/pm-feature-cut.json', import.meta.url)), 'utf-8'
+    fileURLToPath(new URL('../../test/fixtures/schema/pm-feature-cut.json', import.meta.url)), 'utf-8'
   ))
   pmFixture.questions.Q1.choices[0].stage = 'DISCOVER'
   const result = validateChallengeImport(pmFixture)

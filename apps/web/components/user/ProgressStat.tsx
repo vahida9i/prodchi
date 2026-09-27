@@ -2,7 +2,7 @@
 
 import type { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { digits } from "@/lib/i18n"
+import { digits } from "@/lib/utils"
 
 export function ProgressStat({
   label,

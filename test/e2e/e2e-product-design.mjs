@@ -15,7 +15,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
 const BASE = 'http://localhost:4000/api/v1'
-const FIXTURE_DIR = fileURLToPath(new URL('../../docs/fixtures', import.meta.url))
+const FIXTURE_DIR = fileURLToPath(new URL('../fixtures/schema', import.meta.url))
 const PASSWORD = 'e2e-password-123'
 
 const onboarding = JSON.parse(readFileSync(`${FIXTURE_DIR}/onboarding-drop-off.json`, 'utf-8'))
@@ -372,7 +372,7 @@ check('skill profile endpoint available',
 check('a new player has seven unproven skills and no decisions',
   emptySkills.json?.decisions === 0 && emptySkills.json?.scenarios === 0 &&
   emptySkills.json?.skills?.length === 7 &&
-  emptySkills.json?.skills?.every(skill => skill.proficiency === 'unproven' && skill.evidence === 'not yet observed'),
+  emptySkills.json?.skills?.every(skill => skill.proficiency === 'unproven' && skill.evidence === 'هنوز ارزیابی نشده'),
   JSON.stringify(emptySkills.json))
 check('the skill payload speaks the public vocabulary only',
   !keysOf(emptySkills.json).has('stage'),
@@ -599,7 +599,7 @@ check('all seven skills present in process order',
   JSON.stringify(skills.json?.skills?.map(skill => skill.id)))
 const evidenced = (skills.json?.skills ?? []).filter(skill => skill.count > 0)
 check('skills carry evidence in the report line format',
-  evidenced.length > 0 && evidenced.every(skill => /^\d+ of \d+ strongest calls/.test(skill.evidence)),
+  evidenced.length > 0 && evidenced.every(skill => /^[۰-۹]+ از [۰-۹]+ تصمیم برتر/.test(skill.evidence)),
   JSON.stringify(skills.json?.skills?.map(skill => [skill.id, skill.evidence])))
 check('proficiencies stay within the declared bands',
   skills.json?.skills?.every(skill => ['strong', 'developing', 'emerging', 'unproven'].includes(skill.proficiency)),

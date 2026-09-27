@@ -37,9 +37,9 @@ export default function AdminFailedImportsPage() {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Admin: Failed Imports</h1>
+          <h1 className="text-2xl font-bold">خطاهای ورود سناریو</h1>
           <Link href="/admin/challenges">
-            <Button variant="ghost" size="sm">← Challenges</Button>
+            <Button variant="ghost" size="sm">بازگشت به سناریوها</Button>
           </Link>
         </div>
       </header>
@@ -48,7 +48,7 @@ export default function AdminFailedImportsPage() {
         {failedImports.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">No failed imports. Clean record!</p>
+              <p className="text-muted-foreground">هیچ ورود ناموفقی ثبت نشده است.</p>
             </CardContent>
           </Card>
         ) : (
@@ -57,18 +57,18 @@ export default function AdminFailedImportsPage() {
               <CardContent className="pt-6 space-y-3">
                 <div className="flex items-center justify-between text-sm">
                   <div>
-                    <p className="font-medium">{failed.summary.title || "Untitled payload"}</p>
+                    <p className="font-medium">{failed.summary.title || "محتوای بدون عنوان"}</p>
                     <p className="text-muted-foreground">
                       {failed.summary.id ? (
-                        <>id: <code>{failed.summary.id}</code> · </>
+                        <>شناسه: <code>{failed.summary.id}</code> · </>
                       ) : null}
                       {failed.summary.questionCount !== null
-                        ? `${failed.summary.questionCount} question(s) parsed`
-                        : "payload was not a challenge object"}
+                        ? `${failed.summary.questionCount.toLocaleString("fa-IR")} سؤال شناسایی شد`
+                        : "محتوا ساختار سناریو ندارد"}
                     </p>
                   </div>
                   <span className="text-muted-foreground whitespace-nowrap">
-                    {new Date(failed.createdAt).toLocaleString()}
+                    {new Date(failed.createdAt).toLocaleString("fa-IR")}
                   </span>
                 </div>
                 <ValidationErrorList errors={failed.errors} />

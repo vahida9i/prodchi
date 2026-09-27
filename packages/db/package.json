@@ -8,6 +8,7 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx seed.ts",
+    "db:sync-wireframe": "node --import tsx sync-wireframe.ts",
     "db:studio": "prisma studio"
   },
   "dependencies": {

@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation"
 import { BarChart3, Check, Cpu, Loader2, Palette, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { api } from "@/lib/api-client"
-import { getTranslations } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
-type RoleMeta = { icon: typeof Palette; accent: string; soft: string; focus: string[]; promise: string }
+type RoleMeta = { title: string; description?: string; icon: typeof Palette; accent: string; soft: string; focus: string[]; promise: string }
 
 const ROLE_META: Record<string, RoleMeta> = {
   "Product Design": {
+    title: "طراحی محصول",
+    description: "پژوهش کاربر، طرح‌واره، طراحی بصری، آزمون کاربردپذیری و حل مسئله تجربه کاربری.",
     icon: Palette,
     accent: "text-violet-700",
     soft: "bg-violet-50 border-violet-200",
@@ -19,6 +20,8 @@ const ROLE_META: Record<string, RoleMeta> = {
     promise: "یاد می‌گیری مسئله‌ی درست را پیدا کنی و تجربه‌ای بسازی که واقعاً به کاربر کمک کند.",
   },
   "Product Management": {
+    title: "مدیریت محصول",
+    description: "تشخیص مسئله، راهبرد محصول، اولویت‌بندی، نقشه راه و سنجه‌های کسب‌وکار.",
     icon: BarChart3,
     accent: "text-sky-700",
     soft: "bg-sky-50 border-sky-200",
@@ -26,6 +29,8 @@ const ROLE_META: Record<string, RoleMeta> = {
     promise: "تمرین می‌کنی با داده و محدودیت‌های واقعی، تصمیم‌های محصولی دقیق‌تری بگیری.",
   },
   "Tech Lead": {
+    title: "تک لید",
+    description: "جهت فنی، بده‌بستان‌های معماری، مدیریت رخداد و رشد تیم را تمرین کنید.",
     icon: Cpu,
     accent: "text-emerald-700",
     soft: "bg-emerald-50 border-emerald-200",
@@ -35,6 +40,7 @@ const ROLE_META: Record<string, RoleMeta> = {
 }
 
 const fallbackMeta: RoleMeta = {
+  title: "نقش تخصصی فعال",
   icon: Sparkles,
   accent: "text-primary",
   soft: "bg-primary/5 border-primary/20",
@@ -67,7 +73,6 @@ function CelebrationBurst() {
 
 export function RoleSelect({ currentRoleId = null }: { currentRoleId?: string | null }) {
   const router = useRouter()
-  const t = getTranslations()
   const [roles, setRoles] = useState<Array<{ id: string; name: string }>>([])
   const [selectedRole, setSelectedRole] = useState<string | null>(currentRoleId)
   const [isLoading, setIsLoading] = useState(false)
@@ -82,7 +87,7 @@ export function RoleSelect({ currentRoleId = null }: { currentRoleId?: string | 
       const data = await api.getRoles()
       setRoles(data.roles)
     } catch {
-      setError(t.auth.errorGeneral)
+      setError("خطایی رخ داد. لطفاً دوباره تلاش کنید.")
     } finally {
       setRolesLoading(false)
     }
@@ -109,7 +114,7 @@ export function RoleSelect({ currentRoleId = null }: { currentRoleId?: string | 
         window.setTimeout(() => { router.push("/home"); router.refresh() }, 720)
       }
     } catch {
-      setError(t.auth.errorGeneral)
+      setError("خطایی رخ داد. لطفاً دوباره تلاش کنید.")
     } finally {
       setIsLoading(false)
     }
@@ -133,8 +138,8 @@ export function RoleSelect({ currentRoleId = null }: { currentRoleId?: string | 
             const meta = ROLE_META[role.name] ?? fallbackMeta
             const Icon = meta.icon
             const selected = selectedRole === role.id
-            const title = t.roles.byName[role.name as keyof typeof t.roles.byName]?.name ?? t.profile.roleLabel
-            const description = t.roles.byName[role.name as keyof typeof t.roles.byName]?.description ?? meta.promise
+            const title = meta.title
+            const description = meta.description ?? meta.promise
             return (
               <button
                 key={role.id}

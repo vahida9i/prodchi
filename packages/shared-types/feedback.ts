@@ -47,35 +47,6 @@ const VERDICT_WEIGHT: Record<Verdict, number> = { strongest: 1, reasonable: 0.5,
  */
 const STAGE_LABELS: Record<Role, Record<string, string>> = {
   'Product Design': {
-    FRAME: 'Framing the challenge',
-    DISCOVER: 'Discovering needs & evidence',
-    DEFINE: 'Defining the problem',
-    IDEATE: 'Generating options',
-    DESIGN: 'Designing the solution',
-    TEST: 'Testing with users',
-    REFINE: 'Refining the solution'
-  },
-  'Product Management': {
-    FRAME: 'Framing the problem',
-    DIAGNOSE: 'Diagnosing the cause',
-    STRATEGIZE: 'Setting the direction',
-    PRIORITIZE: 'Prioritizing the work',
-    PLAN: 'Planning the roadmap',
-    EXECUTE: 'Executing and shipping',
-    MEASURE: 'Measuring the outcome'
-  },
-  'Tech Lead': {
-    FRAME: 'Framing the leadership challenge',
-    INVESTIGATE: 'Investigating the signal',
-    ARCHITECT: 'Shaping the technical direction',
-    PRIORITIZE: 'Prioritizing risk and impact',
-    RESPOND: 'Responding to incidents',
-    COORDINATE: 'Coordinating across the team',
-    COACH: 'Coaching and growing the team'
-  }
-}
-const STAGE_LABELS_FA: Record<Role, Record<string, string>> = {
-  'Product Design': {
     FRAME: 'صورت‌بندی چالش',
     DISCOVER: 'اکتشاف نیازها و شواهد',
     DEFINE: 'تعریف دقیق مسئله',
@@ -106,10 +77,6 @@ const STAGE_LABELS_FA: Record<Role, Record<string, string>> = {
 
 
 export function stageLabel(role: Role, stage: Stage): string {
-  const isFa = (process.env.APP_LOCALE === 'fa' || process.env.NEXT_PUBLIC_APP_LOCALE === 'fa')
-  if (isFa) {
-    return STAGE_LABELS_FA[role]?.[stage] ?? STAGE_LABELS[role]?.[stage] ?? stage
-  }
   return STAGE_LABELS[role]?.[stage] ?? stage
 }
 
@@ -283,8 +250,8 @@ export function evaluateRun(path: readonly RunPathEntry[], challenge: RunChallen
     reasonableCalls: stat.reasonableCalls,
     rate: stat.weight / stat.count,
     evidence:
-      `${stat.bestHits} of ${stat.count} strongest moves` +
-      (stat.reasonableCalls > 0 ? `, ${stat.reasonableCalls} defensible` : '')
+      `${stat.bestHits.toLocaleString('fa-IR')} از ${stat.count.toLocaleString('fa-IR')} تصمیم برتر` +
+      (stat.reasonableCalls > 0 ? `، ${stat.reasonableCalls.toLocaleString('fa-IR')} تصمیم قابل‌دفاع` : '')
   }))
 
   const strengths = areas
@@ -355,8 +322,8 @@ export function evaluateRun(path: readonly RunPathEntry[], challenge: RunChallen
       rate,
       evidence:
         stat.count === 0
-          ? 'not exercised on this run'
-          : `${stat.bestHits} of ${stat.count} strongest moves`,
+          ? 'در این اجرا سنجیده نشد'
+          : `${stat.bestHits.toLocaleString('fa-IR')} از ${stat.count.toLocaleString('fa-IR')} تصمیم برتر`,
       status: stat.count === 0 ? 'neutral' : rate >= 0.75 ? 'strength' : rate <= 0.5 ? 'growth' : 'neutral'
     }
   })

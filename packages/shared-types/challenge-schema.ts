@@ -95,6 +95,15 @@ export const RevealTableSchema = z.object({
   })
 })
 
+/** Evidence visible before the candidate answers, kept on our own origin. */
+export const QuestionMaterialSchema = z.object({
+  table: RevealTableSchema.optional(),
+  image: z.object({
+    src: z.string().regex(/^\/scenario-assets\/[a-z0-9/_-]+\.(?:png|jpe?g|webp|svg)$/),
+    alt: z.string().min(1).max(200)
+  }).strict().optional()
+}).strict().refine(value => Boolean(value.table || value.image), 'material needs a table or image')
+
 export const RevealBlockSchema = z.object({
   text: z.string().min(1).optional(),
   table: RevealTableSchema.optional()
@@ -171,6 +180,8 @@ export const ChoiceSchema = z.object({
 
 export const QuestionSchema = z.object({
   text: z.string().min(1),
+  answerMode: z.enum(['choice', 'text']).optional(),
+  material: QuestionMaterialSchema.optional(),
   choices: z.array(ChoiceSchema).min(3).max(4),
   /**
    * Index (0-based) of the choice that represents the strongest reasoning at
@@ -294,6 +305,7 @@ export type QualityTier = z.infer<typeof QualitySchema>
 export type AssessmentCriterion = z.infer<typeof CriterionSchema>
 export type Assessment = z.infer<typeof AssessmentSchema>
 export type RevealTable = z.infer<typeof RevealTableSchema>
+export type QuestionMaterial = z.infer<typeof QuestionMaterialSchema>
 export type RevealBlock = z.infer<typeof RevealBlockSchema>
 export type Choice = z.infer<typeof ChoiceSchema>
 export type Question = z.infer<typeof QuestionSchema>

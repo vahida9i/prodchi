@@ -49,7 +49,7 @@ test('a rubriced run scores each strand it exercised, in declared order', () => 
   assert.equal(mixed.dimensions?.[0].count, 1)
   assert.equal(mixed.dimensions?.[1].count, 0)
   assert.equal(mixed.dimensions?.[1].status, 'neutral')
-  assert.equal(mixed.dimensions?.[1].evidence, 'not exercised on this run')
+  assert.equal(mixed.dimensions?.[1].evidence, 'در این اجرا سنجیده نشد')
 })
 
 test('an unrubriced challenge reports an empty unit layer', () => {
@@ -105,7 +105,7 @@ test('a miss carries the strongest move, its because, and the mismatch flag', ()
   assert.equal(first.mismatch, true) // IDEATE move where DISCOVER was needed
   assert.equal(first.strongest?.text, 'Split by device')
   assert.equal(first.strongest?.because, 'The pattern is device-dependent.')
-  // Stage labels are locale-aware, so the expected area is resolved the same way.
+  // Stage labels are Persian and resolved from the role.
   const growth = report.growth.find(g => g.area === stageLabel('Product Design', 'DISCOVER'))
   assert.ok(growth, 'expected the DISCOVER area in growth')
   assert.equal(growth.atQuestion, 'Q1')
@@ -119,7 +119,7 @@ test('reasonable moves count half and surface as defensible in evidence', () => 
   assert.equal(report.headline, 'mixed')
   assert.ok(report.perQuestion.every(q => q.verdict === 'reasonable'))
   const evidence = report.strengths.concat(report.growth).map(a => a.evidence).join(' | ')
-  assert.ok(evidence.includes('defensible'), evidence)
+  assert.ok(evidence.includes('تصمیم قابل‌دفاع'), evidence)
 })
 
 test('untagged (legacy) choices derive best/poor from bestChoice', () => {

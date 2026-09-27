@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma.ts'
 import { levelFromXp } from '@prodchi/shared-types/scoring'
+import { tehranDayStart } from './calendar-day.ts'
 import type { LevelScore } from '@prodchi/shared-types/scoring'
 
 /**
@@ -54,17 +55,18 @@ function utcDayStart(date: Date): Date {
 }
 
 /** XP of this account ON ONE role track — profile/progress never aggregate across tracks. */
-async function sumXp(userId: string, roleId: string): Promise<number> {
-  const aggregate = await prisma.levelProgress.aggregate({
+export async function totalXpForRole(userId: string, roleId: string): Promise<number> {
+  const [aggregate, daily] = await Promise.all([prisma.levelProgress.aggregate({
     where: { userId, level: { challenge: { roleId } } },
     _sum: { xpEarned: true }
-  })
-  return aggregate._sum.xpEarned ?? 0
+  }), prisma.dailyChallenge.aggregate({ where: { userId, roleId }, _sum: { xpEarned: true } })])
+  return (aggregate._sum.xpEarned ?? 0) + (daily._sum.xpEarned ?? 0)
 }
+const sumXp = totalXpForRole
 
 /** Yesterday extends the streak, today is a no-op, anything older restarts at 1. Per (user, role). */
-async function updateStreak(userId: string, roleId: string) {
-  const today = utcDayStart(new Date())
+export async function updateStreak(userId: string, roleId: string) {
+  const today = tehranDayStart(new Date())
   const existing = await prisma.streak.findUnique({ where: { userId_roleId: { userId, roleId } } })
 
   if (!existing) {
@@ -143,16 +145,14 @@ export async function evaluateBadges(userId: string, roleId: string): Promise<Ba
         unlocked = (streak?.currentStreak ?? 0) >= (condition.threshold ?? 0)
         break
       case 'industryCompleted': {
-        if (!condition.industryId) break
-        // Scoped to the track: only this role's levels inside the industry can
-        // complete it — the other track's levels in the same industry are not
-        // part of this candidate's path at all.
         const industryLevels = await prisma.level.findMany({
-          where: { industryId: condition.industryId, status: 'active', challenge: { roleId } },
-          select: { id: true }
+          where: { ...(condition.industryId ? { industryId: condition.industryId } : {}), status: 'active', challenge: { roleId } },
+          select: { id: true, industryId: true }
         })
         const passedIds = new Set(passed.map(row => row.levelId))
-        unlocked = industryLevels.length > 0 && industryLevels.every(level => passedIds.has(level.id))
+        const byIndustry = new Map<string, string[]>()
+        for (const level of industryLevels) byIndustry.set(level.industryId, [...(byIndustry.get(level.industryId) ?? []), level.id])
+        unlocked = [...byIndustry.values()].some(ids => ids.length > 0 && ids.every(id => passedIds.has(id)))
         break
       }
       default:
@@ -256,7 +256,7 @@ export async function creditLevelResult(
     include: { challenge: { select: { roleId: true } } }
   })
   if (!levelRow) {
-    throw new Error('Level not found')
+    throw new Error('مرحله پیدا نشد')
   }
   const roleId = levelRow.challenge.roleId
 

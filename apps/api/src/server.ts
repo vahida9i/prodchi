@@ -8,6 +8,9 @@ import { sessionRoutes } from './routes/sessions.ts'
 import { levelRoutes } from './routes/levels.ts'
 import { progressRoutes } from './routes/progress.ts'
 import { roleRoutes } from './routes/roles.ts'
+import { profileRoutes, publicProfileRoutes } from './routes/profile.ts'
+import { adminProfileReviewRoutes } from './routes/admin/profile-review.ts'
+import { dailyRoutes } from './routes/daily.ts'
 import { adminChallengeRoutes } from './routes/admin/challenges.ts'
 import { adminImportRoutes } from './routes/admin/imports.ts'
 import { adminLevelRoutes } from './routes/admin/levels.ts'
@@ -51,6 +54,7 @@ app.get('/health', async () => ({ status: 'ok' }))
 
 // Public auth routes
 app.register(authRoutes, { prefix: '/api/v1/auth' })
+app.register(publicProfileRoutes, { prefix: '/api/v1/public' })
 
 // Protected user routes
 app.register(async function (fastify) {
@@ -60,6 +64,8 @@ app.register(async function (fastify) {
   fastify.register(levelRoutes, { prefix: '/api/v1/levels' })
   fastify.register(progressRoutes, { prefix: '/api/v1/progress' })
   fastify.register(roleRoutes, { prefix: '/api/v1/roles' })
+  fastify.register(profileRoutes, { prefix: '/api/v1/profile' })
+  fastify.register(dailyRoutes, { prefix: '/api/v1/daily' })
 })
 
 // Admin routes
@@ -70,6 +76,7 @@ app.register(async function (fastify) {
   fastify.register(adminChallengeRoutes, { prefix: '/api/v1/admin' })
   fastify.register(adminImportRoutes, { prefix: '/api/v1/admin' })
   fastify.register(adminLevelRoutes, { prefix: '/api/v1/admin' })
+  fastify.register(adminProfileReviewRoutes, { prefix: '/api/v1/admin' })
 })
 
 const start = async () => {

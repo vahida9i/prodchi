@@ -6,7 +6,7 @@ import { isSingleQuestion, levelFromXp, scoreLevel, starsFor } from './scoring'
 import { END, XP_PER_BEST_CHOICE } from './challenge-schema'
 import type { ChallengeImport, Question } from './challenge-schema'
 
-const FIXTURE_PATH = fileURLToPath(new URL('../../docs/fixtures/onboarding-drop-off.json', import.meta.url))
+const FIXTURE_PATH = fileURLToPath(new URL('../../test/fixtures/schema/onboarding-drop-off.json', import.meta.url))
 const fixture = JSON.parse(readFileSync(FIXTURE_PATH, 'utf-8')) as ChallengeImport
 
 function question(bestChoice: number, choices = 3): Question {

@@ -11,6 +11,8 @@ import { ChallengeImportForm } from "@/components/admin/ChallengeImportForm"
 import { api } from "@/lib/api-client"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
+const DIFFICULTY_LABELS: Record<string, string> = { easy: "آسان", medium: "متوسط", hard: "سخت" }
+
 type AdminChallenge = Awaited<ReturnType<typeof api.getAdminChallenges>>["challenges"][number]
 
 /**
@@ -47,17 +49,17 @@ export default function AdminChallengesPage() {
       )
       await refresh()
     } catch (err: any) {
-      alert(err.message || "Failed to update status")
+      alert(err.message || "تغییر وضعیت ناموفق بود")
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this challenge? Deletion is only possible for challenges without sessions.")) return
+    if (!confirm("این سناریو حذف شود؟ فقط سناریوهای بدون نشست قابل حذف‌اند.")) return
     try {
       await api.deleteChallenge(id)
       await refresh()
     } catch (err: any) {
-      alert(err.message || "Failed to delete challenge")
+      alert(err.message || "حذف سناریو ناموفق بود")
     }
   }
 
@@ -75,7 +77,7 @@ export default function AdminChallengesPage() {
       return (
         <TableRow>
           <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-            No {tab} challenges.
+            هیچ سناریوی {tab === "active" ? "فعالی" : "بازنشسته‌ای"} وجود ندارد.
           </TableCell>
         </TableRow>
       )
@@ -83,25 +85,25 @@ export default function AdminChallengesPage() {
     return rows.map((challenge) => (
       <TableRow key={challenge.id}>
         <TableCell className="font-medium">{challenge.title}</TableCell>
-        <TableCell className="capitalize">{challenge.difficulty}</TableCell>
+        <TableCell className="capitalize">{DIFFICULTY_LABELS[challenge.difficulty as "easy" | "medium" | "hard"] ?? challenge.difficulty}</TableCell>
         <TableCell>
           <code className="text-xs">{challenge.importKey}</code>
         </TableCell>
         <TableCell className="text-sm text-muted-foreground">
-          {new Date(challenge.createdAt).toLocaleDateString()}
+          {new Date(challenge.createdAt).toLocaleDateString("fa-IR")}
         </TableCell>
         <TableCell className="text-right space-x-2">
           <Badge variant={challenge.status === "active" ? "default" : "secondary"} className="mr-2">
-            {challenge.status}
+            {challenge.status === "active" ? "فعال" : "بازنشسته"}
           </Badge>
           <Link href={`/admin/challenges/${challenge.id}`}>
-            <Button variant="outline" size="sm">View</Button>
+            <Button variant="outline" size="sm">مشاهده</Button>
           </Link>
           <Button variant="outline" size="sm" onClick={() => handleToggle(challenge)}>
-            {tab === "active" ? "Retire" : "Restore"}
+            {tab === "active" ? "بازنشسته‌کردن" : "فعال‌سازی"}
           </Button>
           <Button variant="destructive" size="sm" onClick={() => handleDelete(challenge.id)}>
-            Delete
+            حذف
           </Button>
         </TableCell>
       </TableRow>
@@ -114,11 +116,11 @@ export default function AdminChallengesPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Difficulty</TableHead>
-              <TableHead>Import key</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="text-right">Status &amp; actions</TableHead>
+              <TableHead>عنوان</TableHead>
+              <TableHead>سختی</TableHead>
+              <TableHead>شناسه ورود</TableHead>
+              <TableHead>تاریخ ایجاد</TableHead>
+              <TableHead className="text-right">وضعیت و عملیات</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>{renderRows(rows, tab)}</TableBody>
@@ -139,31 +141,34 @@ export default function AdminChallengesPage() {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Admin: Challenges</h1>
+          <h1 className="text-2xl font-bold">مدیریت سناریوها</h1>
           <div className="flex items-center gap-2">
             <Link href="/admin/levels">
-              <Button variant="outline" size="sm">Levels</Button>
+              <Button variant="outline" size="sm">مرحله‌ها</Button>
             </Link>
             <Link href="/admin/imports">
-              <Button variant="outline" size="sm">Failed imports</Button>
+              <Button variant="outline" size="sm">خطاهای ورود</Button>
             </Link>
-            <Button variant="outline" size="sm" onClick={handleLogout}>Log out</Button>
+            <Link href="/admin/profile-review">
+              <Button variant="outline" size="sm">بررسی پروفایل‌ها</Button>
+            </Link>
+            <Button variant="outline" size="sm" onClick={handleLogout}>خروج</Button>
           </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-8">
         <section>
-          <h2 className="text-xl font-semibold mb-4">Import New Challenge</h2>
+          <h2 className="text-xl font-semibold mb-4">افزودن سناریوی جدید</h2>
           <ChallengeImportForm onImported={refresh} />
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold mb-4">Challenge Library</h2>
+          <h2 className="text-xl font-semibold mb-4">فهرست سناریوها</h2>
           <Tabs defaultValue="active">
             <TabsList>
-              <TabsTrigger value="active">Active ({active.length})</TabsTrigger>
-              <TabsTrigger value="retired">Retired ({retired.length})</TabsTrigger>
+              <TabsTrigger value="active">فعال ({active.length})</TabsTrigger>
+              <TabsTrigger value="retired">بازنشسته ({retired.length})</TabsTrigger>
             </TabsList>
             <TabsContent value="active">{renderTable(active, "active")}</TabsContent>
             <TabsContent value="retired">{renderTable(retired, "retired")}</TabsContent>

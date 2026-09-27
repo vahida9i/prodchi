@@ -8,6 +8,7 @@
 #   make doctor    check docker/compose/daemon + host port conflicts
 #   make up        dev stack  (HMR, bind mounts)
 #   make up-prod   prod stack (built images, no mounts)
+#   make dev-backend  host API in watch mode + Docker PostgreSQL
 # ---------------------------------------------------------------------------
 
 SHELL := /bin/sh
@@ -33,7 +34,7 @@ WEB_PORT          ?= 3000
 
 .DEFAULT_GOAL := help
 
-.PHONY: help env doctor install up up-prod down restart logs ps build \
+.PHONY: help env doctor install up up-prod dev-backend down restart logs ps build \
         migrate seed reset-content db-reset psql shell-api shell-web \
         typecheck test e2e clean nuke
 
@@ -46,6 +47,7 @@ help: ## Show this help
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z0-9_-]+:.*## / {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}' $(firstword $(MAKEFILE_LIST))
 	@echo ""
 	@echo "  Dev stack : make up       (HMR, source edits apply live)"
+	@echo "  Backend   : make dev-backend (host API + Docker PostgreSQL)"
 	@echo "  Prod stack: make up-prod  (built images, no bind mounts)"
 
 env: ## Create a host .env from .env.example when missing (for the pnpm flows)
@@ -84,6 +86,12 @@ up: ## Start the dev stack (HMR, bind mounts; builds images on first run)
 
 up-prod: ## Start the prod-style stack (built images, no bind mounts)
 	$(COMPOSE_PROD) up -d --build
+
+dev-backend: env ## Start PostgreSQL on the port in .env, then run the host API in watch mode
+	@db_port=$$(node -e 'const { readFileSync } = require("node:fs"); const { parseEnv } = require("node:util"); const env = parseEnv(readFileSync(".env", "utf8")); console.log(new URL(env.DATABASE_URL).port || "5432")') || exit 1; \
+		DB_PORT="$$db_port" $(COMPOSE_PROD) up -d --wait db
+	./node_modules/.bin/tsc -p packages/shared-types/tsconfig.json
+	cd apps/api && ./node_modules/.bin/tsx watch src/server.ts
 
 down: ## Stop and remove the stack's containers (volumes are kept)
 	$(COMPOSE_DEV) down --remove-orphans
@@ -168,4 +176,3 @@ clean: ## Stop the stack and delete the images built from this repo
 nuke: ## Stop the stack AND delete its volumes (database data included)
 	@echo "This deletes the db volume (all data) plus the node_modules volumes."
 	$(COMPOSE_DEV) down --volumes --rmi local --remove-orphans
-

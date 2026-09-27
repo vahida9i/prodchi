@@ -1,7 +1,6 @@
 "use client"
 
 import type { SkillScore } from "@/lib/api-client"
-import { getTranslations } from "@/lib/i18n"
 
 /**
  * The role's skill radar: one axis per skill of the candidate's role track,
@@ -33,7 +32,6 @@ function polygonPoints(count: number, radiusOf: (index: number) => number): stri
 }
 
 export function SkillRadar({ skills }: { skills: SkillScore[] }) {
-  const t = getTranslations()
   const count = skills.length
   if (count < 3) return null
 
@@ -46,7 +44,7 @@ export function SkillRadar({ skills }: { skills: SkillScore[] }) {
       viewBox="-44 0 328 244"
       className="mx-auto block w-full max-w-md"
       role="img"
-      aria-label={t.profile.radarAria}
+      aria-label={"نمودار رادار مهارت‌های نقش"}
     >
       {RINGS.map(ring => (
         <polygon

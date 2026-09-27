@@ -27,6 +27,8 @@ import {
   toPath
 } from '../services/session-engine.ts'
 import { creditLevelResult, isLevelPlayable } from '../services/gamification.ts'
+import { assessCompletedRun, assessWrittenAnswer, isAiConfigured, parseRunAssessment } from '../services/written-assessment.ts'
+import { creditDailySession } from '../services/daily-challenge.ts'
 
 /**
  * The run's score as frozen at completion. Challenges can be re-imported at any
@@ -79,7 +81,7 @@ function sessionFeedback(value: unknown): FeedbackReport | null {
 }
 
 /** A challenge can be re-imported mid-run; retire the unusable session instead of dead-ending on a 500. */
-const SUPERSEDED_MESSAGE = 'This level was updated and this run can no longer continue. Start it again from your path.'
+const SUPERSEDED_MESSAGE = 'این مرحله به‌روزرسانی شده و ادامهٔ اجرای فعلی ممکن نیست. آن را از مسیر دوباره شروع کنید.'
 
 const createSessionSchema = z.object({
   challengeId: z.string().uuid(),
@@ -89,22 +91,23 @@ const createSessionSchema = z.object({
 })
 
 const answerSchema = z.object({
-  choiceIndex: z.number().int().nonnegative()
-})
+  choiceIndex: z.number().int().nonnegative().optional(),
+  answerText: z.string().trim().min(20).max(2000).optional()
+}).strict().refine(value => (value.choiceIndex === undefined) !== (value.answerText === undefined), 'یک نوع پاسخ لازم است')
 
 export async function sessionRoutes(fastify: FastifyInstance) {
   // POST /api/v1/sessions — start (or resume) a session for a challenge
   fastify.post('/', async (request, reply) => {
     const parseResult = createSessionSchema.safeParse(request.body)
     if (!parseResult.success) {
-      return reply.status(400).send({ error: 'Invalid input', details: parseResult.error.flatten() })
+      return reply.status(400).send({ error: 'ورودی نامعتبر است', details: parseResult.error.flatten() })
     }
 
     const { challengeId, levelId } = parseResult.data
     const user = request.user!
 
     if (!user.roleTrackId) {
-      return reply.status(400).send({ error: 'Role not selected. Complete onboarding first.' })
+      return reply.status(400).send({ error: 'هنوز نقشی انتخاب نشده است. ابتدا مسیر خود را انتخاب کنید.' })
     }
 
     const challenge = await prisma.challenge.findFirst({
@@ -112,7 +115,7 @@ export async function sessionRoutes(fastify: FastifyInstance) {
       include: { level: { select: { id: true, number: true } } }
     })
     if (!challenge) {
-      return reply.status(404).send({ error: 'Challenge not found or not available' })
+      return reply.status(404).send({ error: 'سناریو پیدا نشد یا در دسترس نیست' })
     }
 
     // Path integrity: a challenge that is assigned to a level is ONLY playable
@@ -123,25 +126,25 @@ export async function sessionRoutes(fastify: FastifyInstance) {
       // A caller-supplied levelId must match the challenge's level, otherwise
       // a level could be credited by playing unrelated content.
       if (levelId && levelId !== challenge.level.id) {
-        return reply.status(400).send({ error: 'Level does not match this challenge' })
+        return reply.status(400).send({ error: 'مرحله با این سناریو مطابقت ندارد' })
       }
       // The caller's role scopes the gate: a track's levels unlock only
       // against that same track's progress, never another role's.
       if (!(await isLevelPlayable(user.userId, challenge.level, user.roleTrackId))) {
-        return reply.status(403).send({ error: 'This level is locked. Pass the previous level to unlock it.' })
+        return reply.status(403).send({ error: 'این مرحله قفل است. برای بازشدن آن مرحلهٔ قبلی را کامل کنید.' })
       }
       sessionLevelId = challenge.level.id
     } else if (levelId) {
       // No level backs this challenge: any levelId is bogus (a level always
       // points at exactly one challenge).
-      return reply.status(400).send({ error: 'Level does not match this challenge' })
+      return reply.status(400).send({ error: 'مرحله با این سناریو مطابقت ندارد' })
     }
 
     let started
     try {
       started = await startOrResumeSession(user.userId, challenge, sessionLevelId)
     } catch (err) {
-      if (err instanceof Error && err.message === 'Challenge has no valid start question') {
+      if (err instanceof Error && err.message === 'سناریو سؤال آغازین معتبری ندارد') {
         return reply.status(500).send({ error: err.message })
       }
       throw err
@@ -155,7 +158,7 @@ export async function sessionRoutes(fastify: FastifyInstance) {
     const { id } = request.params as { id: string }
     const parseResult = answerSchema.safeParse(request.body)
     if (!parseResult.success) {
-      return reply.status(400).send({ error: 'Invalid input', details: parseResult.error.flatten() })
+      return reply.status(400).send({ error: 'ورودی نامعتبر است', details: parseResult.error.flatten() })
     }
 
     const user = request.user!
@@ -165,10 +168,10 @@ export async function sessionRoutes(fastify: FastifyInstance) {
       include: { challenge: { include: { role: { select: { name: true } } } } }
     })
     if (!session) {
-      return reply.status(404).send({ error: 'Session not found' })
+      return reply.status(404).send({ error: 'نشست پیدا نشد' })
     }
     if (session.status !== 'in_progress' || !session.currentKey) {
-      return reply.status(409).send({ error: 'Session already completed' })
+      return reply.status(409).send({ error: 'نشست قبلاً کامل شده است' })
     }
 
     const questions = getQuestions(session.challenge)
@@ -181,10 +184,25 @@ export async function sessionRoutes(fastify: FastifyInstance) {
       return reply.status(409).send({ error: SUPERSEDED_MESSAGE, restart: true })
     }
 
-    const { choiceIndex } = parseResult.data
+    const isWritten = question.answerMode === 'text'
+    if (isWritten !== (parseResult.data.answerText !== undefined)) {
+      return reply.status(400).send({ error: 'نوع پاسخ با سؤال فعلی مطابقت ندارد' })
+    }
+    let assessment: Awaited<ReturnType<typeof assessWrittenAnswer>> | undefined
+    if (isWritten) {
+      try {
+        assessment = await assessWrittenAnswer(question, parseResult.data.answerText!)
+      } catch (error) {
+        request.log.error({ error }, 'written assessment failed')
+        return reply.status(isAiConfigured() ? 502 : 503).send({
+          error: isAiConfigured() ? 'ارزیابی پاسخ در دسترس نیست. دوباره تلاش کنید.' : 'ارزیابی پاسخ تشریحی هنوز پیکربندی نشده است.'
+        })
+      }
+    }
+    const choiceIndex = assessment?.choiceIndex ?? parseResult.data.choiceIndex!
     const choice = question.choices[choiceIndex]
     if (!choice) {
-      return reply.status(400).send({ error: 'Invalid choiceIndex for the current question' })
+      return reply.status(400).send({ error: 'گزینهٔ انتخاب‌شده برای سؤال فعلی معتبر نیست' })
     }
 
     const path = toPath(session).slice()
@@ -192,9 +210,10 @@ export async function sessionRoutes(fastify: FastifyInstance) {
       key: session.currentKey,
       questionText: question.text,
       choiceIndex,
-      choiceText: choice.text,
+      choiceText: parseResult.data.answerText ?? choice.text,
       reveal: revealOf(choice),
-      at: new Date().toISOString()
+      at: new Date().toISOString(),
+      ...(assessment ? { assessment: { score: assessment.score, strength: assessment.strength, weakness: assessment.weakness } } : {})
     })
     const pathJson = path as unknown as Prisma.InputJsonValue
 
@@ -212,7 +231,7 @@ export async function sessionRoutes(fastify: FastifyInstance) {
     if (choice.next === 'END') {
       // Score once, here: the snapshot rides on the session so the recap can
       // never disagree with the XP credited below.
-      const score = session.levelId ? scoreLevel(path, questions) : null
+      const score = scoreLevel(path, questions)
       // The feedback report freezes alongside the score, computed once from
       // the graph as it stood at completion — for free-play runs too.
       const feedback = evaluateRun(path, {
@@ -229,23 +248,31 @@ export async function sessionRoutes(fastify: FastifyInstance) {
           currentKey: null,
           status: 'completed',
           completedAt: new Date(),
-          score: score ? (score as unknown as Prisma.InputJsonValue) : Prisma.DbNull,
+          score: score as unknown as Prisma.InputJsonValue,
           feedback: feedback as unknown as Prisma.InputJsonValue
         }
       })
       if (result.count === 0) {
-        return reply.status(409).send({ error: 'This question was already answered. Reload to see the current state.' })
+        return reply.status(409).send({ error: 'این سؤال قبلاً پاسخ داده شده است. صفحه را تازه‌سازی کنید.' })
       }
 
-      const completion = session.levelId && score
+      const completion = session.levelId
         ? await creditLevelResult(user.userId, session.levelId, score)
         : null
+      const dailyReward = await creditDailySession(session.id)
+      if (completion && dailyReward) {
+        completion.totalXp = dailyReward.totalXp
+        completion.playerLevel = dailyReward.playerLevel
+        completion.leveledUp = completion.leveledUp || dailyReward.leveledUp
+      }
 
       return reply.send({
         reveal: revealOf(choice),
+        assessment: assessment ? { score: assessment.score, strength: assessment.strength, weakness: assessment.weakness } : null,
         question: null,
         status: 'completed',
-        result: completion
+        result: completion,
+        dailyReward
       })
     }
 
@@ -262,11 +289,12 @@ export async function sessionRoutes(fastify: FastifyInstance) {
       data: { path: pathJson, currentKey: choice.next }
     })
     if (result.count === 0) {
-      return reply.status(409).send({ error: 'This question was already answered. Reload to see the current state.' })
+      return reply.status(409).send({ error: 'این سؤال قبلاً پاسخ داده شده است. صفحه را تازه‌سازی کنید.' })
     }
 
     return reply.send({
       reveal: revealOf(choice),
+      assessment: assessment ? { score: assessment.score, strength: assessment.strength, weakness: assessment.weakness } : null,
       question: sanitizeQuestion(choice.next, nextQuestion),
       status: 'in_progress'
     })
@@ -283,7 +311,7 @@ export async function sessionRoutes(fastify: FastifyInstance) {
       include: { challenge: true }
     })
     if (!session) {
-      return reply.status(404).send({ error: 'Session not found' })
+      return reply.status(404).send({ error: 'نشست پیدا نشد' })
     }
 
     const history = toHistory(session)
@@ -321,17 +349,17 @@ export async function sessionRoutes(fastify: FastifyInstance) {
       include: { challenge: { include: { role: { select: { name: true } } } } }
     })
     if (!session) {
-      return reply.status(404).send({ error: 'Session not found' })
+      return reply.status(404).send({ error: 'نشست پیدا نشد' })
     }
     if (session.status !== 'completed') {
-      return reply.status(409).send({ error: 'Session is not completed yet' })
+      return reply.status(409).send({ error: 'نشست هنوز کامل نشده است' })
     }
 
     const questions = getQuestions(session.challenge)
     // Prefer the score frozen at completion (content may have been re-imported
     // since); recomputing is the fallback for runs recorded before the snapshot.
-    const computed = session.levelId ? scoreLevel(toPath(session), questions) : null
-    const snapshot = session.levelId ? sessionScore(session.score) : null
+    const computed = scoreLevel(toPath(session), questions)
+    const snapshot = sessionScore(session.score)
     const level = session.levelId
       ? await prisma.level.findUnique({ where: { id: session.levelId }, select: { number: true } })
       : null
@@ -340,19 +368,23 @@ export async function sessionRoutes(fastify: FastifyInstance) {
           where: { userId_levelId: { userId: user.userId, levelId: session.levelId } }
         })
       : null
+    const daily = await prisma.dailyChallenge.findUnique({ where: { sessionId: session.id }, select: { xpEarned: true } })
 
     return reply.send({
       id: session.id,
       challengeTitle: session.challenge.title,
       completedAt: session.completedAt,
       levelNumber: level?.number ?? null,
-      score: computed && {
+      score: {
         hits: snapshot?.hits ?? computed.hits,
         answered: snapshot?.answered ?? computed.answered,
         accuracy: snapshot?.accuracy ?? computed.accuracy,
-        xp: progress?.xpEarned ?? snapshot?.xp ?? computed.xp,
+        xp: progress?.xpEarned ?? daily?.xpEarned ?? 0,
         stars: progress?.bestStars ?? snapshot?.stars ?? computed.stars
       },
+      dailyReward: daily?.xpEarned ?? 0,
+      aiAvailable: isAiConfigured(),
+      aiAssessment: session.aiAssessment ?? null,
       // Feedback: snapshot first (same authority rule as the score); live
       // computation is the fallback for runs recorded before the snapshot.
       feedback: sessionFeedback(session.feedback) ??
@@ -364,5 +396,33 @@ export async function sessionRoutes(fastify: FastifyInstance) {
         }),
       path: toHistory(session)
     })
+  })
+
+  fastify.post('/:id/ai-assessment', async (request, reply) => {
+    const { id } = request.params as { id: string }
+    const user = request.user!
+    if (!isAiConfigured()) return reply.status(503).send({ error: 'ارزیابی هوشمند هنوز پیکربندی نشده است.' })
+    const session = await prisma.session.findFirst({ where: { id, userId: user.userId }, include: { challenge: true } })
+    if (!session) return reply.status(404).send({ error: 'نشست پیدا نشد' })
+    if (session.status !== 'completed') return reply.status(409).send({ error: 'ابتدا سناریو را کامل کنید.' })
+    if (session.aiAssessment) {
+      try { return reply.send(parseRunAssessment(session.aiAssessment)) } catch { /* regenerate invalid legacy data */ }
+    }
+    const questions = getQuestions(session.challenge)
+    const path = toPath(session)
+    const decisions = path.map(entry => ({
+      question: entry.questionText,
+      answer: entry.choiceText.slice(0, 2000),
+      strongest: questions[entry.key]?.choices[questions[entry.key].bestChoice]?.text ?? ''
+    }))
+    const referenceScore = Math.round(scoreLevel(path, questions).accuracy * 100)
+    try {
+      const assessment = await assessCompletedRun(session.challenge.title, decisions, referenceScore)
+      await prisma.session.update({ where: { id: session.id }, data: { aiAssessment: assessment as unknown as Prisma.InputJsonValue } })
+      return reply.send(assessment)
+    } catch (error) {
+      request.log.error({ error }, 'run AI assessment failed')
+      return reply.status(502).send({ error: 'ارزیابی هوشمند در دسترس نیست. دوباره تلاش کنید.' })
+    }
   })
 }

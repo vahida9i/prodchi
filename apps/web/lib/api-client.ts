@@ -3,7 +3,25 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v
 export interface SanitizedQuestion {
   key: string
   text: string
+  answerMode: 'choice' | 'text'
+  material?: { table?: RevealTable; image?: { src: string; alt: string } }
   choices: Array<{ index: number; text: string }>
+}
+
+export interface WrittenAssessment { score: number; strength: string; weakness: string }
+export interface AiRunAssessment { score: number; strength: string; weakness: string; nextStep: string }
+export interface DailyReward { xpGained: number; totalXp: number; playerLevel: number; leveledUp: boolean }
+export interface DailyChallenge {
+  day: string
+  challengeId: string
+  title: string
+  summary: string | null
+  difficulty: 'easy' | 'medium' | 'hard'
+  estimatedMinutes: number
+  maxXp: number
+  bonusXp: number
+  completed: boolean
+  sessionId: string | null
 }
 
 export interface RevealTable {
@@ -28,6 +46,7 @@ export interface SessionHistoryEntry {
   questionText: string
   choiceText: string
   reveal: RevealBlock
+  assessment?: WrittenAssessment
 }
 
 // ---------------------------------------------------------------------------
@@ -110,6 +129,11 @@ export interface LevelOnPath {
   difficulty: 'easy' | 'medium' | 'hard'
   type: 'challenge' | 'single_question'
   xpPerBest: number
+  questionCount: number
+  estimatedMinutes: number
+  maxXp: number
+  skillNames: string[]
+  materialKinds: string[]
   progress: LevelProgressInfo
 }
 
@@ -139,6 +163,9 @@ export interface LevelCompletion {
 export interface ProgressSummary {
   totalXp: number
   playerLevel: number
+  xpLevelStart: number
+  xpNextLevel: number
+  activityDays: string[]
   levelsPassed: number
   levelsTotal: number
   totalStars: number
@@ -162,6 +189,7 @@ export interface BadgeInfo {
   unlockCondition: { type?: string; threshold?: number; industryId?: string }
   earned: boolean
   earnedAt: string | null
+  progress: { current: number; target: number; percent: number }
 }
 
 export interface Leaderboard {
@@ -198,6 +226,42 @@ export interface SkillProfile {
   overallRate: number
   decisions: number
   scenarios: number
+}
+
+export interface SkillTree {
+  threshold: number
+  skills: Array<SkillScore & {
+    status: 'locked' | 'current' | 'mastered'
+    challenges: Array<{ id: string; number: number; title: string; passed: boolean; playable: boolean }>
+    completedChallenges: number
+  }>
+}
+
+export interface ProfileEvidence {
+  id: string
+  type: 'case_study' | 'project'
+  title: string
+  description: string
+  url: string | null
+  verifiedAt: string | null
+  createdAt?: string
+}
+
+export interface SharingProfile {
+  displayName: string | null
+  publicProfileToken: string | null
+  mentorVerifiedAt: string | null
+  evidence: ProfileEvidence[]
+}
+
+export interface PublicProfile {
+  displayName: string
+  roleName: string
+  mentorVerified: boolean
+  skills: SkillProfile
+  evidence: ProfileEvidence[]
+  caseStudies: number
+  projects: number
 }
 
 class ApiClient {
@@ -281,8 +345,8 @@ class ApiClient {
   }
 
   // Sessions (guided candidate session engine)
-  answerSession(sessionId: string, choiceIndex: number) {
-    return this.post<{ reveal: RevealBlock; question: SanitizedQuestion | null; status: 'in_progress' | 'completed'; result: LevelCompletion | null }>(`/sessions/${sessionId}/answer`, { choiceIndex })
+  answerSession(sessionId: string, answer: { choiceIndex: number } | { answerText: string }) {
+    return this.post<{ reveal: RevealBlock; assessment: WrittenAssessment | null; question: SanitizedQuestion | null; status: 'in_progress' | 'completed'; result: LevelCompletion | null; dailyReward: DailyReward | null }>(`/sessions/${sessionId}/answer`, answer)
   }
 
   getSession(sessionId: string) {
@@ -308,10 +372,15 @@ class ApiClient {
       completedAt: string
       levelNumber: number | null
       score: { hits: number; answered: number; accuracy: number; xp: number; stars: number } | null
+      dailyReward: number
+      aiAvailable: boolean
+      aiAssessment: AiRunAssessment | null
       feedback: FeedbackReport | null
       path: SessionHistoryEntry[]
     }>(`/sessions/${sessionId}/summary`)
   }
+
+  getAiAssessment(sessionId: string) { return this.post<AiRunAssessment>(`/sessions/${sessionId}/ai-assessment`) }
 
   // Level path (progression + gamification)
   getLevels() {
@@ -321,6 +390,8 @@ class ApiClient {
   startLevel(levelId: string) {
     return this.post<{ sessionId: string; resumed: boolean; status: string; question: SanitizedQuestion | null; level: { id: string; number: number; type: string } }>(`/levels/${levelId}/start`)
   }
+  getDailyChallenge() { return this.get<DailyChallenge>('/daily') }
+  startDailyChallenge() { return this.post<{ sessionId: string; resumed: boolean }>('/daily/start') }
 
   getProgress() {
     return this.get<ProgressSummary>('/progress')
@@ -337,6 +408,17 @@ class ApiClient {
   getSkills() {
     return this.get<SkillProfile>('/progress/skills')
   }
+  getSkillTree() {
+    return this.get<SkillTree>('/progress/skill-tree')
+  }
+  getSharingProfile() { return this.get<SharingProfile>('/profile') }
+  updateSharingProfile(data: { displayName?: string; shareEnabled?: boolean }) { return this.patch<{ displayName: string | null; publicProfileToken: string | null }>('/profile', data) }
+  addProfileEvidence(data: { type: 'case_study' | 'project'; title: string; description: string; url?: string }) { return this.post<ProfileEvidence>('/profile/evidence', data) }
+  deleteProfileEvidence(id: string) { return this.delete<{ success: boolean }>(`/profile/evidence/${id}`) }
+  getPublicProfile(token: string) { return this.get<PublicProfile>(`/public/profiles/${encodeURIComponent(token)}`) }
+  getProfileReview() { return this.get<{ evidence: Array<ProfileEvidence & { user: { id: string; displayName: string | null } }>; profiles: Array<{ id: string; displayName: string | null; mentorVerifiedAt: string | null }> }>('/admin/profile-review') }
+  verifyProfileEvidence(id: string) { return this.post<{ success: boolean }>(`/admin/profile-review/evidence/${id}/verify`) }
+  verifyProfileUser(id: string) { return this.post<{ success: boolean }>(`/admin/profile-review/users/${id}/verify`) }
   // Roles (onboarding)
   getRoles() {
     return this.get<{ roles: Array<{ id: string; name: string }> }>('/roles')

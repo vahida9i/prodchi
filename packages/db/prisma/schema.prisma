@@ -14,14 +14,35 @@ model User {
   role          String    @default("user") // "user" | "admin"
   cohortId      String?
   roleTrackId   String?   // FK to Role; set once during onboarding
+  displayName   String?
+  publicProfileToken String? @unique
+  mentorVerifiedAt DateTime?
+  mentorVerifiedBy String?
   createdAt     DateTime  @default(now())
   roleTrack     Role?     @relation(fields: [roleTrackId], references: [id])
   sessions      Session[]
   levelProgress LevelProgress[]
   badges        UserBadge[]
   streaks       Streak[]
+  evidence      ProfileEvidence[]
+  dailyChallenges DailyChallenge[]
 
   @@index([cohortId])
+}
+
+model ProfileEvidence {
+  id          String    @id @default(uuid())
+  userId      String
+  type        String    // "case_study" | "project"
+  title       String
+  description String
+  url         String?
+  verifiedAt  DateTime?
+  verifiedBy  String?
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, verifiedAt])
 }
 
 model Role {
@@ -31,6 +52,23 @@ model Role {
   users      User[]
   streaks    Streak[]
   userBadges UserBadge[]
+  dailyChallenges DailyChallenge[]
+}
+
+model DailyChallenge {
+  userId      String
+  roleId      String
+  day         String    // Tehran calendar day as YYYY-MM-DD, matching the streak calendar
+  challengeId String
+  sessionId   String?   @unique
+  xpEarned    Int       @default(0)
+  completedAt DateTime?
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        Role      @relation(fields: [roleId], references: [id])
+  challenge   Challenge @relation(fields: [challengeId], references: [id])
+
+  @@id([userId, roleId, day])
+  @@index([roleId, completedAt])
 }
 
 model Challenge {
@@ -59,6 +97,7 @@ model Challenge {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   sessions   Session[]
+  dailyChallenges DailyChallenge[]
   level      Level?
 
   @@index([roleId, status])
@@ -84,15 +123,16 @@ model Session {
   // what a finished run's "how you traversed it" said. Null for runs recorded
   // before this column existed — those compute from the live graph on read.
   feedback    Json?
+  aiAssessment Json?
   startedAt   DateTime  @default(now())
   completedAt DateTime?
   user        User      @relation(fields: [userId], references: [id])
   challenge   Challenge @relation(fields: [challengeId], references: [id])
   level       Level?    @relation(fields: [levelId], references: [id])
 
-  // NOTE: one in-progress session per user per challenge is enforced by the
-  // partial unique index `sessions_one_in_progress` (migration
-  // 20260916020000) — partial indexes cannot be expressed in the Prisma schema.
+  // NOTE: one in-progress session per user/challenge/level context is enforced
+  // by `sessions_one_in_progress` (migration 20260927030000). NULL level IDs
+  // are treated as equal, keeping daily/free-play resumes idempotent.
   @@index([userId, status])
   @@index([userId, challengeId])
   @@index([levelId])
@@ -130,9 +170,7 @@ model Level {
   // "challenge" | "single_question" — derived from the question graph at import
   // (one question whose every choice ends the session = single_question).
   type        String
-  // One content challenge backs exactly one level: this keeps the
-  // `sessions_one_in_progress` partial unique index on (userId, challengeId)
-  // meaningful and stops two levels fighting over one in-progress session.
+  // One content challenge backs exactly one level on the numbered path.
   challengeId String   @unique
   status      String   @default("active") // "active" | "retired"
   createdAt   DateTime @default(now())

@@ -47,14 +47,14 @@ export async function authRoutes(fastify: FastifyInstance) {
   fastify.post('/signup', async (request, reply) => {
     const parseResult = signupSchema.safeParse(request.body)
     if (!parseResult.success) {
-      return reply.status(400).send({ error: 'Invalid input', details: parseResult.error.flatten() })
+      return reply.status(400).send({ error: 'ورودی نامعتبر است', details: parseResult.error.flatten() })
     }
 
     const { email, password } = parseResult.data
 
     const existing = await prisma.user.findUnique({ where: { email } })
     if (existing) {
-      return reply.status(409).send({ error: 'Email already registered' })
+      return reply.status(409).send({ error: 'این ایمیل قبلاً ثبت شده است' })
     }
 
     const passwordHash = await bcrypt.hash(password, 12)
@@ -73,19 +73,19 @@ export async function authRoutes(fastify: FastifyInstance) {
   fastify.post('/login', async (request, reply) => {
     const parseResult = loginSchema.safeParse(request.body)
     if (!parseResult.success) {
-      return reply.status(400).send({ error: 'Invalid input', details: parseResult.error.flatten() })
+      return reply.status(400).send({ error: 'ورودی نامعتبر است', details: parseResult.error.flatten() })
     }
 
     const { email, password } = parseResult.data
 
     const user = await prisma.user.findUnique({ where: { email } })
     if (!user || !user.passwordHash) {
-      return reply.status(401).send({ error: 'Invalid credentials' })
+      return reply.status(401).send({ error: 'ایمیل یا رمز عبور اشتباه است' })
     }
 
     const valid = await bcrypt.compare(password, user.passwordHash)
     if (!valid) {
-      return reply.status(401).send({ error: 'Invalid credentials' })
+      return reply.status(401).send({ error: 'ایمیل یا رمز عبور اشتباه است' })
     }
 
     const token = createSessionToken(toAuthUser(user))
@@ -104,28 +104,28 @@ export async function authRoutes(fastify: FastifyInstance) {
   // POST /api/v1/auth/onboarding/role
   fastify.post('/onboarding/role', async (request, reply) => {
     if (!request.cookies?.session) {
-      return reply.status(401).send({ error: 'Unauthorized' })
+      return reply.status(401).send({ error: 'دسترسی نیاز به ورود دارد' })
     }
 
     // This route sits in the public /auth/* scope, so resolve the session with the
     // same helper the requireAuth hook uses - one verification path, no duplication.
     const sessionUser = await resolveSessionUser(request)
     if (!sessionUser) {
-      return reply.status(401).send({ error: 'Invalid session' })
+      return reply.status(401).send({ error: 'نشست معتبر نیست' })
     }
 
     const userId = sessionUser.userId
 
     const parseResult = onboardingSchema.safeParse(request.body)
     if (!parseResult.success) {
-      return reply.status(400).send({ error: 'Invalid input', details: parseResult.error.flatten() })
+      return reply.status(400).send({ error: 'ورودی نامعتبر است', details: parseResult.error.flatten() })
     }
 
     const { roleId } = parseResult.data
 
     const role = await prisma.role.findUnique({ where: { id: roleId } })
     if (!role) {
-      return reply.status(404).send({ error: 'Role not found' })
+      return reply.status(404).send({ error: 'نقش پیدا نشد' })
     }
 
     const user = await prisma.user.findUnique({
@@ -134,7 +134,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     })
     
     if (!user) {
-      return reply.status(401).send({ error: 'User not found' })
+      return reply.status(401).send({ error: 'کاربر پیدا نشد' })
     }
 
     // Select or switch: first pick sets the track, a different pick switches it
@@ -158,12 +158,12 @@ export async function authRoutes(fastify: FastifyInstance) {
   // GET /api/v1/auth/me - current session (used by the web app for role gating)
   fastify.get('/me', async (request, reply) => {
     if (!request.cookies?.session) {
-      return reply.status(401).send({ error: 'Unauthorized' })
+      return reply.status(401).send({ error: 'دسترسی نیاز به ورود دارد' })
     }
 
     const user = await resolveSessionUser(request)
     if (!user) {
-      return reply.status(401).send({ error: 'Invalid session' })
+      return reply.status(401).send({ error: 'نشست معتبر نیست' })
     }
 
     return reply.send({

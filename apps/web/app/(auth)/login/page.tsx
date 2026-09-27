@@ -9,11 +9,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { api } from "@/lib/api-client"
-import { getTranslations } from "@/lib/i18n"
 
 export default function LoginPage() {
   const router = useRouter()
-  const t = getTranslations()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -29,7 +27,7 @@ export default function LoginPage() {
       router.push("/home")
       router.refresh()
     } catch (err: any) {
-      setError(t.auth.errorInvalidCredentials)
+      setError("ایمیل یا رمز عبور اشتباه است")
     } finally {
       setIsLoading(false)
     }
@@ -39,8 +37,8 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-muted/50 px-4 py-12">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">{t.auth.signIn}</CardTitle>
-          <CardDescription className="text-center">{t.appDescription}</CardDescription>
+          <CardTitle className="text-2xl font-bold text-center">ورود به حساب</CardTitle>
+          <CardDescription className="text-center">حل سناریوهای واقعی و تصمیم‌گیری گام‌به‌گام در محصول</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -48,20 +46,20 @@ export default function LoginPage() {
               <div className="text-sm text-destructive text-center">{error}</div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">{t.auth.email}</Label>
+              <Label htmlFor="email">ایمیل</Label>
               <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder={t.auth.emailPlaceholder}
+                placeholder={"you@example.com"}
                 required
                 disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">{t.auth.password}</Label>
+                <Label htmlFor="password">رمز عبور</Label>
               </div>
               <Input
                 id="password"
@@ -74,16 +72,16 @@ export default function LoginPage() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? t.auth.signIn + '...' : t.auth.signIn}
+              {isLoading ? "ورود به حساب" + '...' : "ورود به حساب"}
             </Button>
           </form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <Separator />
           <p className="text-sm text-muted-foreground text-center">
-            {t.auth.noAccount}{' '}
+            حساب کاربری ندارید؟{' '}
             <Link href="/signup" className="text-primary hover:underline">
-              {t.auth.signUp}
+              ثبت‌نام
             </Link>
           </p>
         </CardFooter>

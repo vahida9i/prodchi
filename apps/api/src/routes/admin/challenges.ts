@@ -54,7 +54,7 @@ export async function adminChallengeRoutes(fastify: FastifyInstance) {
 
     const role = await prisma.role.findUnique({ where: { name: parsed.role } })
     if (!role) {
-      const errors = [{ path: 'role', message: `Role "${parsed.role}" is not seeded in the database` }]
+      const errors = [{ path: 'role', message: `نقش «${parsed.role}» در پایگاه داده ثبت نشده است` }]
       await logFailedImport(request.body, errors)
       return reply.status(400).send({ errors })
     }
@@ -107,7 +107,7 @@ export async function adminChallengeRoutes(fastify: FastifyInstance) {
   fastify.get('/challenges', async (request, reply) => {
     const parseResult = adminChallengeListQuerySchema.safeParse(request.query)
     if (!parseResult.success) {
-      return reply.status(400).send({ error: 'Invalid query', details: parseResult.error.flatten() })
+      return reply.status(400).send({ error: 'جستجوی نامعتبر است', details: parseResult.error.flatten() })
     }
 
     const { status } = parseResult.data
@@ -134,7 +134,7 @@ export async function adminChallengeRoutes(fastify: FastifyInstance) {
       include: { role: { select: { name: true } } }
     })
     if (!challenge) {
-      return reply.status(404).send({ error: 'Challenge not found' })
+      return reply.status(404).send({ error: 'سناریو پیدا نشد' })
     }
 
     const stored = (challenge.questions ?? {}) as Record<string, Question>
@@ -169,7 +169,7 @@ export async function adminChallengeRoutes(fastify: FastifyInstance) {
     const { id } = request.params as { id: string }
     const parseResult = updateChallengeStatusSchema.safeParse(request.body)
     if (!parseResult.success) {
-      return reply.status(400).send({ error: 'Invalid input', details: parseResult.error.flatten() })
+      return reply.status(400).send({ error: 'ورودی نامعتبر است', details: parseResult.error.flatten() })
     }
 
     try {
@@ -180,7 +180,7 @@ export async function adminChallengeRoutes(fastify: FastifyInstance) {
       return reply.send({ id: challenge.id, status: challenge.status })
     } catch (err: any) {
       if (err?.code === 'P2025') {
-        return reply.status(404).send({ error: 'Challenge not found' })
+        return reply.status(404).send({ error: 'سناریو پیدا نشد' })
       }
       throw err
     }
@@ -192,7 +192,7 @@ export async function adminChallengeRoutes(fastify: FastifyInstance) {
 
     const sessionsCount = await prisma.session.count({ where: { challengeId: id } })
     if (sessionsCount > 0) {
-      return reply.status(409).send({ error: 'Cannot delete a challenge with sessions. Retire it instead.' })
+      return reply.status(409).send({ error: 'سناریوی دارای نشست قابل حذف نیست. آن را بازنشسته کنید.' })
     }
 
     try {
@@ -200,7 +200,7 @@ export async function adminChallengeRoutes(fastify: FastifyInstance) {
       return reply.send({ success: true })
     } catch (err: any) {
       if (err?.code === 'P2025') {
-        return reply.status(404).send({ error: 'Challenge not found' })
+        return reply.status(404).send({ error: 'سناریو پیدا نشد' })
       }
       throw err
     }

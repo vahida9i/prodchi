@@ -61,7 +61,7 @@ test('an empty history yields an unproven profile with no fake zeros', () => {
     assert.equal(skill.proficiency, 'unproven')
     assert.equal(skill.count, 0)
     assert.equal(skill.rate, 0)
-    assert.equal(skill.evidence, 'not yet observed')
+    assert.equal(skill.evidence, 'هنوز ارزیابی نشده')
     assert.equal(skill.thinEvidence, false)
   }
 })
@@ -83,7 +83,7 @@ test('each decision credits the skill of the stage on the move actually chosen',
   assert.equal(framing.rate, 0.5)
   assert.equal(framing.proficiency, 'developing')
   assert.equal(framing.thinEvidence, true)
-  assert.equal(framing.evidence, '1 of 2 strongest calls')
+  assert.equal(framing.evidence, '۱ از ۲ تصمیم برتر')
   assert.equal(testing.count, 0)
   assert.equal(discovery.count, 0)
   assert.equal(profile.decisions, 2)
@@ -126,7 +126,7 @@ test('a defensible call counts half a strongest call', () => {
   assert.equal(skill.reasonableCalls, 2)
   assert.equal(skill.rate, 0.75)
   assert.equal(skill.proficiency, 'strong')
-  assert.equal(skill.evidence, '2 of 4 strongest calls, 2 defensible')
+  assert.equal(skill.evidence, '۲ از ۴ تصمیم برتر، ۲ تصمیم قابل‌دفاع')
 })
 
 test('runs merge, and only runs that actually scored count as scenarios', () => {
@@ -200,7 +200,7 @@ test('a PM run credits PM skills by the stage of the move actually chosen', () =
   assert.equal(framing.rate, 1)
   assert.equal(diagnosis.count, 1)
   assert.equal(diagnosis.rate, 0)
-  assert.equal(diagnosis.evidence, '0 of 1 strongest calls')
+  assert.equal(diagnosis.evidence, '۰ از ۱ تصمیم برتر')
   assert.equal(measurement.count, 0)
   assert.equal(profile.decisions, 2)
   assert.equal(profile.overallRate, 0.5)

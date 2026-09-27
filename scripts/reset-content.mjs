@@ -14,18 +14,15 @@
  *
  * Usage: pnpm db:reset-content    (API running; admin creds come from the root .env)
  *
- * Locale: APP_LOCALE picks the content set. An `fa` deployment loads a
- * COMPLETELY SEPARATE fixture directory (docs/fixtures/fa) with its own path
- * layout below — independent Farsi content, never a translation of the English
- * files, and never a silent fallback in either direction: a missing directory
- * or file aborts before anything touches the network.
+ * All authored path content is Persian and lives in docs/fixtures. A missing
+ * fixture aborts before making network requests.
  */
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-// tsx/node do not read .env on their own; the root .env is where ADMIN_SEED_*,
-// APP_LOCALE and PORT live (same pattern as packages/db/seed.ts).
+// Node does not read .env on its own; the root .env holds ADMIN_SEED_* and
+// PORT (same pattern as packages/db/seed.ts).
 for (const path of [resolve(process.cwd(), '.env'), resolve(process.cwd(), '../.env')]) {
   if (existsSync(path)) {
     process.loadEnvFile(path)
@@ -36,39 +33,13 @@ for (const path of [resolve(process.cwd(), '.env'), resolve(process.cwd(), '../.
 const BASE = process.env.API_URL ?? `http://localhost:${process.env.PORT ?? 4000}/api/v1`
 const EMAIL = process.env.ADMIN_SEED_EMAIL ?? 'admin@prodchi.local'
 const PASSWORD = process.env.ADMIN_SEED_PASSWORD ?? 'admin123'
-const LOCALE = (process.env.APP_LOCALE || process.env.NEXT_PUBLIC_APP_LOCALE || 'en') === 'fa' ? 'fa' : 'en'
-const FIXTURE_DIR = fileURLToPath(
-  new URL(LOCALE === 'fa' ? '../docs/fixtures/fa' : '../docs/fixtures', import.meta.url)
-)
+const FIXTURE_DIR = fileURLToPath(new URL('../docs/fixtures', import.meta.url))
 
 /**
  * The path, in play order: one scenario per industry, easiest first. Difficulty
  * comes from the fixture itself, so a level can never disagree with its content.
- * `single-question-sample.json` is deliberately absent — it is the quick-call
- * sample the e2e suites import, not path content.
  */
-const PATH_EN = [
-  // Product Design track (existing)
-  { file: 'clinic-booking.json', industry: 'Health' },
-  { file: 'kyc-drop-off.json', industry: 'Fintech' },
-  { file: 'onboarding-drop-off.json', industry: 'E-commerce' },
-  { file: 'saas-pricing-rework.json', industry: 'SaaS' },
-  // Product Management track (existing + new)
-  { file: 'pm_checkout_abandonment.json', industry: 'E-commerce' },
-  { file: 'pm_unused_feature.json', industry: 'Productivity' },
-  { file: 'pm_pricing_split.json', industry: 'SaaS' },
-  { file: 'pm-feature-cut.json', industry: 'Productivity' },
-  { file: 'pm_growth_plateau.json', industry: 'Health' },
-  { file: 'pm_enterprise_migration.json', industry: 'Enterprise' }
-]
-
-/**
- * Farsi path: its own files, its own order, its own ids — nothing here maps to
- * the English fixtures. `industry` values are the names seeded by
- * packages/db/seed.ts when APP_LOCALE=fa (the name is both the unique key and
- * the label candidates see). Grow this list as Farsi scenarios are authored.
- */
-const PATH_FA = [
+const PATH = [
   { file: 'fa_search_empty_state.json', industry: 'خرده‌فروشی آنلاین' },
   { file: 'fa_telehealth_booking.json', industry: 'سلامت' },
   { file: 'fa_focus_mode.json', industry: 'بهره‌وری' },
@@ -97,24 +68,19 @@ const PATH_FA = [
   { file: 'fa_techlead_team_growth.json', industry: 'سازمانی' }
 ]
 
-const PATH = LOCALE === 'fa' ? PATH_FA : PATH_EN
-
-// Fail fast, before touching the network: the chosen locale's directory and
-// every file the layout names must exist. A missing Farsi set on an fa
-// deployment (or vice versa) aborts here rather than seeding wrong-language
-// content.
+// Check every file before importing any content.
 if (!existsSync(FIXTURE_DIR)) {
-  console.error(`Fixture directory for locale "${LOCALE}" not found: ${FIXTURE_DIR}`)
+  console.error(`Fixture directory not found: ${FIXTURE_DIR}`)
   process.exit(1)
 }
 for (const entry of PATH) {
   if (!existsSync(`${FIXTURE_DIR}/${entry.file}`)) {
-    console.error(`Fixture "${entry.file}" (locale "${LOCALE}") not found in ${FIXTURE_DIR}`)
+    console.error(`Fixture "${entry.file}" not found in ${FIXTURE_DIR}`)
     process.exit(1)
   }
 }
 
-console.log(`Path content (locale: ${LOCALE} → ${FIXTURE_DIR})`)
+console.log(`Path content (${FIXTURE_DIR})`)
 
 let cookie = ''
 async function req(method, path, body) {
@@ -183,7 +149,7 @@ for (const [index, entry] of PATH.entries()) {
       industries.push(refreshed) // Add to cache
       industry = refreshed // Use the refreshed one
     } else {
-      fail(`industry "${entry.industry}" is not seeded — run pnpm db:seed first (industries are seeded per APP_LOCALE="${LOCALE}"; re-seed after switching locales)`)
+      fail(`industry "${entry.industry}" is not seeded — run pnpm db:seed first`)
       continue
     }
   }

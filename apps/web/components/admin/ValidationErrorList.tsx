@@ -19,7 +19,7 @@ export function ValidationErrorList({ errors, className }: ValidationErrorListPr
   return (
     <div className={cn("space-y-2", className)}>
       <div className="flex items-center gap-2">
-        <Badge variant="destructive">Validation Errors ({errors.length})</Badge>
+        <Badge variant="destructive">خطاهای اعتبارسنجی ({errors.length})</Badge>
       </div>
       <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 max-h-60 overflow-y-auto">
         <ul className="space-y-1 text-sm">

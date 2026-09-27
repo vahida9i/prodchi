@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { api } from "@/lib/api-client"
-import { getTranslations } from "@/lib/i18n"
 import { Briefcase, ChevronLeft, AlertCircle } from "lucide-react"
 
 /**
@@ -13,7 +12,6 @@ import { Briefcase, ChevronLeft, AlertCircle } from "lucide-react"
  * with the new track.
  */
 export function RoleChip() {
-  const t = getTranslations()
   const [roleName, setRoleName] = useState<string | null>(null)
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
 
@@ -73,11 +71,11 @@ export function RoleChip() {
     <Link
       href="/role"
       className="touch-target inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-sm transition-colors hover:bg-muted"
-      title={t.nav.switchTrack}
+      title={"تغییر نقش"}
     >
       <Briefcase size={16} className="text-primary" aria-hidden />
       <span className="font-medium">
-      {t.roles.byName[roleName as keyof typeof t.roles.byName]?.name ?? t.profile.roleLabel}
+      {({ "Product Design": "طراحی محصول", "Product Management": "مدیریت محصول", "Tech Lead": "تک لید" } as Record<string, string>)[roleName] ?? "نقش تخصصی فعال"}
       </span>
       <ChevronLeft size={14} className="text-muted-foreground" aria-hidden />
     </Link>

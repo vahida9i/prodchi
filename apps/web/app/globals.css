@@ -25,7 +25,9 @@
     --ring: 153 58% 38%;
     --radius: 0.9rem;
   }
-  * { @apply border-border; }
+  * { @apply border-border;
+    direction: rtl !important;
+   }
   html { background: hsl(var(--background)); }
   body {
     @apply bg-background text-foreground;
@@ -82,3 +84,10 @@
   .role-card-pop, .celebration-confetti, .micro-shake { animation: none !important; }
   .button-shine::after { display: none; }
 }
+@keyframes level-confetti-float {
+  0% { transform: translateY(-8px) rotate(0deg); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(65px) rotate(160deg); opacity: 0; }
+}
+.level-confetti { animation: level-confetti-float 2.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .level-confetti { animation: none; } }

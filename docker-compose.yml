@@ -46,6 +46,9 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/prodchi}
       SESSION_SECRET: ${SESSION_SECRET:-dev-secret-change-in-production}
+      LIARA_BASE_URL: ${LIARA_BASE_URL:-}
+      LIARA_API_KEY: ${LIARA_API_KEY:-}
+      LIARA_CHAT_MODEL: ${LIARA_CHAT_MODEL:-openai/gpt-4o-mini}
       ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-admin@prodchi.local}
       ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-admin123}
       # CORS origin for browser -> API calls.
@@ -54,9 +57,6 @@ services:
       NODE_ENV: ${API_NODE_ENV:-production}
       # False on plain http://localhost, where a Secure cookie is never sent back.
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
-      # UI locale ('en' | 'fa') — read by shared-types (feedback stage labels,
-      # skill names) on the server. Keep in sync with the web build args.
-      APP_LOCALE: ${APP_LOCALE:-en}
     ports:
       - "${API_PORT:-4000}:4000"
     depends_on:
@@ -83,15 +83,12 @@ services:
       dockerfile: docker/web.Dockerfile
       target: prod
       args:
-        # Baked into the client bundle at build time — must be reachable from the
-        # BROWSER, hence localhost rather than the `api` service name.
+        # Browser-facing API URL is baked into the bundle at build time.
+        # Use localhost rather than the `api` service name.
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api/v1}
         NEXT_PUBLIC_ASHKAR_DSN: ${NEXT_PUBLIC_ASHKAR_DSN:-}
         NEXT_PUBLIC_ASHKAR_PROJECT_KEY: ${NEXT_PUBLIC_ASHKAR_PROJECT_KEY:-}
         NEXT_PUBLIC_ASHKAR_ENVIRONMENT: ${NEXT_PUBLIC_ASHKAR_ENVIRONMENT:-staging}
-        # UI locale ('en' | 'fa') — baked into the client bundle at build time.
-        NEXT_PUBLIC_APP_LOCALE: ${NEXT_PUBLIC_APP_LOCALE:-en}
-        APP_LOCALE: ${APP_LOCALE:-en}
     restart: unless-stopped
     environment:
       # Runtime, container-side: the SSR session lookup reaches the API by
@@ -101,8 +98,6 @@ services:
       NEXT_PUBLIC_ASHKAR_DSN: ${NEXT_PUBLIC_ASHKAR_DSN:-}
       NEXT_PUBLIC_ASHKAR_PROJECT_KEY: ${NEXT_PUBLIC_ASHKAR_PROJECT_KEY:-}
       NEXT_PUBLIC_ASHKAR_ENVIRONMENT: ${NEXT_PUBLIC_ASHKAR_ENVIRONMENT:-staging}
-      APP_LOCALE: ${APP_LOCALE:-en}
-      NEXT_PUBLIC_APP_LOCALE: ${NEXT_PUBLIC_APP_LOCALE:-en}
     ports:
       - "${WEB_PORT:-3000}:3000"
     depends_on:
@@ -151,8 +146,6 @@ services:
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/prodchi}
       ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-admin@prodchi.local}
       ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-admin123}
-      # Locale picks the language of seeded content (e.g. badge names).
-      APP_LOCALE: ${APP_LOCALE:-en}
     command: ["pnpm", "--filter", "db", "db:seed"]
     depends_on:
       db:
@@ -169,8 +162,6 @@ services:
       API_URL: http://api:4000/api/v1
       ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-admin@prodchi.local}
       ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-admin123}
-      # Picks the content set: docs/fixtures (en) or docs/fixtures/fa (fa).
-      APP_LOCALE: ${APP_LOCALE:-en}
     command: ["node", "scripts/reset-content.mjs"]
     depends_on:
       api:
@@ -178,4 +169,3 @@ services:
 
 volumes:
   db-data:
-

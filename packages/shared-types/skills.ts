@@ -59,173 +59,7 @@ export interface SkillDefinition {
   growthNote: string
 }
 
-/**
- * The Product Design skills, in design-process order. `stage` is the authored
- * tag the skill is read from — internal only: it is how the answer is
- * classified and never crosses the API boundary (the payload speaks only the
- * public vocabulary below).
- */
 const PD_SKILLS: readonly SkillDefinition[] = [
-  {
-    id: 'framing',
-    name: 'Problem framing',
-    shortName: 'Framing',
-    stage: 'FRAME',
-    blurb: 'You turn a vague business situation into a well-posed problem with a measurable target.',
-    growthNote: 'Restate the problem in the customer\'s words before reaching for a solution.'
-  },
-  {
-    id: 'discovery',
-    name: 'Discovery & evidence',
-    shortName: 'Discovery',
-    stage: 'DISCOVER',
-    blurb: 'You pick the right question to ask and the evidence that can actually answer it.',
-    growthNote: 'Ask what you most need to learn first — then choose the move that learns it.'
-  },
-  {
-    id: 'synthesis',
-    name: 'Synthesis & definition',
-    shortName: 'Synthesis',
-    stage: 'DEFINE',
-    blurb: 'You turn scattered findings into a crisp problem statement and success metric.',
-    growthNote: 'Force the findings into one sentence: who struggles, with what, and how we will measure it.'
-  },
-  {
-    id: 'ideation',
-    name: 'Ideation & options',
-    shortName: 'Ideation',
-    stage: 'IDEATE',
-    blurb: 'You generate real alternatives instead of anchoring on the first idea.',
-    growthNote: 'Sketch the boring option, the bold option and the cheap option before you pick one.'
-  },
-  {
-    id: 'solution',
-    name: 'Solution & tradeoffs',
-    shortName: 'Solution',
-    stage: 'DESIGN',
-    blurb: 'You shape the solution while defending what you deliberately gave up.',
-    growthNote: 'Name the tradeoff out loud: what does this choice cost, and why is it worth paying here?'
-  },
-  {
-    id: 'testing',
-    name: 'Testing with users',
-    shortName: 'Testing',
-    stage: 'TEST',
-    blurb: 'You test the riskiest assumption before committing to the build.',
-    growthNote: 'Identify the assumption that would sink the idea if wrong — test that one first.'
-  },
-  {
-    id: 'refinement',
-    name: 'Refinement & iteration',
-    shortName: 'Refinement',
-    stage: 'REFINE',
-    blurb: 'You tighten the solution from test evidence instead of shipping the first version that works.',
-    growthNote: 'Take one test finding back into the design before calling it done.'
-  }
-]
-
-/**
- * The Product Management skills, in management-process order — the same
- * deterministic profile machinery, speaking the PM process vocabulary.
- */
-const PM_SKILLS: readonly SkillDefinition[] = [
-  {
-    id: 'framing',
-    name: 'Problem framing',
-    shortName: 'Framing',
-    stage: 'FRAME',
-    blurb: 'You turn a vague business situation into a well-posed problem with a measurable target.',
-    growthNote: 'Restate the problem in the customer\'s words before reaching for a solution.'
-  },
-  {
-    id: 'diagnosis',
-    name: 'Diagnosis',
-    shortName: 'Diagnosis',
-    stage: 'DIAGNOSE',
-    blurb: 'You find the real driver behind a metric move instead of treating the symptom.',
-    growthNote: 'Keep asking what changed until the cause explains the number — not just the timing.'
-  },
-  {
-    id: 'strategy',
-    name: 'Strategy & direction',
-    shortName: 'Strategy',
-    stage: 'STRATEGIZE',
-    blurb: 'You pick a direction that fits the market and the company\'s constraints.',
-    growthNote: 'Name what the strategy deliberately gives up — a direction that costs nothing decides nothing.'
-  },
-  {
-    id: 'prioritization',
-    name: 'Prioritization',
-    shortName: 'Prioritizing',
-    stage: 'PRIORITIZE',
-    blurb: 'You decide what gets built now, later, and never — and defend the cut.',
-    growthNote: 'Rank by the outcome you are accountable for, not by who asked loudest.'
-  },
-  {
-    id: 'planning',
-    name: 'Planning & roadmapping',
-    shortName: 'Planning',
-    stage: 'PLAN',
-    blurb: 'You sequence the work into a credible plan with dependencies and rollout stages.',
-    growthNote: 'Sequence by risk: the step that could invalidate the plan goes first.'
-  },
-  {
-    id: 'execution',
-    name: 'Execution & delivery',
-    shortName: 'Execution',
-    stage: 'EXECUTE',
-    blurb: 'You turn decisions into specs, acceptance criteria, and coordinated launches.',
-    growthNote: 'Write down what "done" means before the build starts — handoff clarity is the PM\'s job.'
-  },
-  {
-    id: 'measurement',
-    name: 'Measurement & learning',
-    shortName: 'Measurement',
-    stage: 'MEASURE',
-    blurb: 'You instrument the outcome and decide iterate-or-kill on evidence.',
-    growthNote: 'Define the success metric before launch — an unmeasured launch teaches nothing.'
-  }
-]
-
-/** The Tech Lead skills, in the order a technical leader moves from signal to team learning. */
-const TL_SKILLS: readonly SkillDefinition[] = [
-  {
-    id: 'framing', name: 'Leadership problem framing', shortName: 'Framing', stage: 'FRAME',
-    blurb: 'You turn a noisy technical situation into a clear outcome, boundary, and decision to own.',
-    growthNote: 'Name the customer or team impact before choosing the technical move.'
-  },
-  {
-    id: 'investigation', name: 'Investigation & diagnosis', shortName: 'Investigate', stage: 'INVESTIGATE',
-    blurb: 'You find the evidence that separates a symptom from the failure mode that matters.',
-    growthNote: 'Build the smallest evidence trail that can rule out the most expensive assumption.'
-  },
-  {
-    id: 'architecture', name: 'Architecture & technical direction', shortName: 'Architecture', stage: 'ARCHITECT',
-    blurb: 'You choose a technical direction that fits the product need, constraints, and future cost.',
-    growthNote: 'Make the important trade-off explicit: what complexity are you accepting and why now?'
-  },
-  {
-    id: 'prioritization', name: 'Risk prioritization', shortName: 'Prioritize', stage: 'PRIORITIZE',
-    blurb: 'You decide which reliability, quality, and delivery risks deserve attention first.',
-    growthNote: 'Rank risk by impact and reversibility instead of by whoever is asking loudest.'
-  },
-  {
-    id: 'incident-response', name: 'Incident response', shortName: 'Respond', stage: 'RESPOND',
-    blurb: 'You stabilize the system, create clear ownership, and keep the team learning during incidents.',
-    growthNote: 'Separate containment from root-cause work and give each one a visible owner.'
-  },
-  {
-    id: 'coordination', name: 'Technical coordination', shortName: 'Coordinate', stage: 'COORDINATE',
-    blurb: 'You make decisions legible across engineering, product, design, and operations.',
-    growthNote: 'Write down the decision, the trade-off, and the person who owns the next move.'
-  },
-  {
-    id: 'coaching', name: 'Coaching & team growth', shortName: 'Coach', stage: 'COACH',
-    blurb: 'You grow the team through delegation, feedback, and stronger technical ownership.',
-    growthNote: 'Use the next decision as a coaching opportunity instead of becoming the permanent bottleneck.'
-  }
-]
-const PD_SKILLS_FA: readonly SkillDefinition[] = [
   {
     id: 'framing',
     name: 'صورت‌بندی مسئله',
@@ -284,7 +118,7 @@ const PD_SKILLS_FA: readonly SkillDefinition[] = [
   }
 ]
 
-const PM_SKILLS_FA: readonly SkillDefinition[] = [
+const PM_SKILLS: readonly SkillDefinition[] = [
   {
     id: 'framing',
     name: 'تعریف و شفاف‌سازی مسئله',
@@ -343,7 +177,7 @@ const PM_SKILLS_FA: readonly SkillDefinition[] = [
   }
 ]
 
-const TL_SKILLS_FA: readonly SkillDefinition[] = [
+const TL_SKILLS: readonly SkillDefinition[] = [
   {
     id: 'framing', name: 'صورت‌بندی چالش رهبری', shortName: 'صورت‌بندی', stage: 'FRAME',
     blurb: 'وضعیت فنی مبهم را به نتیجه، دامنه و تصمیمی روشن تبدیل می‌کنید.',
@@ -389,10 +223,6 @@ export const SKILLS_BY_ROLE: Record<Role, readonly SkillDefinition[]> = {
 }
 
 export function skillsForRole(role: Role): readonly SkillDefinition[] {
-  const isFa = (process.env.APP_LOCALE === 'fa' || process.env.NEXT_PUBLIC_APP_LOCALE === 'fa')
-  if (isFa) {
-    return role === 'Product Management' ? PM_SKILLS_FA : role === 'Tech Lead' ? TL_SKILLS_FA : PD_SKILLS_FA
-  }
   return SKILLS_BY_ROLE[role]
 }
 
@@ -511,8 +341,8 @@ export function buildSkillProfile(runs: readonly SkillRun[], role: Role = 'Produ
       rate,
       evidence:
         stat.count === 0
-          ? 'not yet observed'
-          : `${stat.bestHits} of ${stat.count} strongest calls${stat.reasonableCalls > 0 ? `, ${stat.reasonableCalls} defensible` : ''}`,
+          ? 'هنوز ارزیابی نشده'
+          : `${stat.bestHits.toLocaleString('fa-IR')} از ${stat.count.toLocaleString('fa-IR')} تصمیم برتر${stat.reasonableCalls > 0 ? `، ${stat.reasonableCalls.toLocaleString('fa-IR')} تصمیم قابل‌دفاع` : ''}`,
       proficiency: proficiencyFor(rate, stat.count),
       thinEvidence: stat.count > 0 && stat.count < MIN_SKILL_EVIDENCE
     }

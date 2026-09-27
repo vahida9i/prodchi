@@ -11,6 +11,8 @@ import { RevealBlock } from "@/components/challenge/RevealBlock"
 import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 
+const DIFFICULTY_LABELS: Record<string, string> = { easy: "آسان", medium: "متوسط", hard: "سخت" }
+
 type Detail = Awaited<ReturnType<typeof api.getAdminChallenge>>
 
 /**
@@ -33,7 +35,7 @@ export default function AdminChallengeDetailPage() {
     try {
       setDetail(await api.getAdminChallenge(id))
     } catch (err: any) {
-      setError(err.message || "Failed to load challenge")
+      setError(err.message || "بارگذاری سناریو ناموفق بود")
     } finally {
       setLoading(false)
     }
@@ -49,7 +51,7 @@ export default function AdminChallengeDetailPage() {
       await api.updateChallengeStatus(id, detail.status === "active" ? "retired" : "active")
       await load()
     } catch (err: any) {
-      alert(err.message || "Failed to update status")
+      alert(err.message || "تغییر وضعیت ناموفق بود")
     }
   }
 
@@ -79,17 +81,17 @@ export default function AdminChallengeDetailPage() {
       await api.importChallenge(JSON.parse(editJson))
       setEditJson(null)
       await load()
-      setSaveState({ kind: "ok", message: "Challenge updated — the new content is live for every session started from now on." })
+      setSaveState({ kind: "ok", message: "سناریو به‌روزرسانی شد و برای نشست‌های جدید فعال است." })
     } catch (err: any) {
       if (err instanceof SyntaxError) {
-        setSaveState({ kind: "err", message: `Invalid JSON: ${err.message}` })
+        setSaveState({ kind: "err", message: `ساختار JSON نامعتبر است: ${err.message}` })
       } else if (err?.errors?.length) {
         setSaveState({
           kind: "err",
           message: err.errors.map((e: { path: string; message: string }) => `${e.path}: ${e.message}`).join(" · ")
         })
       } else {
-        setSaveState({ kind: "err", message: err.message || "Update failed" })
+        setSaveState({ kind: "err", message: err.message || "به‌روزرسانی ناموفق بود" })
       }
     } finally {
       setSaving(false)
@@ -109,8 +111,8 @@ export default function AdminChallengeDetailPage() {
       <div className="min-h-screen flex items-center justify-center">
         <Card>
           <CardContent className="py-12 text-center">
-            <h2 className="text-xl font-semibold mb-2">{error || "Challenge not found"}</h2>
-            <Button variant="link" onClick={() => router.push("/admin/challenges")}>Back to challenges</Button>
+            <h2 className="text-xl font-semibold mb-2">{error || "سناریو پیدا نشد"}</h2>
+            <Button variant="link" onClick={() => router.push("/admin/challenges")}>بازگشت به سناریوها</Button>
           </CardContent>
         </Card>
       </div>
@@ -125,17 +127,17 @@ export default function AdminChallengeDetailPage() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/admin/challenges">
-              <Button variant="ghost" size="sm">← Challenges</Button>
+              <Button variant="ghost" size="sm">بازگشت به سناریوها</Button>
             </Link>
             <h1 className="text-2xl font-bold">{detail.title}</h1>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant={detail.status === "active" ? "default" : "secondary"}>{detail.status}</Badge>
+            <Badge variant={detail.status === "active" ? "default" : "secondary"}>{detail.status === "active" ? "فعال" : "بازنشسته"}</Badge>
             <Button variant="outline" size="sm" onClick={startEditing}>
-              Update content
+              ویرایش محتوا
             </Button>
             <Button variant="outline" size="sm" onClick={toggleStatus}>
-              {detail.status === "active" ? "Retire" : "Restore"}
+              {detail.status === "active" ? "بازنشسته‌کردن" : "فعال‌سازی"}
             </Button>
           </div>
         </div>
@@ -144,15 +146,15 @@ export default function AdminChallengeDetailPage() {
       <main className="container mx-auto px-4 py-8 max-w-3xl space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Details</CardTitle>
+            <CardTitle className="text-base">جزئیات</CardTitle>
           </CardHeader>
           <CardContent className="space-y-1 text-sm">
-            <p><span className="text-muted-foreground">Import key:</span> <code>{detail.importKey}</code></p>
-            <p><span className="text-muted-foreground">Difficulty:</span> <span className="capitalize">{detail.difficulty}</span></p>
-            <p><span className="text-muted-foreground">Start question:</span> <code>{detail.startKey}</code></p>
-            <p><span className="text-muted-foreground">Questions:</span> {questions.length}</p>
+            <p><span className="text-muted-foreground">شناسه ورود:</span> <code>{detail.importKey}</code></p>
+            <p><span className="text-muted-foreground">سختی:</span> <span className="capitalize">{DIFFICULTY_LABELS[detail.difficulty as "easy" | "medium" | "hard"] ?? detail.difficulty}</span></p>
+            <p><span className="text-muted-foreground">سؤال آغازین:</span> <code>{detail.startKey}</code></p>
+            <p><span className="text-muted-foreground">تعداد سؤال‌ها:</span> {questions.length.toLocaleString("fa-IR")}</p>
             <p className="text-muted-foreground">
-              Imported {new Date(detail.createdAt).toLocaleString()} · Updated {new Date(detail.updatedAt).toLocaleString()}
+              بارگذاری: {new Date(detail.createdAt).toLocaleString("fa-IR")} · به‌روزرسانی: {new Date(detail.updatedAt).toLocaleString("fa-IR")}
             </p>
           </CardContent>
         </Card>
@@ -171,13 +173,11 @@ export default function AdminChallengeDetailPage() {
         {editJson !== null && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Update content</CardTitle>
+              <CardTitle className="text-base">ویرایش محتوا</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Edit the JSON and save. This re-imports through the same validator as a first
-                import — sessions already finished keep the score they earned, and a run in
-                progress is retired so nobody is stranded on content that changed.
+                JSON را ویرایش و ذخیره کنید. اعتبارسنجی دوباره انجام می‌شود؛ امتیاز نشست‌های پایان‌یافته حفظ و نشست‌های در حال اجرا متوقف می‌شوند.
               </p>
               <Textarea
                 value={editJson}
@@ -186,10 +186,10 @@ export default function AdminChallengeDetailPage() {
               />
               <div className="flex gap-2">
                 <Button onClick={saveUpdate} disabled={saving}>
-                  {saving ? "Saving…" : "Save update"}
+                  {saving ? "در حال ذخیره…" : "ذخیره تغییرات"}
                 </Button>
                 <Button variant="outline" onClick={() => setEditJson(null)} disabled={saving}>
-                  Cancel
+                  انصراف
                 </Button>
               </div>
             </CardContent>
@@ -197,13 +197,13 @@ export default function AdminChallengeDetailPage() {
         )}
 
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Questions (internal view)</h2>
+          <h2 className="text-xl font-semibold">سؤال‌ها (نمای مدیر)</h2>
           {questions.map(([key, q]) => (
             <div key={key} className="rounded-lg border p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <code className="bg-muted px-2 py-0.5 rounded text-sm">{key}</code>
-                {key === detail.startKey && <Badge>start</Badge>}
-                <Badge variant="secondary">Answer key: choice {q.bestChoice}</Badge>
+                {key === detail.startKey && <Badge>آغاز</Badge>}
+                <Badge variant="secondary">پاسخ برتر: گزینه {(q.bestChoice + 1).toLocaleString("fa-IR")}</Badge>
               </div>
               <p className="font-medium leading-relaxed">{q.text}</p>
               <ul className="space-y-2">
@@ -211,17 +211,17 @@ export default function AdminChallengeDetailPage() {
                   <li key={i} className={cn("rounded-md p-3 text-sm space-y-1", q.bestChoice === i ? "bg-primary/5 border border-primary/30" : "bg-muted/50")}>
                     <p className="font-medium">
                       {choice.text}
-                      {q.bestChoice === i && <Badge className="ml-2">best</Badge>}
+                      {q.bestChoice === i && <Badge className="ml-2">برتر</Badge>}
                     </p>
                     <p>
                       <Badge variant="outline">{choice.stage}</Badge>
                     </p>
                     <div className="space-y-1 text-muted-foreground">
-                      <p className="italic">Reveals:</p>
+                      <p className="italic">پیامد انتخاب:</p>
                       <RevealBlock reveal={choice.reveal} variant="compact" />
                     </div>
                     <p className="text-muted-foreground">
-                      Next: {choice.next === "END" ? "ends the session" : <code>{choice.next}</code>}
+                      بعدی: {choice.next === "END" ? "پایان نشست" : <code>{choice.next}</code>}
                     </p>
                   </li>
                 ))}

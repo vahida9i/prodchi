@@ -7,11 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { api } from "@/lib/api-client"
 import { RoleSelect } from "@/components/RoleSelect"
-import { getTranslations } from "@/lib/i18n"
 
 export default function RolePage() {
   const router = useRouter()
-  const t = getTranslations()
   const [currentRoleId, setCurrentRoleId] = useState<string | null | undefined>(undefined)
   const [error, setError] = useState("")
   const [retrying, setRetrying] = useState(false)
@@ -23,7 +21,7 @@ export default function RolePage() {
       setCurrentRoleId(me.user.roleTrackId)
     } catch (err: any) {
       if (err?.status === 401) { router.push("/login"); return }
-      setError(t.auth.errorGeneral)
+      setError("خطایی رخ داد. لطفاً دوباره تلاش کنید.")
       setCurrentRoleId(null)
     } finally {
       setRetrying(false)

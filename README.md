@@ -1,6 +1,6 @@
 # Prodchi — Challenge Import, Session & Progression App
 
-A product-design skill-practice app: admins import branching scenario challenges as JSON, candidates play them one question at a time along a numbered level path, and the finished reasoning path is viewable as a recap with the run's score. The app **consumes, runs, and tracks** challenge content — it never generates or edits it, and scoring is fully deterministic (no LLM, no per-content judgments beyond the authored answer key).
+A Persian skill-practice app for product design, product management and tech leads: admins import branching scenario challenges as JSON, candidates play them one question at a time along a numbered level path, and the finished reasoning path is viewable as a recap with the run's score. The app **consumes, runs, and tracks** challenge content — it never generates or edits it. Multiple-choice scoring is deterministic; written answers and optional run recaps are assessed through Liara AI.
 
 ## Architecture
 
@@ -19,11 +19,11 @@ prodchi/
 │   ├── db/           # Prisma schema, migrations, seed (roles, industries, badges)
 │   └── shared-types/ # Zod schema, graph validator, deterministic scoring/feedback, tests
 ├── docs/
-│   └── fixtures/     # onboarding-drop-off.json + single-question-sample.json
+│   └── fixtures/     # Persian scenarios for all role paths
 ├── test/
 │   └── e2e/          # end-to-end API flows: import → play → resume → levels → XP
 └── scripts/
-    └── reset-content.mjs  # wipes authored content/progress for a clean level path
+    └── reset-content.mjs  # imports Persian scenarios and places their levels
 ```
 
 ## Running with Docker & Make
@@ -148,34 +148,43 @@ path in one command:
 pnpm db:reset-content
 ```
 
-Every fixture in `docs/fixtures` is imported through the real import endpoint (so the
-graph validator judges it exactly as the admin panel would) and assigned to one level,
-easiest first, one scenario per industry. Re-running it refreshes content in place and
-never overwrites a level slot it cannot claim. `single-question-sample.json` is left out
-deliberately: it is the quick-call sample the e2e suites import, not path content.
+Every listed fixture in `docs/fixtures` is imported through the real import endpoint
+(so the graph validator judges it exactly as the admin panel would) and assigned
+to one level. Re-running it refreshes content in place and never overwrites a
+level slot it cannot claim.
 
-### Content locale
+### Persian-only content
 
-`APP_LOCALE` selects the UI language **and** the challenge content set:
+The app always renders in Persian with RTL layout. Seeded industries, badges,
+skill labels, feedback and all path scenarios are Persian. The only authored
+path content lives in `docs/fixtures/`; `pnpm db:reset-content` checks that every
+listed file exists before importing anything. Internal enum keys (`role`, `stage`,
+`difficulty`, criterion ids) remain stable English identifiers for the API and
+database. There is no language setting or English content path.
 
-- `APP_LOCALE=en` → `docs/fixtures/` (English scenarios), English industry names.
-- `APP_LOCALE=fa` → `docs/fixtures/fa/` — a **completely separate** fixture set: its own
-  files, ids (`fa_*`) and `PATH_FA` layout, independently authored Farsi scenarios
-  (never translations of the English ones), with Farsi industry names seeded by
-  `packages/db/seed.ts`.
+The test-only schema samples live in `test/fixtures/schema/` and are never seeded
+or added to the player path.
 
-There is no cross-locale fallback: `pnpm db:reset-content` aborts before touching the
-network if the active locale's directory or any file in its path layout is missing — a
-Farsi deployment can never silently serve English content, and vice versa. Structural
-fields stay English in both sets (`role`, `stage`, `difficulty`, criterion ids) since
-those are enum keys, not display copy. Because industries and content are keyed per
-locale, switching `APP_LOCALE` on an existing database requires a re-seed:
+### Wireframe features
+
+The customer flow includes a challenge introduction, a skill tree, a daily
+challenge, a completion recap, streak calendar, badges, and an optional public
+capability profile. The authored table/image/written-answer example and extra
+badges can be added to an existing database without resetting user progress:
 
 ```bash
-pnpm db:seed && pnpm db:reset-content
+pnpm --filter @prodchi/db db:sync-wireframe
 ```
 
-The e2e suites always run against the English fixtures.
+Written answers and the optional overall AI recap use the Liara AI service.
+Set `LIARA_BASE_URL`, `LIARA_API_KEY` and `LIARA_CHAT_MODEL` in the root `.env`,
+then restart the API. The model defaults to `openai/gpt-4o-mini` in the example
+configuration. Without a complete configuration, choice-based challenges remain
+playable; written answers report that assessment is not configured. The API key
+is used only by the API server. For Docker, copy `.env.docker` to the ignored
+`.env.docker.local`, add the three Liara values there, then run
+`make up ENV_FILE=.env.docker.local`. Keep the real key out of the tracked
+`.env.docker` file.
 
 For a clean slate first, wipe and re-seed:
 
@@ -190,11 +199,12 @@ pnpm db:seed && pnpm db:reset-content
 |----------|-------------|
 | `DATABASE_URL` | PostgreSQL connection string |
 | `SESSION_SECRET` | Secret for session cookies |
+| `LIARA_BASE_URL` | Liara AI service base URL, ending at the workspace API version |
+| `LIARA_API_KEY` | Liara AI key for written answers and overall recaps (optional) |
+| `LIARA_CHAT_MODEL` | Liara model ID (example: `openai/gpt-4o-mini`) |
 | `ADMIN_SEED_EMAIL` | Initial admin email |
 | `ADMIN_SEED_PASSWORD` | Initial admin password |
 | `NEXT_PUBLIC_API_URL` | API URL for frontend |
-| `APP_LOCALE` | UI language, `en` or `fa` (server-side: SSR, seed, shared-types). Decided once — there is no runtime switch |
-| `NEXT_PUBLIC_APP_LOCALE` | Same value as `APP_LOCALE`; inlined into the client bundle at build time (set both) |
 | `WEB_URL` | Frontend URL for CORS |
 | `PORT` | API server port (default: 4000) |
 | `NEXT_PUBLIC_ASHKAR_DSN` | AshkarHQ monitoring DSN (optional — monitoring is disabled when empty) |
@@ -206,19 +216,20 @@ Challenges are authored externally (by the Challenge Generator) and imported as 
 
 ```json
 {
-  "id": "onboarding_drop_off",
-  "title": "The Onboarding Drop-Off",
+  "id": "fa_sample_search",
+  "title": "نمونه جستجوی بی‌نتیجه",
   "role": "Product Design",
   "difficulty": "medium",
-  "summary": "Shopwell is an online store with its own mobile app — first-party retail, no marketplace or third-party sellers. …",
+  "summary": "بازارچه یک فروشگاه آنلاین برای فروشندگان مستقل است.",
   "start": "Q1",
   "questions": {
     "Q1": {
-      "text": "...",
-      "bestChoice": 1,
+      "text": "کاربران جستجو می‌کنند اما نتیجه‌ای نمی‌بینند. قدم اول چیست؟",
+      "bestChoice": 0,
       "choices": [
-        { "text": "...", "stage": "DISCOVER", "reveal": "...", "next": "Q2" },
-        { "text": "...", "stage": "DEFINE", "reveal": "...", "next": "END" }
+        { "text": "عبارت‌های جستجوی بی‌نتیجه را بررسی کنید", "stage": "DISCOVER", "reveal": "عبارت‌های پرتکرار مشخص شدند.", "next": "END" },
+        { "text": "ظاهر صفحه را تغییر دهید", "stage": "DESIGN", "reveal": "ظاهر بهتر شد اما علت روشن نشد.", "next": "END" },
+        { "text": "جستجو را حذف کنید", "stage": "DESIGN", "reveal": "مسیر یافتن محصول سخت‌تر شد.", "next": "END" }
       ]
     }
   }
@@ -238,7 +249,7 @@ Challenges are authored externally (by the Challenge Generator) and imported as 
 Keep it about the company, not the incident. What went wrong, the numbers, and the decision in front of the candidate belong in `Q1`'s text, which is where the scenario opens; a summary that repeats them tells the candidate nothing new. Also not the candidate's role ("you're the designer") — the question text already speaks to them.
 
 ```json
-"summary": "Shopwell is an online store with its own mobile app — first-party retail, no marketplace or third-party sellers. Its customers are shoppers who install the app from ads and app-store features, and the company earns when they browse and buy."
+"summary": "بازارچه یک فروشگاه آنلاین برای فروشندگان مستقل است و از هر فروش کمیسیون می‌گیرد."
 ```
 
 - Applies to every scenario fixture in `docs/fixtures/`; keep them in sync with the content on the path
@@ -258,13 +269,13 @@ When the evidence is tabular, author it as a table instead — `text` stays opti
 
 ```json
 "reveal": {
-  "text": "Conversion is flat across all four variants:",
+  "text": "نرخ تبدیل در هر چهار نسخه تقریباً یکسان است:",
   "table": {
-    "caption": "Variant results, week 2",
-    "columns": ["Variant", "Visitors", "Signups", "Conversion"],
+    "caption": "نتایج نسخه‌ها در هفته دوم",
+    "columns": ["نسخه", "بازدیدکننده", "ثبت‌نام", "نرخ تبدیل"],
     "rows": [
-      ["Control",    "12,480", "374", "3.0%"],
-      ["Short copy", "12,511", "381", "3.0%"]
+      ["پایه", "۱۲٬۴۸۰", "۳۷۴", "۳٪"],
+      ["متن کوتاه", "۱۲٬۵۱۱", "۳۸۱", "۳٪"]
     ]
   }
 }
@@ -276,7 +287,7 @@ When the evidence is tabular, author it as a table instead — `text` stays opti
 - cells are plain strings: the author decides the formatting (`"3.0%"` vs `"3%"`) — nothing is reformatted or recomputed
 - the table is display-only: it never affects pass/fail, XP, or stars
 
-See `packages/shared-types/challenge-schema.ts` for the full Zod schema and `docs/fixtures/onboarding-drop-off.json` for a complete valid example.
+See `packages/shared-types/challenge-schema.ts` for the full Zod schema and `docs/fixtures/fa_search_empty_state.json` for a complete Persian example.
 
 ### Validation (import is all-or-nothing)
 
@@ -388,8 +399,9 @@ journey (`role onboarding → import → play → level path → skills profile`
 |---|---|
 | `test/e2e/e2e-product-design.mjs` | Product Design — content ops, session mechanics, the level path, the seven design skills |
 | `test/e2e/e2e-product-management.mjs` | Product Management — the same journey plus role isolation and the seven PM skills |
+| `test/e2e/daily-session-isolation.mjs` | Daily challenge — separate sessions, rewards, and recaps when the same scenario is also on the path |
 
-Both suites mutate the database they run against: they import fixtures, build levels as
+The first two suites mutate the database they run against: they import fixtures, build levels as
 they go (`e2e-product-design.mjs` claims a level 2 with `single-question-sample.json` when
 that slot is free) and leave their throwaway candidates behind. They also *reuse*
 whatever already occupies the level numbers they need, so a database that already carries
@@ -412,12 +424,12 @@ pnpm test:e2e
 Then restore `packages/db/.env` and drop the scratch database. The authored scenarios
 come back on the dev database with `pnpm db:reset-content`.
 
-## What the app deliberately does NOT do
+## Assessment boundaries
 
 - Does not generate, edit, or auto-fix challenge content (the answer key is authored, not inferred) — reveal tables included
-- Does not use LLM or heuristic scoring — the score is a deterministic count against the authored `bestChoice`
+- Choice-based level XP is a deterministic count against the authored `bestChoice`; written answers use Liara AI to map the response to an authored branch and return coaching feedback
 - Does not expose internal authoring structure (`stage`, `next`, `bestChoice`) to candidates; only the reveal for a choice they actually made
-- No partial credit, difficulty multipliers, or per-question scoring — one score per finished level
+- No difficulty multipliers for level XP; the optional AI recap is stored separately from the credited XP
 
 ## License
 

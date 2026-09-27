@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { RoleSelect } from "@/components/RoleSelect"
 import { api } from "@/lib/api-client"
-import { getTranslations } from "@/lib/i18n"
 
 /**
  * First-run role selection (post-signup, and the redirect target of the (user)
@@ -16,7 +15,6 @@ import { getTranslations } from "@/lib/i18n"
  */
 export default function OnboardingPage() {
   const router = useRouter()
-  const t = getTranslations()
   const [checking, setChecking] = useState(true)
 
   useEffect(() => {
@@ -46,9 +44,9 @@ export default function OnboardingPage() {
     <div className="min-h-screen flex items-center justify-center bg-muted/50 px-4 py-12">
       <Card className="w-full max-w-2xl">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">{t.auth.onboardingTitle}</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">مسیر تخصصی خود را انتخاب کنید</CardTitle>
           <CardDescription className="text-center">
-            {t.auth.onboardingSubtitle}
+            نقشی را که می‌خواهید در آن تمرین کنید انتخاب نمایید. هر زمان مایل باشید می‌توانید نقش خود را تغییر دهید.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

@@ -71,12 +71,12 @@ export async function resolveSessionUser(request: FastifyRequest): Promise<AuthU
 
 export async function requireAuth(request: FastifyRequest, reply: FastifyReply) {
   if (!request.cookies?.session) {
-    return reply.status(401).send({ error: 'Unauthorized' })
+    return reply.status(401).send({ error: 'دسترسی نیاز به ورود دارد' })
   }
 
   const user = await resolveSessionUser(request)
   if (!user) {
-    return reply.status(401).send({ error: 'Invalid session' })
+    return reply.status(401).send({ error: 'نشست معتبر نیست' })
   }
 
   request.user = user

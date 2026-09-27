@@ -1,16 +1,14 @@
 import type { Metadata } from "next"
 import { Vazirmatn } from "next/font/google"
 import { MonitoringProvider } from "@/components/monitoring-provider"
-import { getLocale, getTranslations, isRtl } from "@/lib/i18n"
 import "./globals.css"
 
 const vazirmatn = Vazirmatn({ subsets: ["arabic", "latin"] })
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = getTranslations()
   return {
-    title: t.appTitle,
-    description: t.appDescription,
+    title: "پرودچی - تمرین و سنجش مهارت‌های محصول",
+    description: "حل سناریوهای واقعی و تصمیم‌گیری گام‌به‌گام در محصول",
   }
 }
 
@@ -23,11 +21,9 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const locale = getLocale()
-  const dir = isRtl(locale) ? "rtl" : "ltr"
   return (
-    <html lang={locale} dir={dir} className={vazirmatn.className}>
-      <body className="min-h-screen bg-background font-sans antialiased">
+    <html lang="fa" dir="rtl" className={vazirmatn.className}>
+      <body className="min-h-screen bg-background antialiased">
         <MonitoringProvider>{children}</MonitoringProvider>
       </body>
     </html>

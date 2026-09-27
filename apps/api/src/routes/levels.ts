@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma.ts'
 import { XP_PER_BEST_CHOICE } from '@prodchi/shared-types/challenge-schema'
 import { startOrResumeSession } from '../services/session-engine.ts'
 import { isLevelPlayable } from '../services/gamification.ts'
+import type { Assessment, Question } from '@prodchi/shared-types/challenge-schema'
 
 /**
  * The path map: numbered levels, unlocked in order, one content challenge each.
@@ -17,7 +18,7 @@ export async function levelRoutes(fastify: FastifyInstance) {
     const user = request.user!
 
     if (!user.roleTrackId) {
-      return reply.status(400).send({ error: 'Role not selected. Complete onboarding first.' })
+      return reply.status(400).send({ error: 'هنوز نقشی انتخاب نشده است. ابتدا مسیر خود را انتخاب کنید.' })
     }
 
     const [levels, progressRows, finishedRuns] = await Promise.all([
@@ -26,7 +27,7 @@ export async function levelRoutes(fastify: FastifyInstance) {
         orderBy: { number: 'asc' },
         include: {
           industry: { select: { id: true, name: true } },
-          challenge: { select: { title: true, summary: true } }
+          challenge: { select: { title: true, summary: true, questions: true, assessment: true } }
         }
       }),
       prisma.levelProgress.findMany({ where: { userId: user.userId } }),
@@ -60,6 +61,14 @@ export async function levelRoutes(fastify: FastifyInstance) {
 
     return reply.send({
       levels: levels.map(level => {
+        const questions = level.challenge.questions as Record<string, Question>
+        const questionCount = Object.keys(questions).length
+        const assessment = level.challenge.assessment as Assessment | null
+        const materialKinds = [...new Set(Object.values(questions).flatMap(question => [
+          ...(question.material?.table ? ['table'] : []),
+          ...(question.material?.image ? ['image'] : []),
+          ...(question.answerMode === 'text' ? ['written-answer'] : [])
+        ]))]
         const progress = progressByLevel.get(level.id)
         const derivedUnlocked = previousLevelId === null || passedIds.has(previousLevelId)
         previousLevelId = level.id
@@ -75,6 +84,11 @@ export async function levelRoutes(fastify: FastifyInstance) {
           difficulty: level.difficulty,
           type: level.type,
           xpPerBest: XP_PER_BEST_CHOICE,
+          questionCount,
+          estimatedMinutes: Math.max(3, Math.min(30, questionCount * 2)),
+          maxXp: questionCount * XP_PER_BEST_CHOICE,
+          skillNames: assessment?.criteria.map(criterion => criterion.label) ?? [],
+          materialKinds,
           progress: {
             status: progress?.status === 'passed' ? 'passed' : derivedUnlocked ? 'unlocked' : 'locked',
             bestStars: progress?.bestStars ?? 0,
@@ -96,7 +110,7 @@ export async function levelRoutes(fastify: FastifyInstance) {
     const user = request.user!
 
     if (!user.roleTrackId) {
-      return reply.status(400).send({ error: 'Role not selected. Complete onboarding first.' })
+      return reply.status(400).send({ error: 'هنوز نقشی انتخاب نشده است. ابتدا مسیر خود را انتخاب کنید.' })
     }
 
     const level = await prisma.level.findUnique({
@@ -110,7 +124,7 @@ export async function levelRoutes(fastify: FastifyInstance) {
       level.challenge.status !== 'active' ||
       level.challenge.roleId !== user.roleTrackId
     ) {
-      return reply.status(404).send({ error: 'Level not found or not available' })
+      return reply.status(404).send({ error: 'مرحله پیدا نشد یا در دسترس نیست' })
     }
 
     // Gating is enforced here, not just hidden in the UI: only the first active
@@ -120,14 +134,14 @@ export async function levelRoutes(fastify: FastifyInstance) {
     // and locks one track behind progress it can never see or make.
     const playable = await isLevelPlayable(user.userId, level, user.roleTrackId)
     if (!playable) {
-      return reply.status(403).send({ error: 'This level is locked. Pass the previous level to unlock it.' })
+      return reply.status(403).send({ error: 'این مرحله قفل است. برای بازشدن آن مرحلهٔ قبلی را کامل کنید.' })
     }
 
     let started
     try {
       started = await startOrResumeSession(user.userId, level.challenge, level.id)
     } catch (err) {
-      if (err instanceof Error && err.message === 'Challenge has no valid start question') {
+      if (err instanceof Error && err.message === 'سناریو سؤال آغازین معتبری ندارد') {
         return reply.status(500).send({ error: err.message })
       }
       throw err

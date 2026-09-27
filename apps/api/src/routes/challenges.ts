@@ -7,7 +7,7 @@ export async function challengeRoutes(fastify: FastifyInstance) {
     const user = request.user!
 
     if (!user.roleTrackId) {
-      return reply.status(400).send({ error: 'Role not selected. Complete onboarding first.' })
+      return reply.status(400).send({ error: 'هنوز نقشی انتخاب نشده است. ابتدا مسیر خود را انتخاب کنید.' })
     }
 
     const challenges = await prisma.challenge.findMany({
@@ -46,7 +46,7 @@ export async function challengeRoutes(fastify: FastifyInstance) {
     const user = request.user!
 
     if (!user.roleTrackId) {
-      return reply.status(400).send({ error: 'Role not selected. Complete onboarding first.' })
+      return reply.status(400).send({ error: 'هنوز نقشی انتخاب نشده است. ابتدا مسیر خود را انتخاب کنید.' })
     }
 
     const challenge = await prisma.challenge.findFirst({
@@ -55,7 +55,7 @@ export async function challengeRoutes(fastify: FastifyInstance) {
     })
 
     if (!challenge) {
-      return reply.status(404).send({ error: 'Challenge not found' })
+      return reply.status(404).send({ error: 'سناریو پیدا نشد' })
     }
 
     const inProgress = await prisma.session.findFirst({

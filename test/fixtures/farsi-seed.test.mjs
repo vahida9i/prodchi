@@ -3,14 +3,14 @@ import assert from 'node:assert/strict'
 import { readdir, readFile } from 'node:fs/promises'
 import { validateChallengeImport } from '../../packages/shared-types/dist/validator.js'
 
-const fixtureDir = new URL('../../docs/fixtures/fa/', import.meta.url)
+const fixtureDir = new URL('../../docs/fixtures/', import.meta.url)
 
-test('the Farsi demo catalog contains twenty valid, unique challenges', async () => {
+test('the Farsi demo catalog contains twenty-five valid, unique challenges', async () => {
   const files = (await readdir(fixtureDir))
     .filter(file => file.endsWith('.json'))
     .sort()
 
-  assert.equal(files.length, 20, 'the Farsi demo catalog should contain 20 fixtures')
+  assert.equal(files.length, 25, 'the Farsi demo catalog should contain 25 fixtures')
 
   const ids = new Set()
   for (const file of files) {

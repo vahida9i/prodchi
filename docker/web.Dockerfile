@@ -50,19 +50,12 @@ ARG NEXT_PUBLIC_API_URL=http://localhost:4000/api/v1
 ARG NEXT_PUBLIC_ASHKAR_DSN=
 ARG NEXT_PUBLIC_ASHKAR_PROJECT_KEY=
 ARG NEXT_PUBLIC_ASHKAR_ENVIRONMENT=staging
-# UI locale ('en' | 'fa'). NEXT_PUBLIC_APP_LOCALE is inlined into the client
-# bundle at build time; APP_LOCALE is read server-side during SSR. Changing
-# either requires a rebuild.
-ARG NEXT_PUBLIC_APP_LOCALE=en
-ARG APP_LOCALE=en
 # Promote the build args to env vars: Next reads them while compiling, and that
 # is the only moment they can reach the client bundle.
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
     NEXT_PUBLIC_ASHKAR_DSN=$NEXT_PUBLIC_ASHKAR_DSN \
     NEXT_PUBLIC_ASHKAR_PROJECT_KEY=$NEXT_PUBLIC_ASHKAR_PROJECT_KEY \
-    NEXT_PUBLIC_ASHKAR_ENVIRONMENT=$NEXT_PUBLIC_ASHKAR_ENVIRONMENT \
-    NEXT_PUBLIC_APP_LOCALE=$NEXT_PUBLIC_APP_LOCALE \
-    APP_LOCALE=$APP_LOCALE
+    NEXT_PUBLIC_ASHKAR_ENVIRONMENT=$NEXT_PUBLIC_ASHKAR_ENVIRONMENT
 RUN pnpm --filter @prodchi/web build
 
 # ---------------------------------------------------------------------------

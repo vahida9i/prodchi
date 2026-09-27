@@ -39,14 +39,14 @@ export function ChallengeImportForm({ onImported }: ChallengeImportFormProps) {
       const response = await api.importChallenge(data)
       setSuccess(
         response.updated
-          ? "Challenge updated — the new content is live. Past sessions keep the score they earned."
-          : "Challenge imported and live in the library."
+          ? "سناریو به‌روزرسانی شد و محتوای جدید فعال است. امتیاز نشست‌های گذشته حفظ می‌شود."
+          : "سناریو بارگذاری و در فهرست فعال شد."
       )
       setJsonInput('')
       onImported?.()
     } catch (error: any) {
       if (error instanceof SyntaxError) {
-        setErrors([{ path: 'json', message: `Invalid JSON: ${error.message}` }])
+        setErrors([{ path: 'json', message: `ساختار JSON نامعتبر است: ${error.message}` }])
       } else if (error?.errors?.length) {
         // Import-style failures: itemized `{ path, message }` reasons on the
         // ApiError itself (see api-client).
@@ -54,7 +54,7 @@ export function ChallengeImportForm({ onImported }: ChallengeImportFormProps) {
       } else if (error?.details?.errors) {
         setErrors(error.details.errors)
       } else {
-        setErrors([{ path: 'root', message: error.message || 'Import failed' }])
+        setErrors([{ path: 'root', message: error.message || 'بارگذاری سناریو ناموفق بود' }])
       }
     } finally {
       setIsLoading(false)
@@ -64,24 +64,21 @@ export function ChallengeImportForm({ onImported }: ChallengeImportFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Import Challenge</CardTitle>
+        <CardTitle>بارگذاری سناریو</CardTitle>
         <CardDescription>
-          Paste the generator&apos;s challenge JSON. Validation checks structure and flow
-          (dead ends, loops, unreachable questions, reveal tables) and reports exact reasons
-          on failure. A new challenge goes live immediately; re-importing an existing id
-          updates it in place.
+          JSON سناریو را وارد کنید. ساختار و مسیر سؤال‌ها بررسی می‌شود و خطاها به‌صورت دقیق نمایش داده می‌شوند. سناریوی جدید بلافاصله فعال می‌شود و ورود دوبارهٔ شناسهٔ قبلی، آن را به‌روزرسانی می‌کند.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="json-input">Challenge JSON</Label>
+            <Label htmlFor="json-input">JSON سناریو</Label>
             <Textarea
               id="json-input"
               value={jsonInput}
               onChange={(e) => setJsonInput(e.target.value)}
               className="font-mono text-sm min-h-[300px]"
-              placeholder={'{\n  "id": "onboarding_drop_off",\n  "title": "The Onboarding Drop-Off",\n  "role": "Product Design",\n  "difficulty": "medium",\n  "start": "Q1",\n  "questions": { "Q1": { "text": "...", "choices": [ ... ] }, ... }\n}'}
+              placeholder={'{\n  "id": "onboarding_drop_off",\n  "title": "جستجوی بی‌نتیجه",\n  "role": "Product Design",\n  "difficulty": "medium",\n  "start": "Q1",\n  "questions": { "Q1": { "text": "...", "choices": [ ... ] }, ... }\n}'}
             />
           </div>
 
@@ -94,7 +91,7 @@ export function ChallengeImportForm({ onImported }: ChallengeImportFormProps) {
           )}
 
           <Button type="submit" disabled={isLoading || jsonInput.trim() === ''}>
-            {isLoading ? 'Validating…' : 'Import challenge'}
+            {isLoading ? 'در حال بررسی…' : 'بارگذاری سناریو'}
           </Button>
         </form>
       </CardContent>

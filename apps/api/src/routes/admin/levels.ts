@@ -56,7 +56,7 @@ export async function adminLevelRoutes(fastify: FastifyInstance) {
   fastify.post('/industries', async (request, reply) => {
     const parseResult = createIndustrySchema.safeParse(request.body)
     if (!parseResult.success) {
-      return reply.status(400).send({ error: 'Invalid input', details: parseResult.error.flatten() })
+      return reply.status(400).send({ error: 'ورودی نامعتبر است', details: parseResult.error.flatten() })
     }
 
     try {
@@ -64,7 +64,7 @@ export async function adminLevelRoutes(fastify: FastifyInstance) {
       return reply.status(201).send(industry)
     } catch (err: any) {
       if (err?.code === 'P2002') {
-        return reply.status(409).send({ error: `An industry named "${parseResult.data.name}" already exists` })
+        return reply.status(409).send({ error: `صنعت «${parseResult.data.name}» قبلاً ثبت شده است` })
       }
       throw err
     }
@@ -75,15 +75,15 @@ export async function adminLevelRoutes(fastify: FastifyInstance) {
     const { id } = request.params as { id: string }
     const parseResult = updateIndustrySchema.safeParse(request.body)
     if (!parseResult.success) {
-      return reply.status(400).send({ error: 'Invalid input', details: parseResult.error.flatten() })
+      return reply.status(400).send({ error: 'ورودی نامعتبر است', details: parseResult.error.flatten() })
     }
 
     try {
       const industry = await prisma.industry.update({ where: { id }, data: parseResult.data })
       return reply.send(industry)
     } catch (err: any) {
-      if (err?.code === 'P2025') return reply.status(404).send({ error: 'Industry not found' })
-      if (err?.code === 'P2002') return reply.status(409).send({ error: 'Another industry already uses that name' })
+      if (err?.code === 'P2025') return reply.status(404).send({ error: 'صنعت پیدا نشد' })
+      if (err?.code === 'P2002') return reply.status(409).send({ error: 'صنعت دیگری با این نام وجود دارد' })
       throw err
     }
   })
@@ -94,14 +94,14 @@ export async function adminLevelRoutes(fastify: FastifyInstance) {
 
     const levelCount = await prisma.level.count({ where: { industryId: id } })
     if (levelCount > 0) {
-      return reply.status(409).send({ error: 'Cannot delete an industry that still has levels. Retire or reassign them.' })
+      return reply.status(409).send({ error: 'صنعتی که هنوز مرحله دارد قابل حذف نیست. ابتدا مرحله‌ها را جابه‌جا کنید.' })
     }
 
     try {
       await prisma.industry.delete({ where: { id } })
       return reply.send({ success: true })
     } catch (err: any) {
-      if (err?.code === 'P2025') return reply.status(404).send({ error: 'Industry not found' })
+      if (err?.code === 'P2025') return reply.status(404).send({ error: 'صنعت پیدا نشد' })
       throw err
     }
   })
@@ -155,7 +155,7 @@ export async function adminLevelRoutes(fastify: FastifyInstance) {
   fastify.post('/levels', async (request, reply) => {
     const parseResult = createLevelSchema.safeParse(request.body)
     if (!parseResult.success) {
-      return reply.status(400).send({ error: 'Invalid input', details: parseResult.error.flatten() })
+      return reply.status(400).send({ error: 'ورودی نامعتبر است', details: parseResult.error.flatten() })
     }
 
     const { number, industryId, difficulty, challengeId } = parseResult.data
@@ -165,8 +165,8 @@ export async function adminLevelRoutes(fastify: FastifyInstance) {
       prisma.challenge.findUnique({ where: { id: challengeId }, select: { id: true, questions: true } })
     ])
 
-    if (!industry) return reply.status(404).send({ error: 'Industry not found' })
-    if (!challenge) return reply.status(404).send({ error: 'Challenge not found' })
+    if (!industry) return reply.status(404).send({ error: 'صنعت پیدا نشد' })
+    if (!challenge) return reply.status(404).send({ error: 'سناریو پیدا نشد' })
 
     // Derived, never authored: one question whose every choice ends the session.
     const type = isSingleQuestion(challenge.questions as Record<string, Question>)
@@ -184,8 +184,8 @@ export async function adminLevelRoutes(fastify: FastifyInstance) {
         const target = String(err?.meta?.target ?? '')
         return reply.status(409).send({
           error: target.includes('challengeId')
-            ? 'That challenge is already assigned to a level'
-            : `Level number ${number} is already taken`
+            ? 'این سناریو قبلاً به یک مرحله اختصاص داده شده است'
+            : `شمارهٔ مرحلهٔ ${number} قبلاً استفاده شده است`
         })
       }
       throw err
@@ -197,7 +197,7 @@ export async function adminLevelRoutes(fastify: FastifyInstance) {
     const { id } = request.params as { id: string }
     const parseResult = updateLevelSchema.safeParse(request.body)
     if (!parseResult.success) {
-      return reply.status(400).send({ error: 'Invalid input', details: parseResult.error.flatten() })
+      return reply.status(400).send({ error: 'ورودی نامعتبر است', details: parseResult.error.flatten() })
     }
 
     // A nonexistent industry would otherwise fail later as an opaque FK
@@ -207,15 +207,15 @@ export async function adminLevelRoutes(fastify: FastifyInstance) {
         where: { id: parseResult.data.industryId },
         select: { id: true }
       })
-      if (!industry) return reply.status(404).send({ error: 'Industry not found' })
+      if (!industry) return reply.status(404).send({ error: 'صنعت پیدا نشد' })
     }
 
     try {
       const level = await prisma.level.update({ where: { id }, data: parseResult.data })
       return reply.send({ id: level.id, number: level.number, status: level.status, difficulty: level.difficulty })
     } catch (err: any) {
-      if (err?.code === 'P2025') return reply.status(404).send({ error: 'Level not found' })
-      if (err?.code === 'P2002') return reply.status(409).send({ error: 'That level number is already taken' })
+      if (err?.code === 'P2025') return reply.status(404).send({ error: 'مرحله پیدا نشد' })
+      if (err?.code === 'P2002') return reply.status(409).send({ error: 'این شمارهٔ مرحله قبلاً استفاده شده است' })
       throw err
     }
   })
@@ -226,14 +226,14 @@ export async function adminLevelRoutes(fastify: FastifyInstance) {
 
     const progressCount = await prisma.levelProgress.count({ where: { levelId: id } })
     if (progressCount > 0) {
-      return reply.status(409).send({ error: 'Cannot delete a level players have progress on. Retire it instead.' })
+      return reply.status(409).send({ error: 'مرحله‌ای که بازیکنان در آن پیشرفت دارند قابل حذف نیست. آن را بازنشسته کنید.' })
     }
 
     try {
       await prisma.level.delete({ where: { id } })
       return reply.send({ success: true })
     } catch (err: any) {
-      if (err?.code === 'P2025') return reply.status(404).send({ error: 'Level not found' })
+      if (err?.code === 'P2025') return reply.status(404).send({ error: 'مرحله پیدا نشد' })
       throw err
     }
   })

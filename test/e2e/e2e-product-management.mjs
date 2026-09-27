@@ -13,7 +13,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
 const BASE = 'http://localhost:4000/api/v1'
-const FIXTURE_DIR = fileURLToPath(new URL('../../docs/fixtures', import.meta.url))
+const FIXTURE_DIR = fileURLToPath(new URL('../fixtures/schema', import.meta.url))
 const PASSWORD = 'e2e-password-123'
 
 const pmFixture = JSON.parse(readFileSync(`${FIXTURE_DIR}/pm-feature-cut.json`, 'utf-8'))
@@ -125,7 +125,7 @@ const pmLevelPrior = levels.find(level => level.challenge?.id === imported.chall
 // A level is always a challenge wrapped with an industry and a difficulty —
 // `POST /admin/levels` takes the industry's id, not its name.
 const industries = (await req('GET', '/admin/industries')).json?.industries ?? []
-const pmIndustry = industries.find(industry => industry.name === 'Productivity') ?? industries[0]
+const pmIndustry = industries.find(industry => industry.name === 'بهره‌وری') ?? industries[0]
 check('the PM industry is available to place the level in', Boolean(pmIndustry?.id), JSON.stringify(industries))
 
 let pmLevel
@@ -187,10 +187,10 @@ r = await req('GET', `/sessions/${played.started.json.sessionId}/summary`)
 const feedback = r.json?.feedback
 check('the PM summary carries a frozen feedback report', Boolean(feedback), JSON.stringify(r.json).slice(0, 200))
 const areas = [...(feedback?.strengths ?? []), ...(feedback?.growth ?? [])].map(area => area.area)
-const PM_LABELS = ['Framing the problem', 'Diagnosing the cause', 'Setting the direction',
-  'Prioritizing the work', 'Planning the roadmap', 'Executing and shipping', 'Measuring the outcome']
-const PD_LABELS = ['Digging into evidence', 'Defining the problem', 'Generating options',
-  'Designing the solution', 'Validating with users']
+const PM_LABELS = ['تعریف و چارچوب مسئله', 'ریشه‌یابی و تحلیل علل', 'تعیین جهت و استراتژی',
+  'اولویت‌بندی اقدامات', 'برنامه‌ریزی نقشه راه', 'اجرا و تحویل', 'سنجش و اندازه‌گیری نتایج']
+const PD_LABELS = ['اکتشاف نیازها و شواهد', 'تعریف دقیق مسئله', 'ایده‌پردازی و گزینه‌ها',
+  'طراحی راه‌حل', 'تست با کاربران']
 check('the report areas use PM labels only', areas.length > 0 && areas.every(area => PM_LABELS.includes(area)),
   JSON.stringify(areas))
 check('no PD label leaks into the PM report', !areas.some(area => PD_LABELS.includes(area)),
@@ -207,7 +207,7 @@ check('the PM skill profile carries the seven PM skills in process order',
   JSON.stringify(skills.map(skill => skill.id)))
 const evidenced = skills.filter(skill => skill.count > 0)
 check('played skills carry evidence in the report line format',
-  evidenced.length > 0 && evidenced.every(skill => /^\d+ of \d+ strongest calls/.test(skill.evidence)),
+  evidenced.length > 0 && evidenced.every(skill => /^[۰-۹]+ از [۰-۹]+ تصمیم برتر/.test(skill.evidence)),
   JSON.stringify(skills.map(skill => [skill.id, skill.count, skill.evidence])))
 check('proficiencies stay within the declared bands',
   skills.every(skill => ['strong', 'developing', 'emerging', 'unproven'].includes(skill.proficiency)),
@@ -224,7 +224,7 @@ const pmProgress = r.json ?? {}
 check('the PM candidate earned XP on the PM track', (pmProgress.totalXp ?? 0) > 0, JSON.stringify(pmProgress))
 const pmIndustries = (pmProgress.industries ?? []).map(industry => industry.name)
 check('the PM dashboard lists only PM-track industries',
-  pmIndustries.includes('Productivity') && !pmIndustries.includes('E-commerce'),
+  pmIndustries.includes('بهره‌وری') && !pmIndustries.includes('خرده‌فروشی آنلاین'),
   JSON.stringify(pmIndustries))
 r = await req('GET', '/progress/badges')
 const pmEarnedIds = new Set((r.json?.badges ?? []).filter(badge => badge.earned).map(badge => badge.id))
