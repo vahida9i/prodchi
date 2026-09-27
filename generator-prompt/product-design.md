@@ -19,13 +19,25 @@ Optional: `summary`, `assessment`.
 `role` must always be exactly: `"Product Design"`
 `difficulty` must be exactly one of: `easy`, `medium`, `hard`
 
+### Language Requirement — Persian (Farsi)
+All candidate-facing content MUST be written in natural, idiomatic **Persian (Farsi)**:
+- `title`
+- `summary`
+- question `text`
+- choice `text`
+- choice `because`
+- choice `reveal` (both `text` and table `caption` / `columns` / `rows`)
+- rubric `label` and `guidance`
+
+Technical identifiers and internal keys remain ASCII English: `id`, `role`, `difficulty`, `start`, `stage`, `quality`, question keys (`Q1`, `Q2`), and rubric `id`.
+
 | Field | Rules |
 |---|---|
-| `id` | snake_case slug, unique (e.g. `onboarding_drop_off`) |
-| `title` | The incident, not the company — "The Onboarding Drop-Off" |
+| `id` | snake_case slug, unique (e.g. `fa_search_empty_state`) |
+| `title` | Persian title describing the incident — e.g. "جستجوی بی‌نتیجه" |
 | `role` | exactly `"Product Design"` |
 | `difficulty` | `easy`, `medium`, or `hard` |
-| `summary` | optional, ≤400 chars. The business brief: what the company is, who its customers are, how it earns. Never the incident or the numbers (that is Q1's job) and never "you are the designer" |
+| `summary` | optional, ≤400 chars, in Persian. The business brief: what the company is, who its customers are, how it earns. Never the incident or the numbers (that is Q1's job) and never "you are the designer" |
 | `start` | `"Q1"` — must be an existing question key |
 | `questions` | 1–200 questions, keyed `Q1`, `Q2`, … |
 | `assessment` | optional rubric — see §4 |
@@ -36,8 +48,8 @@ Example skeleton:
 
 ```json
 {
-  "id": "onboarding_drop_off",
-  "title": "The Onboarding Drop-Off",
+  "id": "fa_onboarding_drop_off",
+  "title": "ریزش کاربران در فرآیند ورود",
   "role": "Product Design",
   "difficulty": "medium",
   "summary": "…",
@@ -111,57 +123,118 @@ Apply difficulty consistently. The schema stays identical across difficulty leve
 
 ## 4. Core Data Model
 
-Each question contains: `text`, `choices`, `bestChoice`
-Each choice contains: `text`, `stage`, `reveal`, `next` — and optionally `quality`, `because`, `criteria`
+Each question contains: `text`, `choices`, `bestChoice` — and optionally `material` (e.g. data table visible before answering).
+Each choice contains: `text`, `stage`, `reveal`, `next` — and optionally `quality`, `because`, `criteria`.
 
-The internal stages are: `FRAME`, `INVESTIGATE`, `DEFINE`, `EXPLORE`, `DESIGN`, `VALIDATE`
+The internal stages are: `FRAME`, `DISCOVER`, `DEFINE`, `IDEATE`, `DESIGN`, `TEST`, `REFINE`
 Stages are internal metadata only. Never show stages to the candidate.
 
 What each stage means in a Product Design context:
 
 - **FRAME** — Establishing or reframing the design problem itself: who the user is, what job they're trying to do, what "success" would look like.
-- **INVESTIGATE** — Gathering evidence: usability sessions, session recordings, heatmaps, support tickets, analytics on user flows, interviews, competitive review, accessibility audits.
+- **DISCOVER** — Gathering evidence: usability sessions, session recordings, heatmaps, support tickets, analytics on user flows, user interviews, competitive review, accessibility audits.
 - **DEFINE** — Sharpening the problem: articulating user needs, naming constraints (technical, brand, accessibility, design-system), stating what must be true for a solution to work.
-- **EXPLORE** — Generating and comparing design directions: sketches, wireframe concepts, alternative interaction patterns, considering multiple structural approaches before committing.
+- **IDEATE** — Generating and comparing design directions: sketches, wireframe concepts, alternative interaction patterns, considering multiple structural approaches before committing.
 - **DESIGN** — Making concrete design decisions: layout, information hierarchy, navigation structure, interaction patterns, states (empty/error/loading), microcopy, accessibility choices.
-- **VALIDATE** — Testing a direction: usability testing, A/B testing a design variant, prototype feedback, review with engineering/accessibility/design-system stakeholders.
+- **TEST** — Testing a direction: usability testing, A/B testing a design variant, prototype feedback, review with engineering/accessibility/design-system stakeholders.
+- **REFINE** — Polishing and adapting based on test signals: edge cases, micro-interactions, copy adjustments, component system alignment.
 
-A candidate can move between stages freely (e.g., INVESTIGATE → DESIGN → INVESTIGATE → DEFINE → VALIDATE is valid). Do not force a fixed sequence.
+A candidate can move between stages freely. Do not force a fixed sequence.
+
+### Choices Count and Quality Distribution (4 Options per Question)
+
+Every question must provide **exactly 4 choices** (index 0 to 3):
+- **1x best choice**: `quality: "best"`, with `because` explained. Pointed to by `bestChoice`.
+- **2x reasonable choices**: `quality: "reasonable"`. Defensible design actions that carry a trade-off or cost.
+- **1x poor choice**: `quality: "poor"`. A hasty, superficial, or misaligned action whose reveal shows the failed consequence (or leads to early exit `next: "END"`).
+
+**For Hard difficulty challenges**:
+- Hard challenges test deeper design ambiguity and deceptive fixes. Questions in hard challenges should have **2x poor choices** (wrong/trap options):
+  - `1x best`
+  - `1x reasonable`
+  - `2x poor` (superficial redesigns, premature visual changes, anti-patterns)
+  - Or questions balancing two subtle trade-offs (`1x best`, `2x reasonable`, `1x poor`).
 
 ### `bestChoice` — required, internal
 
 A 0-based index into that question's `choices` marking the strongest move; must satisfy `0 ≤ bestChoice < choices.length`. It is the answer key: candidates never see it, and it is what a finished run is scored against after it ends.
 
-### Grading — optional, internal
+### Grading — internal quality tiers
 
-A choice may also carry:
-
-- `quality` — `best`, `reasonable`, or `poor`
-- `because` — ≤500 chars, one sentence on why this is the strongest move (required on every `best`; it is what a candidate who missed it is shown *after* the run)
-- `criteria` — array of rubric ids this move exercises
+Every choice MUST carry:
+- `quality` — `"best"`, `"reasonable"`, or `"poor"`
+- `because` — ≤500 chars in Persian, one clear sentence explaining why this choice is the strongest move. **Required on every `best` choice** (it is what is shown to the candidate if they miss it after the run).
+- `criteria` — array of rubric ids this move exercises.
 
 Grading rules:
-- `quality` is **all-or-nothing per question**: tag every choice, or none. Two of four tagged is a rejection.
-- Exactly one `"best"` per question, and only at `bestChoice`.
-- Semantics: `best` = the strongest reasoning; `reasonable` = defensible but it costs the candidate something; `poor` = a misstep whose reveal shows the failed consequence.
+1. `quality` is **all-or-nothing per question**: tag all 4 choices on every question.
+2. Exactly one `"best"` per question, located exactly at the index specified by `bestChoice`.
+3. Every `"best"` choice must have a non-empty `because`.
 
-Leaving every question untagged is tolerated (the choice at `bestChoice` reads as best, the rest as poor). **Prefer full grading** — it makes the after-run feedback richer.
+### `material` — Question Data & Evidence Table (Visible Before Answering)
 
-### `reveal` — a sentence or a table
-
-A reveal is either a plain sentence or a block that may carry a data table:
+You can provide tabular evidence directly inside the question so candidates examine the interaction or drop-off data before making their design decision:
 
 ```json
-"reveal": "Most users who drop off pause noticeably on the permissions screen before leaving."
+"Q1": {
+  "text": "با توجه به جدول ریزش مراحل ثبت‌نام، بررسی اولیه را از کدام مرحله آغاز می‌کنید؟",
+  "material": {
+    "table": {
+      "caption": "نرخ ریزش در مراحل ورود کاربر جدید",
+      "columns": ["مرحله", "دستگاه موبایل", "دستگاه دسکتاپ"],
+      "rows": [
+        ["فرم اطلاعات اولیه", "۱۴٪", "۱۲٪"],
+        ["مجوزهای دسترسی", "۵۸٪", "۱۸٪"],
+        ["انتخاب علاقه‌مندی‌ها", "۶٪", "۵٪"]
+      ]
+    }
+  },
+  "choices": [ ... ],
+  "bestChoice": 0
+}
 ```
 
+Table rules:
+- `caption`: optional short Persian title
+- `columns`: 1 to 6 columns
+- `rows`: 1 to 50 rows, **strictly rectangular** (every row must contain exactly as many items as `columns`)
+- Cells are plain strings (≤200 chars). Persian numerals and percentages are encouraged.
+
+### `reveal` — Rich Evidence After Making a Choice (Never Single-Sentence Spoilers)
+
+A reveal is the empirical evidence the candidate uncovers *after* committing to an action.
+
+**CRITICAL REQUIREMENT: Never write short, single-sentence direct conclusions.**
+A reveal must NOT spoon-feed the answer or state an omniscient summary like "کاربران در فرم گیج شدند" or "طراحی جدید نرخ ریزش را کم کرد". Real-world design research yields behavioral signals, friction points, hesitations, and quotes that require design interpretation.
+
+**Structure of a Strong Reveal (2 to 4 detailed sentences, or a data table):**
+1. **Behavioral Observation / Usability Signal**: Concrete observations from screen recordings, usability tests, drop-off heatmaps, or user quotes.
+2. **Context, Nuance or Friction**: A secondary observation or contrasting signal (e.g., users completed the task but felt uneasy; or desktop behavior diverged completely from mobile).
+3. **Design System / Engineering / Accessibility Constraint**: Practical constraints surfaced during exploration (e.g., design system tokens, responsive edge cases, screen reader hurdles).
+
+#### Comparison: Weak vs. Rich Reveals (Persian)
+- ❌ **Weak / Too straightforward (FORBIDDEN):**
+  `"کاربران در مرحلهٔ درخواست دسترسی گیج می‌شوند و برنامه را می‌بندند."`
+-  **Rich & Informative (REQUIRED):**
+  `"در بررسی ویدیوهای ضبط‌شده از ۴۰ جلسهٔ کاربر، مشخص شد ۶۵٪ کاربران پس از مواجهه با پنجرهٔ دسترسی به موقعیت مکانی بیش از ۲۰ ثانیه بی‌حرکت می‌مانند. در مصاحبه‌های خروجی، ۳ نفر از هر ۵ کاربر اعلام کردند متوجه رابطهٔ میان این مجوز و کارکرد نقشه نشده‌اند و نگران مصرف باتری و ردیابی پس‌زمینه بوده‌اند؛ بخش بزرگی از کاربران نیز دکمهٔ لغو را به اشتباه به جای بازگشت لمس کرده‌اند."`
+
+- ❌ **Weak / Too straightforward (FORBIDDEN):**
+  `"طراحی مجدد فرم باعث بهبود تکمیل ثبت‌نام شد اما شکایات جدیدی ایجاد کرد."`
+-  **Rich & Informative (REQUIRED):**
+  `"با تقسیم فرم بلند به ۳ گام کوتاه، نرخ تکمیل ثبت‌نام از ۵۴٪ به ۶۹٪ رسید. با این حال، تحلیل لاگ‌های پشتیبانی نشان داد تیکت‌های مربوط به 'فراموشی رمز عبور موقت' دو برابر شده، زیرا کاربران در گام دوم پیامک تأیید را با تأخیر شبکه دریافت می‌کنند و فیلد ورود کد در گام سوم امکان تلاش مجدد واضحی ندارد."`
+
+**When to use a Reveal Table:**
+Whenever a choice involves usability testing comparative metrics, drop-off funnel by device, task completion times, or A/B variant metrics, use `"table"` inside `"reveal"`:
 ```json
 "reveal": {
-  "text": "The recordings agree on where guest sessions stop:",
+  "text": "نتایج تست کاربری مقایسه‌ای روی ۲۴ شرکت‌کننده در آزمایشگاه کاربردپذیری:",
   "table": {
-    "caption": "Where guest sessions abandon, last 30 days",
-    "columns": ["Step", "Share of abandons"],
-    "rows": [["Account form", "63%"], ["Payment fields", "22%"], ["Order review", "15%"]]
+    "caption": "مقایسه عملکرد دو الگوی تعاملی در مرحله تأیید هویت",
+    "columns": ["الگوی طراحی", "میانگین زمان تکمیل", "نرخ خطای لمس", "نمره سهولت (۱ تا ۵)"],
+    "rows": [
+      ["پاپ‌آپ مدال تمام‌صفحه", "۴۲ ثانیه", "۱۸٪", "۲٫۸"],
+      ["کارت بازشونده درون‌صفحه‌ای", "۱۹ ثانیه", "۴٪", "۴٫۴"]
+    ]
   }
 }
 ```
@@ -194,9 +267,15 @@ The candidate's path is the result of their decisions, not a graded judgment.
 
 The internal `bestChoice`/`quality` layer from §4 is the one exception — and it is invisible during play: it exists only so the finished run can be scored after the fact, and `because` is the miss-feedback shown to a candidate who made a different call, after their run ends. During the challenge itself, every choice is simply an action with its own information.
 
-## 6. Progressive Information
+## 6. Progressive Information & "Show, Don't Tell"
 
 Do not reveal the complete problem at the beginning. The initial question should contain enough information to make a decision, but not enough to know the entire situation. The candidate discovers the design problem progressively. Every choice should reveal information relevant to that specific choice, answering: "What did the candidate learn because they chose this action?"
+
+**Show, Don't Tell — Never give away the design diagnosis directly:**
+- **Bad (Telling):** "تحقیقات نشان داد کاربران به دلیل شلوغی صفحه و فونت ریز، دکمه پرداخت را پیدا نمی‌کنند." (Gives away the conclusion and leaves no thinking for the designer).
+- **Good (Showing):** "نقشهٔ حرارتی (Heatmap) کلیک‌ها نشان داد تمرکز کلیک‌ها روی بنر بالای صفحه پراکنده است و فقط ۱۲٪ تعاملات به ناحیه پایینی صفحه می‌رسد. در ۳ تست کاربردپذیری با پروتوتایپ، کاربران هنگام جستجوی دکمه تأیید نهایی، چند بار صفحه را به سمت بالا و پایین اسکرول کردند و از پیدا نکردن جمع کل فاکتور گله داشتند."
+
+The candidate must connect the dots themselves from the concrete interaction signals, behavioral hesitation, and qualitative quotes revealed to them.
 
 ## 7. Meaningful Branching — Hard Rules
 
@@ -790,21 +869,22 @@ Starting at `start`, list out every distinct path of question keys from `start` 
 - The JSON is valid and parses correctly
 - `role` is exactly `"Product Design"`; `difficulty` is exactly `easy`, `medium`, or `hard`
 - `start` references an existing question key
+- All user-facing text is written in natural Persian (Farsi)
 - Every `next` value is either `"END"` or an existing question key
 - Every question in `questions` was visited in at least one path from Step A (no orphans)
-- Every question has 3–4 choices, and every choice has all four required fields: `text`, `stage`, `reveal`, `next`
-- Every question has `bestChoice`, and it is in range (`0 ≤ bestChoice < choices.length`)
-- If grading: `quality` on all choices of a question or none; exactly one `best`, at `bestChoice`; every `best` has `because` (≤500 chars)
+- Every question has exactly 4 choices, and every choice has all four required fields: `text`, `stage`, `reveal`, `next`
+- Every question has `bestChoice`, and it matches the 0-based index of the `"best"` choice
+- Quality tiers are tagged on all choices of every question: 1x `"best"` (with `because`), 2x `"reasonable"`, and 1x `"poor"` (or 2x `"poor"` for traps on hard challenges)
 - If a rubric: criterion ids unique kebab-case, `label` ≤120, `guidance` ≤500; every cited id declared; every best move cites ≥1
-- If a table reveal: rectangular rows, ≤6 columns, ≤50 rows, cells ≤200 chars
-- Every stage value is one of the six valid stages
+- If a question `material` or a `reveal` has a data table: rectangular rows, ≤6 columns, ≤50 rows, cells ≤200 chars
+- Every stage value is one of the valid Product Design stages: `FRAME`, `DISCOVER`, `DEFINE`, `IDEATE`, `DESIGN`, `TEST`, `REFINE`
 - The graph meets the minimum-bar requirements for its stated difficulty (Section 2)
 - Total question count falls within (or close to, ±20%) the target range for the stated difficulty (Section 10)
 
 ### Step D — Content quality
 
 - No choice is marked correct/incorrect **to the candidate**, and no reveal evaluates the candidate's decision
-- Every reveal answers "what did the candidate learn from this specific action" and is meaningfully different from other reveals reachable from the same question
+- Every reveal answers "what did the candidate learn from this specific action" with rich, multi-sentence behavioral evidence or a table (NO single-sentence direct conclusions)
 - Every question requires an actual design decision, not a definition or trivia recall
 - All content concerns Product Design reasoning (user needs, interaction/visual decisions, usability evidence, design-system/accessibility constraints), not business-metrics analytics for its own sake
 - The difficulty level's ambiguity and evidence quality matches Section 2's minimum bars, not just its question count
