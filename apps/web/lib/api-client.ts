@@ -49,6 +49,15 @@ export interface SessionHistoryEntry {
   assessment?: WrittenAssessment
 }
 
+export interface SessionAnswerResult {
+  reveal: RevealBlock
+  assessment: WrittenAssessment | null
+  question: SanitizedQuestion | null
+  status: 'in_progress' | 'completed'
+  result: LevelCompletion | null
+  dailyReward: DailyReward | null
+}
+
 // ---------------------------------------------------------------------------
 // End-of-run feedback (deterministic, rule-based — mirrors
 // @prodchi/shared-types/feedback evaluateRun, frozen on the session at
@@ -346,7 +355,7 @@ class ApiClient {
 
   // Sessions (guided candidate session engine)
   answerSession(sessionId: string, answer: { choiceIndex: number } | { answerText: string }) {
-    return this.post<{ reveal: RevealBlock; assessment: WrittenAssessment | null; question: SanitizedQuestion | null; status: 'in_progress' | 'completed'; result: LevelCompletion | null; dailyReward: DailyReward | null }>(`/sessions/${sessionId}/answer`, answer)
+    return this.post<SessionAnswerResult>(`/sessions/${sessionId}/answer`, answer)
   }
 
   getSession(sessionId: string) {
@@ -381,6 +390,79 @@ class ApiClient {
   }
 
   getAiAssessment(sessionId: string) { return this.post<AiRunAssessment>(`/sessions/${sessionId}/ai-assessment`) }
+
+  async streamAiAssessment(
+    sessionId: string,
+    onProgress: (fields: Partial<Pick<AiRunAssessment, 'strength' | 'weakness' | 'nextStep'>>) => void,
+    signal?: AbortSignal
+  ): Promise<AiRunAssessment> {
+    return this.streamPost(`/sessions/${sessionId}/ai-assessment`, undefined, 'assessment', onProgress, signal)
+  }
+
+  streamWrittenAnswer(
+    sessionId: string,
+    answerText: string,
+    onProgress: (fields: Partial<Pick<WrittenAssessment, 'strength' | 'weakness'>>) => void,
+    signal?: AbortSignal
+  ): Promise<SessionAnswerResult> {
+    return this.streamPost(`/sessions/${sessionId}/answer`, { answerText }, 'result', onProgress, signal)
+  }
+
+  private async streamPost<T, P>(
+    endpoint: string,
+    data: unknown,
+    doneKey: 'assessment' | 'result',
+    onProgress: (fields: P) => void,
+    signal?: AbortSignal
+  ): Promise<T> {
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/x-ndjson' },
+      body: data === undefined ? undefined : JSON.stringify(data),
+      signal
+    })
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({ error: 'ارزیابی هوشمند در دسترس نیست.' }))
+      const error = new ApiError(response.status, body.error || 'ارزیابی هوشمند در دسترس نیست.') as ApiError & { restart?: boolean }
+      error.restart = body.restart
+      throw error
+    }
+    if (!response.body) throw new Error('جریان ارزیابی در دسترس نیست.')
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    let completed: T | undefined
+    const consume = (line: string) => {
+      if (!line.trim()) return
+      const event = JSON.parse(line) as { type: 'progress' | 'done' | 'error'; fields?: P; assessment?: T; result?: T; error?: string; status?: number; restart?: boolean }
+      if (event.type === 'progress' && event.fields) onProgress(event.fields)
+      if (event.type === 'done') completed = event[doneKey]
+      if (event.type === 'error') {
+        const error = new ApiError(event.status ?? 502, event.error || 'ارزیابی هوشمند در دسترس نیست.') as ApiError & { restart?: boolean }
+        error.restart = event.restart
+        throw error
+      }
+    }
+    try {
+      while (true) {
+        const { value, done } = await reader.read()
+        buffer += decoder.decode(value, { stream: !done })
+        let newline: number
+        while ((newline = buffer.indexOf('\n')) !== -1) {
+          consume(buffer.slice(0, newline))
+          buffer = buffer.slice(newline + 1)
+        }
+        if (done) break
+      }
+      consume(buffer)
+    } finally {
+      reader.releaseLock()
+    }
+    if (!completed) throw new Error('جریان ارزیابی ناتمام ماند. دوباره تلاش کنید.')
+    return completed
+  }
 
   // Level path (progression + gamification)
   getLevels() {

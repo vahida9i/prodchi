@@ -41,13 +41,14 @@ export function SessionResult({
 }) {
   const [celebrate, setCelebrate] = useState(Boolean(completion?.leveledUp || dailyReward?.leveledUp))
   const [aiAssessment, setAiAssessment] = useState<AiRunAssessment | null>(summary?.aiAssessment ?? null)
+  const [aiProgress, setAiProgress] = useState<Partial<Pick<AiRunAssessment, 'strength' | 'weakness' | 'nextStep'>>>({})
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
   const attemptedAi = useRef(false)
   const requestAi = async (id: string) => {
-    setAiLoading(true); setAiError(null)
-    try { setAiAssessment(await api.getAiAssessment(id)) }
-    catch (error: any) { setAiError(error?.message || 'ارزیابی هوشمند در دسترس نیست.') }
+    setAiLoading(true); setAiError(null); setAiProgress({})
+    try { setAiAssessment(await api.streamAiAssessment(id, fields => setAiProgress(fields))) }
+    catch (error: any) { setAiProgress({}); setAiError(error?.message || 'ارزیابی هوشمند در دسترس نیست.') }
     finally { setAiLoading(false) }
   }
   useEffect(() => {
@@ -128,7 +129,31 @@ export function SessionResult({
 
       {summary && (
         <>
-          {summary.aiAvailable && <section className="rounded-2xl border bg-card p-5 shadow-sm sm:p-6"><p className="text-xs font-bold text-primary">ارزیابی هوشمند</p>{aiAssessment ? <div className="mt-3 space-y-3 text-sm leading-7"><p className="text-lg font-extrabold">{digits(aiAssessment.score)} از ۱۰۰</p><p><strong>نقطهٔ قوت:</strong> {aiAssessment.strength}</p><p><strong>فرصت رشد:</strong> {aiAssessment.weakness}</p><p><strong>گام بعد:</strong> {aiAssessment.nextStep}</p></div> : aiLoading ? <p role="status" className="mt-3 text-sm text-muted-foreground">در حال ارزیابی تصمیم‌ها…</p> : <div className="mt-3 space-y-3"><p role="alert" className="text-sm text-destructive">{aiError || 'ارزیابی هوشمند هنوز آماده نیست.'}</p><Button variant="outline" onClick={() => void requestAi(summary.id)}>تلاش دوباره</Button></div>}</section>}
+          {summary.aiAvailable && (
+            <section className="rounded-2xl border border-violet-200 bg-violet-50/40 p-5 shadow-sm sm:p-6" aria-labelledby="ai-assessment-title">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1.5 text-xs font-bold text-violet-800"><Sparkles size={15} aria-hidden /> تولیدشده با هوش مصنوعی</span>
+                <h2 id="ai-assessment-title" className="text-sm font-extrabold">ارزیابی تصمیم‌ها</h2>
+              </div>
+              {aiAssessment ? (
+                <div className="mt-4 space-y-3 text-sm leading-7">
+                  <p className="text-lg font-extrabold">{digits(aiAssessment.score)} از ۱۰۰</p>
+                  <p><strong>نقطهٔ قوت:</strong> {aiAssessment.strength}</p>
+                  <p><strong>فرصت رشد:</strong> {aiAssessment.weakness}</p>
+                  <p><strong>گام بعد:</strong> {aiAssessment.nextStep}</p>
+                </div>
+              ) : aiLoading || (!attemptedAi.current && !aiError) ? (
+                <div className="mt-4 space-y-3 text-sm leading-7">
+                  <p role="status" className="inline-flex items-center gap-2 text-xs font-semibold text-violet-700"><span className="h-2 w-2 motion-safe:animate-pulse rounded-full bg-violet-500" /> هوش مصنوعی در حال نوشتن است…</p>
+                  {aiProgress.strength && <p><strong>نقطهٔ قوت:</strong> {aiProgress.strength}</p>}
+                  {aiProgress.weakness && <p><strong>فرصت رشد:</strong> {aiProgress.weakness}</p>}
+                  {aiProgress.nextStep && <p><strong>گام بعد:</strong> {aiProgress.nextStep}</p>}
+                </div>
+              ) : (
+                <div className="mt-4 space-y-3"><p role="alert" className="text-sm text-destructive">{aiError || 'ارزیابی هوشمند هنوز آماده نیست.'}</p><Button variant="outline" onClick={() => void requestAi(summary.id)}>تلاش دوباره</Button></div>
+              )}
+            </section>
+          )}
           {hasLastReveal && <section className="rounded-2xl border bg-card p-5 shadow-sm sm:p-6"><div className="mb-3 flex items-center gap-2"><CheckCircle2 className="text-primary" size={19} aria-hidden /><h2 className="text-base font-extrabold">نتیجهٔ تصمیم آخر</h2></div><RevealBlock reveal={lastReveal} /></section>}
 
           {feedback ? (
@@ -149,7 +174,7 @@ export function SessionResult({
             </section>
           ) : <section className="rounded-2xl border bg-card p-5 text-sm text-muted-foreground">این اجرا ارزیابی ضمیمه ندارد؛ مسیر تصمیم‌هایت را در پایین مرور کن.</section>}
 
-          {summary.path.length > 0 && <details className="rounded-2xl border bg-card p-5 shadow-sm sm:p-6"><summary className="cursor-pointer text-base font-extrabold">مرور مسیر تصمیم‌ها <span className="text-xs font-semibold text-muted-foreground">({digits(summary.path.length)} گام)</span></summary><ol className="mt-5 space-y-4">{summary.path.map((entry, index) => <li key={index} className="border-r-2 border-primary/25 pr-4"><p className="text-xs font-bold text-primary">تصمیم {digits(index + 1)}</p><p className="mt-1 text-sm font-bold leading-7">{entry.questionText}</p><p className="mt-1 text-sm leading-7 text-muted-foreground">پاسخ شما: {entry.choiceText}</p>{entry.assessment && <div className="mt-2 rounded-xl bg-muted/40 p-3 text-sm leading-7"><p className="font-bold">{digits(entry.assessment.score)} از ۱۰۰</p><p>نقطهٔ قوت: {entry.assessment.strength}</p><p>فرصت رشد: {entry.assessment.weakness}</p></div>}<div className="mt-2"><RevealBlock reveal={entry.reveal} variant="compact" /></div></li>)}</ol></details>}
+          {summary.path.length > 0 && <details className="rounded-2xl border bg-card p-5 shadow-sm sm:p-6"><summary className="cursor-pointer text-base font-extrabold">مرور مسیر تصمیم‌ها <span className="text-xs font-semibold text-muted-foreground">({digits(summary.path.length)} گام)</span></summary><ol className="mt-5 space-y-4">{summary.path.map((entry, index) => <li key={index} className="border-r-2 border-primary/25 pr-4"><p className="text-xs font-bold text-primary">تصمیم {digits(index + 1)}</p><p className="mt-1 text-sm font-bold leading-7">{entry.questionText}</p><p className="mt-1 text-sm leading-7 text-muted-foreground">پاسخ شما: {entry.choiceText}</p>{entry.assessment && <div className="mt-2 rounded-xl border border-violet-200 bg-violet-50/40 p-3 text-sm leading-7"><p className="inline-flex items-center gap-1.5 text-xs font-bold text-violet-800"><Sparkles size={14} aria-hidden /> ارزیابی تولیدشده با هوش مصنوعی</p><p className="font-bold">{digits(entry.assessment.score)} از ۱۰۰</p><p>نقطهٔ قوت: {entry.assessment.strength}</p><p>فرصت رشد: {entry.assessment.weakness}</p></div>}<div className="mt-2"><RevealBlock reveal={entry.reveal} variant="compact" /></div></li>)}</ol></details>}
 
           <p className="text-center text-xs text-muted-foreground">تکمیل‌شده در {new Date(summary.completedAt).toLocaleString("fa-IR")}</p>
         </>

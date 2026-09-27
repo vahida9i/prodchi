@@ -177,6 +177,8 @@ pnpm --filter @prodchi/db db:sync-wireframe
 ```
 
 Written answers and the optional overall AI recap use the Liara AI service.
+Both assessments stream their feedback into the player UI as it is generated;
+the completed, validated result is saved with the session and labeled as AI-generated.
 Set `LIARA_BASE_URL`, `LIARA_API_KEY` and `LIARA_CHAT_MODEL` in the root `.env`,
 then restart the API. The model defaults to `openai/gpt-4o-mini` in the example
 configuration. Without a complete configuration, choice-based challenges remain

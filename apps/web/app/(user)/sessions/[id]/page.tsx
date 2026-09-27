@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { StepOptionList } from "@/components/challenge/StepOptionList"
@@ -40,6 +40,7 @@ export default function SessionPage() {
   const [answering, setAnswering] = useState(false)
   const [answerText, setAnswerText] = useState("")
   const [writtenAssessment, setWrittenAssessment] = useState<{ score: number; strength: string; weakness: string } | null>(null)
+  const [aiProgress, setAiProgress] = useState<{ strength?: string; weakness?: string }>({})
   const pendingRef = useRef<SanitizedQuestion | null>(null)
 
   const loadCompletedSummary = useCallback(async () => {
@@ -70,13 +71,15 @@ export default function SessionPage() {
     load()
   }, [sessionId, router])
 
-  const applyNext = useCallback((next: SanitizedQuestion | null) => { pendingRef.current = null; setReveal(null); setQuestion(next); setAnswerText(""); setWrittenAssessment(null) }, [])
+  const applyNext = useCallback((next: SanitizedQuestion | null) => { pendingRef.current = null; setReveal(null); setQuestion(next); setAnswerText(""); setWrittenAssessment(null); setAiProgress({}) }, [])
 
   const handleAnswer = async (answer: { choiceIndex: number } | { answerText: string }) => {
     if (answering || reveal !== null || !question) return
-    setAnswering(true); setError(null)
+    setAnswering(true); setError(null); setAiProgress({})
     try {
-      const response = await api.answerSession(sessionId, answer)
+      const response = 'answerText' in answer
+        ? await api.streamWrittenAnswer(sessionId, answer.answerText, fields => setAiProgress(fields))
+        : await api.answerSession(sessionId, answer)
       const choiceText = 'answerText' in answer ? answer.answerText : question.choices.find(c => c.index === answer.choiceIndex)?.text ?? ""
       setHistory(prev => [...prev, { questionText: question.text, choiceText, reveal: response.reveal, ...(response.assessment ? { assessment: response.assessment } : {}) }])
       setAnsweredCount(count => count + 1); setReveal(response.reveal); setWrittenAssessment(response.assessment)
@@ -87,6 +90,7 @@ export default function SessionPage() {
         void loadCompletedSummary()
       } else pendingRef.current = response.question
     } catch (err: any) {
+      setAiProgress({})
       if (err?.status === 409 && !err?.restart) {
         try { const fresh = await api.getSession(sessionId); if (fresh.status === "completed") { router.replace(`/sessions/${sessionId}/summary`); return }; setHistory(fresh.history); setAnsweredCount(fresh.answeredCount); applyNext(fresh.question); return } catch {}
       }
@@ -109,9 +113,9 @@ export default function SessionPage() {
 
       {error && <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div>}
 
-      {question && reveal === null && <Card><CardHeader className="pb-3"><CardTitle className="text-base">تصمیم شما چیست؟</CardTitle></CardHeader><CardContent><QuestionMaterial material={question.material} />{question.answerMode === 'text' ? <form className="space-y-4" onSubmit={event => { event.preventDefault(); void handleAnswer({ answerText: answerText.trim() }) }}><label htmlFor="written-answer" className="block text-sm font-bold leading-7">{question.text}</label><textarea id="written-answer" value={answerText} onChange={event => setAnswerText(event.target.value)} minLength={20} maxLength={2000} required placeholder="دلیل تصمیم خود را با توجه به داده‌ها بنویسید…" className="min-h-36 w-full rounded-xl border bg-background p-3 text-sm leading-7 outline-none focus:border-primary" /><p className="text-xs text-muted-foreground">پاسخ شما برای ارزیابی به سرویس هوش مصنوعی لیارا فرستاده می‌شود و نتیجه در گزارش همین سناریو ثبت می‌شود.</p><Button type="submit" disabled={answering || answerText.trim().length < 20} className="touch-target w-full">{answering ? 'در حال ارزیابی…' : 'ثبت و ارزیابی پاسخ'}</Button></form> : <><StepOptionList key={question.key} question={question} onAnswer={choiceIndex => void handleAnswer({ choiceIndex })} disabled={answering} /></>}</CardContent></Card>}
+      {question && reveal === null && <Card><CardHeader className="pb-3"><CardTitle className="text-base">تصمیم شما چیست؟</CardTitle></CardHeader><CardContent><QuestionMaterial material={question.material} />{question.answerMode === 'text' ? <form className="space-y-4" onSubmit={event => { event.preventDefault(); void handleAnswer({ answerText: answerText.trim() }) }}><label htmlFor="written-answer" className="block text-sm font-bold leading-7">{question.text}</label><textarea id="written-answer" value={answerText} onChange={event => setAnswerText(event.target.value)} minLength={20} maxLength={2000} required placeholder="دلیل تصمیم خود را با توجه به داده‌ها بنویسید…" className="min-h-36 w-full rounded-xl border bg-background p-3 text-sm leading-7 outline-none focus:border-primary" /><p className="text-xs text-muted-foreground">پاسخ شما برای ارزیابی به سرویس هوش مصنوعی لیارا فرستاده می‌شود و نتیجه در گزارش همین سناریو ثبت می‌شود.</p>{answering && <div className="space-y-2 rounded-xl border border-violet-200 bg-violet-50/40 p-4 text-sm leading-7"><p role="status" className="inline-flex items-center gap-2 text-xs font-bold text-violet-800"><Sparkles size={15} aria-hidden /> هوش مصنوعی در حال نوشتن ارزیابی است…</p>{aiProgress.strength && <p><strong>نقطهٔ قوت:</strong> {aiProgress.strength}</p>}{aiProgress.weakness && <p><strong>فرصت رشد:</strong> {aiProgress.weakness}</p>}</div>}<Button type="submit" disabled={answering || answerText.trim().length < 20} className="touch-target w-full">{answering ? 'در حال ارزیابی…' : 'ثبت و ارزیابی پاسخ'}</Button></form> : <><StepOptionList key={question.key} question={question} onAnswer={choiceIndex => void handleAnswer({ choiceIndex })} disabled={answering} /></>}</CardContent></Card>}
 
-      {reveal !== null && <Card><CardHeader><CardTitle className="text-lg">نتیجه تصمیم شما</CardTitle></CardHeader><CardContent className="space-y-5">{writtenAssessment && <div className="rounded-xl border bg-muted/40 p-4 text-sm leading-7"><p className="font-extrabold">ارزیابی پاسخ: {digits(writtenAssessment.score)} از ۱۰۰</p><p>نقطهٔ قوت: {writtenAssessment.strength}</p><p>فرصت رشد: {writtenAssessment.weakness}</p></div>}<RevealBlock reveal={reveal} /><p className="text-sm leading-7 text-muted-foreground">عجله نکنید — هر وقت آماده بودید ادامه دهید.</p><Button className="touch-target w-full" onClick={handleContinue}>ادامه</Button></CardContent></Card>}
+      {reveal !== null && <Card><CardHeader><CardTitle className="text-lg">نتیجه تصمیم شما</CardTitle></CardHeader><CardContent className="space-y-5">{writtenAssessment && <div className="rounded-xl border border-violet-200 bg-violet-50/40 p-4 text-sm leading-7"><p className="mb-2 inline-flex items-center gap-1.5 text-xs font-bold text-violet-800"><Sparkles size={14} aria-hidden /> ارزیابی تولیدشده با هوش مصنوعی</p><p className="font-extrabold">ارزیابی پاسخ: {digits(writtenAssessment.score)} از ۱۰۰</p><p>نقطهٔ قوت: {writtenAssessment.strength}</p><p>فرصت رشد: {writtenAssessment.weakness}</p></div>}<RevealBlock reveal={reveal} /><p className="text-sm leading-7 text-muted-foreground">عجله نکنید — هر وقت آماده بودید ادامه دهید.</p><Button className="touch-target w-full" onClick={handleContinue}>ادامه</Button></CardContent></Card>}
 
       {pathReveals.length > 0 && <details className="rounded-2xl border bg-card p-4"><summary className="cursor-pointer text-sm font-bold">آنچه تاکنون یافته‌اید</summary><div className="mt-4 space-y-4">{pathReveals.map((entry, index) => <div key={index} className="border-r-2 border-primary/30 pr-3"><RevealBlock reveal={entry.reveal} variant="compact" /></div>)}</div></details>}
     </div>

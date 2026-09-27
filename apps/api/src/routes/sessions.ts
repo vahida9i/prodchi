@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { prisma } from '../lib/prisma.ts'
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
+import { PassThrough } from 'node:stream'
 import { scoreLevel } from '@prodchi/shared-types/scoring'
 import type { LevelScore } from '@prodchi/shared-types/scoring'
 import { evaluateRun } from '@prodchi/shared-types/feedback'
@@ -27,7 +28,7 @@ import {
   toPath
 } from '../services/session-engine.ts'
 import { creditLevelResult, isLevelPlayable } from '../services/gamification.ts'
-import { assessCompletedRun, assessWrittenAnswer, isAiConfigured, parseRunAssessment } from '../services/written-assessment.ts'
+import { assessCompletedRun, assessWrittenAnswer, isAiConfigured, parseRunAssessment, streamCompletedRun, streamWrittenAnswer } from '../services/written-assessment.ts'
 import { creditDailySession } from '../services/daily-challenge.ts'
 
 /**
@@ -188,116 +189,133 @@ export async function sessionRoutes(fastify: FastifyInstance) {
     if (isWritten !== (parseResult.data.answerText !== undefined)) {
       return reply.status(400).send({ error: 'نوع پاسخ با سؤال فعلی مطابقت ندارد' })
     }
+    const streaming = isWritten && (request.headers.accept?.includes('application/x-ndjson') ?? false)
+    if (streaming && !isAiConfigured()) return reply.status(503).send({ error: 'ارزیابی پاسخ تشریحی هنوز پیکربندی نشده است.' })
+    const output = streaming ? new PassThrough() : null
+    if (output) reply.type('application/x-ndjson; charset=utf-8').header('Cache-Control', 'no-cache, no-transform').header('X-Accel-Buffering', 'no').send(output)
+    const deliver = (body: object, status = 200) => {
+      if (!output) return reply.status(status).send(body)
+      output.end(JSON.stringify(status >= 400 ? { type: 'error', status, ...body } : { type: 'done', result: body }) + '\n')
+      return reply
+    }
     let assessment: Awaited<ReturnType<typeof assessWrittenAnswer>> | undefined
     if (isWritten) {
       try {
-        assessment = await assessWrittenAnswer(question, parseResult.data.answerText!)
+        assessment = output
+          ? await streamWrittenAnswer(question, parseResult.data.answerText!, fields => { if (!output.destroyed) output.write(JSON.stringify({ type: 'progress', fields }) + '\n') })
+          : await assessWrittenAnswer(question, parseResult.data.answerText!)
       } catch (error) {
         request.log.error({ error }, 'written assessment failed')
-        return reply.status(isAiConfigured() ? 502 : 503).send({
+        return deliver({
           error: isAiConfigured() ? 'ارزیابی پاسخ در دسترس نیست. دوباره تلاش کنید.' : 'ارزیابی پاسخ تشریحی هنوز پیکربندی نشده است.'
-        })
+        }, isAiConfigured() ? 502 : 503)
       }
     }
-    const choiceIndex = assessment?.choiceIndex ?? parseResult.data.choiceIndex!
-    const choice = question.choices[choiceIndex]
-    if (!choice) {
-      return reply.status(400).send({ error: 'گزینهٔ انتخاب‌شده برای سؤال فعلی معتبر نیست' })
-    }
+    try {
+      const choiceIndex = assessment?.choiceIndex ?? parseResult.data.choiceIndex!
+      const choice = question.choices[choiceIndex]
+      if (!choice) {
+        return deliver({ error: 'گزینهٔ انتخاب‌شده برای سؤال فعلی معتبر نیست' }, 400)
+      }
 
-    const path = toPath(session).slice()
-    path.push({
-      key: session.currentKey,
-      questionText: question.text,
-      choiceIndex,
-      choiceText: parseResult.data.answerText ?? choice.text,
-      reveal: revealOf(choice),
-      at: new Date().toISOString(),
-      ...(assessment ? { assessment: { score: assessment.score, strength: assessment.strength, weakness: assessment.weakness } } : {})
-    })
-    const pathJson = path as unknown as Prisma.InputJsonValue
-
-    // Optimistic concurrency: the update only applies while the session still
-    // sits on the question that was just answered. A parallel answer (second
-    // tab, double-click, network retry) changes `currentKey` first, so this
-    // update matches nothing and the caller gets a conflict instead of a lost
-    // or duplicated path entry.
-    const guard = { id: session.id, currentKey: session.currentKey, status: 'in_progress' }
-
-    // The session completes itself when the chosen choice's next is END. That is
-    // also the level's pass condition, so this is the one place a finished level
-    // is scored: the recorded path is compared against each question's
-    // `bestChoice` (10 XP per best hit) and the result is credited to the level.
-    if (choice.next === 'END') {
-      // Score once, here: the snapshot rides on the session so the recap can
-      // never disagree with the XP credited below.
-      const score = scoreLevel(path, questions)
-      // The feedback report freezes alongside the score, computed once from
-      // the graph as it stood at completion — for free-play runs too.
-      const feedback = evaluateRun(path, {
-        role: session.challenge.role.name as RunChallengeRole,
-        startKey: session.challenge.startKey,
-        questions,
-        assessment: challengeAssessment(session.challenge.assessment)
+      const path = toPath(session).slice()
+      path.push({
+        key: session.currentKey,
+        questionText: question.text,
+        choiceIndex,
+        choiceText: parseResult.data.answerText ?? choice.text,
+        reveal: revealOf(choice),
+        at: new Date().toISOString(),
+        ...(assessment ? { assessment: { score: assessment.score, strength: assessment.strength, weakness: assessment.weakness } } : {})
       })
+      const pathJson = path as unknown as Prisma.InputJsonValue
+
+      // Optimistic concurrency: the update only applies while the session still
+      // sits on the question that was just answered. A parallel answer (second
+      // tab, double-click, network retry) changes `currentKey` first, so this
+      // update matches nothing and the caller gets a conflict instead of a lost
+      // or duplicated path entry.
+      const guard = { id: session.id, currentKey: session.currentKey, status: 'in_progress' }
+
+      // The session completes itself when the chosen choice's next is END. That is
+      // also the level's pass condition, so this is the one place a finished level
+      // is scored: the recorded path is compared against each question's
+      // `bestChoice` (10 XP per best hit) and the result is credited to the level.
+      if (choice.next === 'END') {
+        // Score once, here: the snapshot rides on the session so the recap can
+        // never disagree with the XP credited below.
+        const score = scoreLevel(path, questions)
+        // The feedback report freezes alongside the score, computed once from
+        // the graph as it stood at completion — for free-play runs too.
+        const feedback = evaluateRun(path, {
+          role: session.challenge.role.name as RunChallengeRole,
+          startKey: session.challenge.startKey,
+          questions,
+          assessment: challengeAssessment(session.challenge.assessment)
+        })
+
+        const result = await prisma.session.updateMany({
+          where: guard,
+          data: {
+            path: pathJson,
+            currentKey: null,
+            status: 'completed',
+            completedAt: new Date(),
+            score: score as unknown as Prisma.InputJsonValue,
+            feedback: feedback as unknown as Prisma.InputJsonValue
+          }
+        })
+        if (result.count === 0) {
+          return deliver({ error: 'این سؤال قبلاً پاسخ داده شده است. صفحه را تازه‌سازی کنید.' }, 409)
+        }
+
+        const completion = session.levelId
+          ? await creditLevelResult(user.userId, session.levelId, score)
+          : null
+        const dailyReward = await creditDailySession(session.id)
+        if (completion && dailyReward) {
+          completion.totalXp = dailyReward.totalXp
+          completion.playerLevel = dailyReward.playerLevel
+          completion.leveledUp = completion.leveledUp || dailyReward.leveledUp
+        }
+
+        return deliver({
+          reveal: revealOf(choice),
+          assessment: assessment ? { score: assessment.score, strength: assessment.strength, weakness: assessment.weakness } : null,
+          question: null,
+          status: 'completed',
+          result: completion,
+          dailyReward
+        })
+      }
+
+      // The graph can be re-imported mid-run: if the chosen branch no longer
+      // leads anywhere, retire the run rather than dead-ending on a 500.
+      const nextQuestion = questions[choice.next]
+      if (!nextQuestion) {
+        await prisma.session.delete({ where: { id: session.id } })
+        return deliver({ error: SUPERSEDED_MESSAGE, restart: true }, 409)
+      }
 
       const result = await prisma.session.updateMany({
         where: guard,
-        data: {
-          path: pathJson,
-          currentKey: null,
-          status: 'completed',
-          completedAt: new Date(),
-          score: score as unknown as Prisma.InputJsonValue,
-          feedback: feedback as unknown as Prisma.InputJsonValue
-        }
+        data: { path: pathJson, currentKey: choice.next }
       })
       if (result.count === 0) {
-        return reply.status(409).send({ error: 'این سؤال قبلاً پاسخ داده شده است. صفحه را تازه‌سازی کنید.' })
+        return deliver({ error: 'این سؤال قبلاً پاسخ داده شده است. صفحه را تازه‌سازی کنید.' }, 409)
       }
 
-      const completion = session.levelId
-        ? await creditLevelResult(user.userId, session.levelId, score)
-        : null
-      const dailyReward = await creditDailySession(session.id)
-      if (completion && dailyReward) {
-        completion.totalXp = dailyReward.totalXp
-        completion.playerLevel = dailyReward.playerLevel
-        completion.leveledUp = completion.leveledUp || dailyReward.leveledUp
-      }
-
-      return reply.send({
+      return deliver({
         reveal: revealOf(choice),
         assessment: assessment ? { score: assessment.score, strength: assessment.strength, weakness: assessment.weakness } : null,
-        question: null,
-        status: 'completed',
-        result: completion,
-        dailyReward
+        question: sanitizeQuestion(choice.next, nextQuestion),
+        status: 'in_progress'
       })
+    } catch (error) {
+      if (!output) throw error
+      request.log.error({ error }, 'streamed answer failed')
+      return deliver({ error: 'ثبت پاسخ ناموفق بود. دوباره تلاش کنید.' }, 500)
     }
-
-    // The graph can be re-imported mid-run: if the chosen branch no longer
-    // leads anywhere, retire the run rather than dead-ending on a 500.
-    const nextQuestion = questions[choice.next]
-    if (!nextQuestion) {
-      await prisma.session.delete({ where: { id: session.id } })
-      return reply.status(409).send({ error: SUPERSEDED_MESSAGE, restart: true })
-    }
-
-    const result = await prisma.session.updateMany({
-      where: guard,
-      data: { path: pathJson, currentKey: choice.next }
-    })
-    if (result.count === 0) {
-      return reply.status(409).send({ error: 'این سؤال قبلاً پاسخ داده شده است. صفحه را تازه‌سازی کنید.' })
-    }
-
-    return reply.send({
-      reveal: revealOf(choice),
-      assessment: assessment ? { score: assessment.score, strength: assessment.strength, weakness: assessment.weakness } : null,
-      question: sanitizeQuestion(choice.next, nextQuestion),
-      status: 'in_progress'
-    })
   })
 
   // GET /api/v1/sessions/:id — session state; this is what makes resume work.
@@ -401,12 +419,20 @@ export async function sessionRoutes(fastify: FastifyInstance) {
   fastify.post('/:id/ai-assessment', async (request, reply) => {
     const { id } = request.params as { id: string }
     const user = request.user!
+    const streaming = request.headers.accept?.includes('application/x-ndjson') ?? false
     if (!isAiConfigured()) return reply.status(503).send({ error: 'ارزیابی هوشمند هنوز پیکربندی نشده است.' })
     const session = await prisma.session.findFirst({ where: { id, userId: user.userId }, include: { challenge: true } })
     if (!session) return reply.status(404).send({ error: 'نشست پیدا نشد' })
     if (session.status !== 'completed') return reply.status(409).send({ error: 'ابتدا سناریو را کامل کنید.' })
     if (session.aiAssessment) {
-      try { return reply.send(parseRunAssessment(session.aiAssessment)) } catch { /* regenerate invalid legacy data */ }
+      try {
+        const cached = parseRunAssessment(session.aiAssessment)
+        if (!streaming) return reply.send(cached)
+        const output = new PassThrough()
+        reply.type('application/x-ndjson; charset=utf-8').header('Cache-Control', 'no-cache, no-transform').send(output)
+        output.end(JSON.stringify({ type: 'done', assessment: cached }) + '\n')
+        return reply
+      } catch { /* regenerate invalid legacy data */ }
     }
     const questions = getQuestions(session.challenge)
     const path = toPath(session)
@@ -416,6 +442,27 @@ export async function sessionRoutes(fastify: FastifyInstance) {
       strongest: questions[entry.key]?.choices[questions[entry.key].bestChoice]?.text ?? ''
     }))
     const referenceScore = Math.round(scoreLevel(path, questions).accuracy * 100)
+    if (streaming) {
+      const output = new PassThrough()
+      reply.type('application/x-ndjson; charset=utf-8')
+        .header('Cache-Control', 'no-cache, no-transform')
+        .header('X-Accel-Buffering', 'no')
+        .send(output)
+      const send = (event: object) => { if (!output.destroyed) output.write(JSON.stringify(event) + '\n') }
+      void (async () => {
+        try {
+          const assessment = await streamCompletedRun(session.challenge.title, decisions, referenceScore, fields => send({ type: 'progress', fields }))
+          await prisma.session.update({ where: { id: session.id }, data: { aiAssessment: assessment as unknown as Prisma.InputJsonValue } })
+          send({ type: 'done', assessment })
+        } catch (error) {
+          request.log.error({ error }, 'run AI assessment stream failed')
+          send({ type: 'error', error: 'ارزیابی هوشمند در دسترس نیست. دوباره تلاش کنید.' })
+        } finally {
+          output.end()
+        }
+      })()
+      return reply
+    }
     try {
       const assessment = await assessCompletedRun(session.challenge.title, decisions, referenceScore)
       await prisma.session.update({ where: { id: session.id }, data: { aiAssessment: assessment as unknown as Prisma.InputJsonValue } })

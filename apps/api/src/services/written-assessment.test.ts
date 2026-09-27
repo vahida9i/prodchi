@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { assessCompletedRun, assessWrittenAnswer, isAiConfigured, parseRunAssessment, parseWrittenAssessment } from './written-assessment.ts'
+import { assessCompletedRun, assessWrittenAnswer, isAiConfigured, parseRunAssessment, parseWrittenAssessment, streamCompletedRun, streamWrittenAnswer } from './written-assessment.ts'
 import type { Question } from '@prodchi/shared-types/challenge-schema'
 
 const fixture = JSON.parse(readFileSync(new URL('../../../../docs/fixtures/fa_calendar_growth.json', import.meta.url), 'utf8'))
@@ -73,6 +73,68 @@ test('parses overall assessment from a structured Liara chat completion', async 
     assert.equal(result.score, 76)
     assert.equal(requestBody.response_format.json_schema.name, 'run_assessment')
     assert.equal(JSON.parse(requestBody.messages[1].content).referenceScore, 75)
+  } finally {
+    globalThis.fetch = previousFetch
+    for (const [name, value] of Object.entries({ LIARA_BASE_URL: previousConfig.base, LIARA_API_KEY: previousConfig.key, LIARA_CHAT_MODEL: previousConfig.model })) {
+      if (value === undefined) delete process.env[name]
+      else process.env[name] = value
+    }
+  }
+})
+
+test('streams readable assessment fields before returning a validated result', async () => {
+  const previousConfig = { base: process.env.LIARA_BASE_URL, key: process.env.LIARA_API_KEY, model: process.env.LIARA_CHAT_MODEL }
+  const previousFetch = globalThis.fetch
+  process.env.LIARA_BASE_URL = 'https://ai.liara.ir/api/test-workspace/v1'
+  process.env.LIARA_API_KEY = 'test-key'
+  process.env.LIARA_CHAT_MODEL = 'openai/gpt-4o-mini'
+  let requestBody: any
+  const chunks = [
+    '{"score":76,"strength":"تحلیل ',
+    'روشن","weakness":"شواهد ',
+    'کم","nextStep":"گروه‌ها را جدا کن"}'
+  ]
+  const eventText = chunks.map(content => `data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\n`).join('') + 'data: [DONE]\n\n'
+  const encoded = new TextEncoder().encode(eventText)
+  globalThis.fetch = async (_url, options) => {
+    requestBody = JSON.parse(options?.body as string)
+    return new Response(new ReadableStream({
+      start(controller) {
+        for (let offset = 0; offset < encoded.length; offset += 11) controller.enqueue(encoded.slice(offset, offset + 11))
+        controller.close()
+      }
+    }), { status: 200, headers: { 'Content-Type': 'text/event-stream' } })
+  }
+  const progress: Array<{ strength?: string; weakness?: string; nextStep?: string }> = []
+  try {
+    const result = await streamCompletedRun('سناریوی آزمون', [{ question: 'چه می‌کنید؟', answer: 'گروه‌ها را جدا می‌کنم', strongest: 'بررسی گروه‌ها' }], 75, value => progress.push(value))
+    assert.equal(requestBody.stream, true)
+    assert.equal(requestBody.response_format.json_schema.name, 'run_assessment')
+    assert.ok(progress.some(value => value.strength === 'تحلیل ' && value.weakness === undefined))
+    assert.ok(progress.some(value => value.weakness === 'شواهد ' && value.nextStep === undefined))
+    assert.deepEqual(result, { score: 76, strength: 'تحلیل روشن', weakness: 'شواهد کم', nextStep: 'گروه‌ها را جدا کن' })
+  } finally {
+    globalThis.fetch = previousFetch
+    for (const [name, value] of Object.entries({ LIARA_BASE_URL: previousConfig.base, LIARA_API_KEY: previousConfig.key, LIARA_CHAT_MODEL: previousConfig.model })) {
+      if (value === undefined) delete process.env[name]
+      else process.env[name] = value
+    }
+  }
+})
+
+test('streams written-answer feedback before choosing the final authored branch', async () => {
+  const previousConfig = { base: process.env.LIARA_BASE_URL, key: process.env.LIARA_API_KEY, model: process.env.LIARA_CHAT_MODEL }
+  const previousFetch = globalThis.fetch
+  process.env.LIARA_BASE_URL = 'https://ai.liara.ir/api/test-workspace/v1'
+  process.env.LIARA_API_KEY = 'test-key'
+  process.env.LIARA_CHAT_MODEL = 'openai/gpt-4o-mini'
+  const chunks = ['{"choiceIndex":0,"score":88,"strength":"تفکیک ', 'درست","weakness":"شواهد بیشتری لازم است"}']
+  globalThis.fetch = async () => new Response(chunks.map(content => `data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\n`).join('') + 'data: [DONE]\n\n', { status: 200 })
+  const progress: Array<{ strength?: string; weakness?: string }> = []
+  try {
+    const result = await streamWrittenAnswer(fixture.questions.Q1 as Question, 'ابتدا کاربران را بر اساس کانال جذب و اتصال همکار جدا می‌کنم تا افت را دقیق‌تر ببینم.', value => progress.push(value))
+    assert.ok(progress.some(value => value.strength === 'تفکیک ' && value.weakness === undefined))
+    assert.deepEqual(result, { choiceIndex: 0, score: 88, strength: 'تفکیک درست', weakness: 'شواهد بیشتری لازم است' })
   } finally {
     globalThis.fetch = previousFetch
     for (const [name, value] of Object.entries({ LIARA_BASE_URL: previousConfig.base, LIARA_API_KEY: previousConfig.key, LIARA_CHAT_MODEL: previousConfig.model })) {
