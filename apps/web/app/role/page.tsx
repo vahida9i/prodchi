@@ -40,8 +40,8 @@ export default function RolePage() {
         )}
 
         <section className="text-center">
-          <span className="mx-auto inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-bold text-primary"><Sparkles size={14} aria-hidden />شروع یک مسیر تازه</span>
-          <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">از کجا می‌خواهی شروع کنی؟</h1>
+          <span className="mx-auto inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-bold text-primary"><Sparkles size={14} aria-hidden />{currentRoleId ? 'مدیریت مسیرهای شما' : 'شروع یک مسیر تازه'}</span>
+          <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">{currentRoleId ? 'کدام مسیر را می‌خواهی ادامه بدهی؟' : 'از کجا می‌خواهی شروع کنی؟'}</h1>
           <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-muted-foreground sm:text-base">یک نقش را انتخاب کن تا سناریوها، تمرین‌ها و مسیر پیشرفتت بر اساس همان ساخته شود. بعداً هر زمان بخواهی می‌توانی مسیرت را تغییر بدهی.</p>
         </section>
 

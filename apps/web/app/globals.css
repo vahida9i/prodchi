@@ -39,6 +39,20 @@
 }
 
 @layer utilities {
+  .pressable-button {
+    box-shadow: 0 5px 0 var(--button-edge);
+    transition: transform 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
+  }
+  .pressable-button:not(:disabled):not([aria-disabled="true"]):active {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 var(--button-edge);
+  }
+  .pressable-button:disabled, .pressable-button[aria-disabled="true"] { box-shadow: 0 3px 0 var(--button-edge); }
+  .pressable-primary { --button-edge: hsl(153 55% 26%); }
+  .pressable-destructive { --button-edge: hsl(0 65% 33%); }
+  .pressable-outline { --button-edge: hsl(var(--input)); }
+  .pressable-secondary { --button-edge: hsl(43 44% 79%); }
+  .pressable-reward { --button-edge: #acc5ea; }
   .touch-target { min-height: 2.75rem; min-width: 2.75rem; }
   .safe-bottom { padding-bottom: calc(5.75rem + env(safe-area-inset-bottom)); }
   .safe-nav { padding-bottom: env(safe-area-inset-bottom); }
@@ -47,7 +61,7 @@
   .button-shine { position: relative; overflow: hidden; }
   .button-shine::after { content: ""; position: absolute; inset-block: 0; width: 35%; background: linear-gradient(90deg, transparent, rgb(255 255 255 / .28), transparent); transform: translateX(180%); pointer-events: none; }
   .button-shine:hover::after { animation: button-shine 700ms ease-out; }
-  .celebration-confetti { animation: confetti-fall 680ms cubic-bezier(.2,.7,.3,1) both; }
+  .celebration-confetti { animation: confetti-burst 1.3s cubic-bezier(.2,.7,.3,1) both; }
   .micro-shake { animation: micro-shake 260ms ease-out; }
 }
 
@@ -62,10 +76,11 @@
   to { transform: translateX(-320%); }
 }
 
-@keyframes confetti-fall {
-  0% { opacity: 0; transform: translate3d(0, -16px, 0) rotate(0deg) scale(.7); }
-  12% { opacity: 1; }
-  100% { opacity: 0; transform: translate3d(var(--confetti-x), 82vh, 0) rotate(var(--confetti-r)) scale(1); }
+@keyframes confetti-burst {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0deg) scale(.8); }
+  10% { opacity: 1; }
+  45% { opacity: 1; transform: translate3d(var(--confetti-x), -46vh, 0) rotate(var(--confetti-r)) scale(1); }
+  100% { opacity: 0; transform: translate3d(var(--confetti-x), 12vh, 0) rotate(var(--confetti-r)) scale(1); }
 }
 
 @keyframes micro-shake {
@@ -84,10 +99,11 @@
   .role-card-pop, .celebration-confetti, .micro-shake { animation: none !important; }
   .button-shine::after { display: none; }
 }
-@keyframes level-confetti-float {
-  0% { transform: translateY(-8px) rotate(0deg); opacity: 0; }
-  20% { opacity: 1; }
-  100% { transform: translateY(65px) rotate(160deg); opacity: 0; }
+@keyframes reward-confetti-burst {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0deg) scale(.8); }
+  10% { opacity: 1; }
+  48% { opacity: 1; transform: translate3d(var(--confetti-x), var(--confetti-rise), 0) rotate(var(--confetti-r)) scale(1); }
+  100% { opacity: 0; transform: translate3d(var(--confetti-x), 15vh, 0) rotate(var(--confetti-r)) scale(1); }
 }
-.level-confetti { animation: level-confetti-float 2.2s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { .level-confetti { animation: none; } }
+.reward-confetti { animation: reward-confetti-burst 3s cubic-bezier(.2,.7,.3,1) both; }
+@media (prefers-reduced-motion: reduce) { .reward-confetti { display: none; } }

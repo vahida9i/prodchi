@@ -21,6 +21,7 @@ function challengeAssessment(value: unknown): Assessment | null {
 }
 import {
   getQuestions,
+  remainingDecisionRange,
   revealOf,
   sanitizeQuestion,
   startOrResumeSession,
@@ -309,6 +310,7 @@ export async function sessionRoutes(fastify: FastifyInstance) {
         reveal: revealOf(choice),
         assessment: assessment ? { score: assessment.score, strength: assessment.strength, weakness: assessment.weakness } : null,
         question: sanitizeQuestion(choice.next, nextQuestion),
+        remainingDecisions: remainingDecisionRange(questions, choice.next),
         status: 'in_progress'
       })
     } catch (error) {
@@ -351,6 +353,7 @@ export async function sessionRoutes(fastify: FastifyInstance) {
       startedAt: session.startedAt,
       completedAt: session.completedAt,
       question,
+      remainingDecisions: question ? remainingDecisionRange(questions, session.currentKey!) : null,
       history
     })
   })

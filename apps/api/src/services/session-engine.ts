@@ -63,6 +63,31 @@ export function getQuestions(challenge: { questions: unknown }): Record<string, 
   return challenge.questions as Record<string, Question>
 }
 
+/** A branch can finish early, so a single total would mislead the player. */
+export function remainingDecisionRange(
+  questions: Record<string, Question>,
+  currentKey: string
+): { min: number; max: number } | null {
+  const memo = new Map<string, { min: number; max: number } | null>()
+  const visiting = new Set<string>()
+  const visit = (key: string): { min: number; max: number } | null => {
+    if (memo.has(key)) return memo.get(key) ?? null
+    const question = questions[key]
+    if (!question || !question.choices.length || visiting.has(key)) return null
+    visiting.add(key)
+    const branches = question.choices.map(choice => choice.next === 'END'
+      ? { min: 0, max: 0 }
+      : visit(choice.next))
+    visiting.delete(key)
+    const result = branches.every((branch): branch is { min: number; max: number } => branch !== null)
+      ? { min: Math.min(...branches.map(branch => branch.min)) + 1, max: Math.max(...branches.map(branch => branch.max)) + 1 }
+      : null
+    memo.set(key, result)
+    return result
+  }
+  return visit(currentKey)
+}
+
 export function toPath(session: { path: unknown }): PathEntry[] {
   return Array.isArray(session.path) ? (session.path as PathEntry[]) : []
 }

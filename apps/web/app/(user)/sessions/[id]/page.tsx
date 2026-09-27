@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowRight, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { StepOptionList } from "@/components/challenge/StepOptionList"
 import { RevealBlock } from "@/components/challenge/RevealBlock"
@@ -28,6 +29,7 @@ export default function SessionPage() {
   const [challengeTitle, setChallengeTitle] = useState("")
   const [summary, setSummary] = useState<string | null>(null)
   const [answeredCount, setAnsweredCount] = useState(0)
+  const [remainingDecisions, setRemainingDecisions] = useState<{ min: number; max: number } | null>(null)
   const [question, setQuestion] = useState<SanitizedQuestion | null>(null)
   const [history, setHistory] = useState<SessionHistoryEntry[]>([])
   const [reveal, setReveal] = useState<RevealBlockData | null>(null)
@@ -38,10 +40,11 @@ export default function SessionPage() {
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [summaryError, setSummaryError] = useState<string | null>(null)
   const [answering, setAnswering] = useState(false)
+  const [leaveOpen, setLeaveOpen] = useState(false)
   const [answerText, setAnswerText] = useState("")
   const [writtenAssessment, setWrittenAssessment] = useState<{ score: number; strength: string; weakness: string } | null>(null)
   const [aiProgress, setAiProgress] = useState<{ strength?: string; weakness?: string }>({})
-  const pendingRef = useRef<SanitizedQuestion | null>(null)
+  const pendingRef = useRef<{ question: SanitizedQuestion | null; remaining: { min: number; max: number } | null } | null>(null)
 
   const loadCompletedSummary = useCallback(async () => {
     setSummaryLoading(true)
@@ -61,7 +64,7 @@ export default function SessionPage() {
       try {
         const data = await api.getSession(sessionId)
         if (data.status === "completed") { router.replace(`/sessions/${sessionId}/summary`); return }
-        setChallengeTitle(data.challengeTitle); setSummary(data.summary); setAnsweredCount(data.answeredCount); setQuestion(data.question); setHistory(data.history)
+        setChallengeTitle(data.challengeTitle); setSummary(data.summary); setAnsweredCount(data.answeredCount); setQuestion(data.question); setRemainingDecisions(data.remainingDecisions); setHistory(data.history)
         if (!data.question) setError("این نشست وضعیت نامعتبری دارد. سناریو را دوباره از کتابخانه شروع کنید.")
       } catch (err: any) {
         if (err?.status === 401) { router.push("/login"); return }
@@ -71,7 +74,7 @@ export default function SessionPage() {
     load()
   }, [sessionId, router])
 
-  const applyNext = useCallback((next: SanitizedQuestion | null) => { pendingRef.current = null; setReveal(null); setQuestion(next); setAnswerText(""); setWrittenAssessment(null); setAiProgress({}) }, [])
+  const applyNext = useCallback((next: SanitizedQuestion | null, remaining: { min: number; max: number } | null) => { pendingRef.current = null; setReveal(null); setQuestion(next); setRemainingDecisions(remaining); setAnswerText(""); setWrittenAssessment(null); setAiProgress({}) }, [])
 
   const handleAnswer = async (answer: { choiceIndex: number } | { answerText: string }) => {
     if (answering || reveal !== null || !question) return
@@ -88,28 +91,29 @@ export default function SessionPage() {
         setResult(response.result ?? null)
         setDailyReward(response.dailyReward ?? null)
         void loadCompletedSummary()
-      } else pendingRef.current = response.question
+      } else pendingRef.current = { question: response.question, remaining: response.remainingDecisions ?? null }
     } catch (err: any) {
       setAiProgress({})
       if (err?.status === 409 && !err?.restart) {
-        try { const fresh = await api.getSession(sessionId); if (fresh.status === "completed") { router.replace(`/sessions/${sessionId}/summary`); return }; setHistory(fresh.history); setAnsweredCount(fresh.answeredCount); applyNext(fresh.question); return } catch {}
+        try { const fresh = await api.getSession(sessionId); if (fresh.status === "completed") { router.replace(`/sessions/${sessionId}/summary`); return }; setHistory(fresh.history); setAnsweredCount(fresh.answeredCount); applyNext(fresh.question, fresh.remainingDecisions); return } catch {}
       }
       setError(err?.message || "ثبت پاسخ ناموفق بود")
     } finally { setAnswering(false) }
   }
 
-  const handleContinue = () => applyNext(pendingRef.current)
+  const handleContinue = () => { if (pendingRef.current) applyNext(pendingRef.current.question, pendingRef.current.remaining) }
   const pathReveals = history.filter(entry => hasReveal(entry.reveal))
 
   if (loading) return <div className="flex min-h-[60vh] items-center justify-center"><div className="h-9 w-9 animate-spin rounded-full border-4 border-primary/20 border-t-primary" /></div>
 
-  if (finished) return <SessionResult title={completedSummary?.challengeTitle ?? challengeTitle} summary={completedSummary} completion={result} dailyReward={dailyReward} loading={summaryLoading} error={summaryError} onRetry={() => void loadCompletedSummary()} onBack={() => router.push(dailyReward ? "/daily" : "/home")} />
+  if (finished) return <SessionResult title={completedSummary?.challengeTitle ?? challengeTitle} summary={completedSummary} completion={result} dailyReward={dailyReward} showRewardOnMount loading={summaryLoading} error={summaryError} onRetry={() => void loadCompletedSummary()} onBack={() => router.push(dailyReward ? "/daily" : "/home")} />
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between gap-3"><Button type="button" variant="ghost" className="touch-target -mr-2" onClick={() => router.push("/home")}><ArrowRight size={18} aria-hidden /> خروج</Button><span className="text-sm font-semibold text-muted-foreground">{fmt("{n} پاسخ ثبت شد", { n: digits(answeredCount) })}</span></div>
+      <div className="flex items-center justify-between gap-3"><Button type="button" variant="ghost" className="touch-target -mr-2" disabled={answering} onClick={() => answerText.trim() && !reveal ? setLeaveOpen(true) : router.push("/home")}><ArrowRight size={18} aria-hidden /> خروج و ادامه بعداً</Button><span className="text-sm font-semibold text-muted-foreground">{fmt("{n} پاسخ ثبت شد", { n: digits(answeredCount) })}</span></div>
+      <AlertDialog open={leaveOpen} onOpenChange={setLeaveOpen}><AlertDialogContent className="mx-auto w-[calc(100%-2rem)] rounded-2xl" dir="rtl"><AlertDialogHeader className="text-right"><AlertDialogTitle>از سناریو خارج می‌شوی؟</AlertDialogTitle><AlertDialogDescription className="leading-7">پاسخ‌های ثبت‌شده محفوظ‌اند، اما متنی که هنوز ثبت نکرده‌ای ذخیره نمی‌شود.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter className="gap-2 sm:space-x-0"><AlertDialogCancel className="touch-target px-4">ماندن و تکمیل پاسخ</AlertDialogCancel><AlertDialogAction className="touch-target px-4" onClick={() => router.push("/home")}>خروج از سناریو</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
       <section className="space-y-2"><p className="text-xs font-semibold text-primary">مرحله {digits(answeredCount + 1)}</p><h1 className="text-2xl font-extrabold leading-9">{challengeTitle}</h1>{summary && <p className="text-sm leading-7 text-muted-foreground">{summary}</p>}</section>
-      <div className="space-y-2"><div className="flex items-center justify-between text-xs text-muted-foreground"><span>{fmt("سؤال {n}", { n: digits(answeredCount + (reveal ? 0 : 1)) })}</span><span>{answeredCount ? <>{digits(answeredCount)} پاسخ</> : "شروع"}</span></div><div className="h-2 overflow-hidden rounded-full bg-muted" dir="rtl"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(100, Math.max(8, answeredCount * 18))}%` }} /></div></div>
+      <div className="rounded-xl border bg-muted/40 px-4 py-3 text-xs leading-6 text-muted-foreground"><div className="flex flex-wrap items-center justify-between gap-2"><span className="font-bold text-foreground">{fmt("گام {n}", { n: digits(answeredCount + (reveal ? 0 : 1)) })}</span>{remainingDecisions && !reveal && <span>{remainingDecisions.min === remainingDecisions.max ? `${digits(remainingDecisions.min)} تصمیم تا پایان` : `${digits(remainingDecisions.min)} تا ${digits(remainingDecisions.max)} تصمیم تا پایان؛ بسته به انتخاب‌های شما`} · حدود {remainingDecisions.min === remainingDecisions.max ? digits(remainingDecisions.min * 2) : `${digits(remainingDecisions.min * 2)} تا ${digits(remainingDecisions.max * 2)}`} دقیقه</span>}</div><p className="mt-1">پاسخ‌های ثبت‌شده محفوظ‌اند و از همین‌جا ادامه می‌دهید. متن ناتمام ذخیره نمی‌شود.</p></div>
 
       {error && <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div>}
 

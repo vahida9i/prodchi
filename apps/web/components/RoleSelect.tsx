@@ -63,7 +63,7 @@ function CelebrationBurst() {
         <span
           key={index}
           aria-hidden="true"
-          className="celebration-confetti absolute right-1/2 top-[12%] h-3 w-2 rounded-sm"
+          className="celebration-confetti absolute bottom-[8%] right-1/2 h-3 w-2 rounded-sm"
           style={{ backgroundColor: color, animationDelay: `${index * 22}ms`, "--confetti-x": x, "--confetti-r": rotation } as CSSProperties}
         />
       ))}
@@ -101,6 +101,10 @@ export function RoleSelect({ currentRoleId = null }: { currentRoleId?: string | 
       setError("لطفاً یکی از مسیرها را انتخاب کنید")
       return
     }
+    if (selectedRole === currentRoleId) {
+      router.push("/home")
+      return
+    }
     setIsLoading(true)
     setError("")
     try {
@@ -111,7 +115,7 @@ export function RoleSelect({ currentRoleId = null }: { currentRoleId?: string | 
         router.refresh()
       } else {
         setCelebrating(true)
-        window.setTimeout(() => { router.push("/home"); router.refresh() }, 720)
+        window.setTimeout(() => { router.push("/home"); router.refresh() }, 1650)
       }
     } catch {
       setError("خطایی رخ داد. لطفاً دوباره تلاش کنید.")
@@ -169,8 +173,9 @@ export function RoleSelect({ currentRoleId = null }: { currentRoleId?: string | 
         </div>
       )}
 
-      <Button type="button" onClick={handleSubmit} disabled={isLoading || rolesLoading || !selectedRole} className="button-shine touch-target w-full gap-2 text-base font-bold shadow-sm">
-        {isLoading ? <><Loader2 size={18} className="animate-spin" aria-hidden />در حال ساخت مسیر…</> : hasCurrentRole ? "تغییر نقش و دیدن مسیر" : "شروع مسیر من"}
+      {hasCurrentRole && <p className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-xs leading-6 text-sky-950">پیشرفت مسیر قبلی‌تان پاک نمی‌شود. با تغییر نقش، مسیر و تمرین‌های نقش تازه را می‌بینید و هر وقت بخواهید می‌توانید به نقش قبلی برگردید.</p>}
+      <Button type="button" onClick={handleSubmit} disabled={isLoading || rolesLoading || !selectedRole} className="button-shine touch-target w-full text-base font-bold">
+        {isLoading ? <><Loader2 size={18} className="animate-spin" aria-hidden />در حال آماده‌سازی مسیر…</> : hasCurrentRole ? selectedRole === currentRoleId ? "بازگشت به مسیر فعلی" : "تغییر نقش و دیدن مسیر" : "شروع مسیر من"}
       </Button>
       {celebrating && <CelebrationBurst />}
     </div>

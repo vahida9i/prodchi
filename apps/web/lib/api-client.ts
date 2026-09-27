@@ -53,6 +53,7 @@ export interface SessionAnswerResult {
   reveal: RevealBlock
   assessment: WrittenAssessment | null
   question: SanitizedQuestion | null
+  remainingDecisions?: { min: number; max: number } | null
   status: 'in_progress' | 'completed'
   result: LevelCompletion | null
   dailyReward: DailyReward | null
@@ -370,6 +371,7 @@ class ApiClient {
       startedAt: string
       completedAt: string | null
       question: SanitizedQuestion | null
+      remainingDecisions: { min: number; max: number } | null
       history: SessionHistoryEntry[]
     }>(`/sessions/${sessionId}`)
   }
