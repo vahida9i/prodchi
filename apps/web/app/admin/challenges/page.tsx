@@ -69,7 +69,7 @@ export default function AdminChallengesPage() {
     } catch {
       // Cookie clearing is best-effort; always land on the login screen.
     }
-    router.push("/login")
+    router.push("/app/login")
   }
 
   const renderRows = (rows: AdminChallenge[], tab: "active" | "retired") => {

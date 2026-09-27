@@ -7,10 +7,10 @@ import { cn } from "@/lib/utils"
 import { RoleChip } from "@/components/RoleChip"
 
 const navItems = [
-  { href: "/home", label: "مسیر", icon: Map },
-  { href: "/skills", label: "مهارت‌ها", icon: Brain },
-  { href: "/progress", label: "پیشرفت", icon: Sparkles },
-  { href: "/profile", label: "پروفایل", icon: CircleUserRound },
+  { href: "/app/home", label: "مسیر", icon: Map },
+  { href: "/app/skills", label: "مهارت‌ها", icon: Brain },
+  { href: "/app/progress", label: "پیشرفت", icon: Sparkles },
+  { href: "/app/profile", label: "پروفایل", icon: CircleUserRound },
 ]
 
 export function PersianUserShell({
@@ -42,7 +42,7 @@ export function PersianUserShell({
       <nav aria-label="ناوبری اصلی" className="safe-nav fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 shadow-[0_-4px_20px_rgba(22,45,34,0.08)] backdrop-blur">
         <div className="mx-auto grid h-16 max-w-3xl grid-cols-4 px-3">
           {navItems.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href || (href === "/home" && pathname.startsWith("/sessions"))
+            const active = pathname === href || (href === "/app/home" && pathname.startsWith("/app/sessions"))
             return (
               <Link
                 key={href}

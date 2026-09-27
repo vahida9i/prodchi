@@ -102,7 +102,7 @@ export function RoleSelect({ currentRoleId = null }: { currentRoleId?: string | 
       return
     }
     if (selectedRole === currentRoleId) {
-      router.push("/home")
+      router.push("/app/home")
       return
     }
     setIsLoading(true)
@@ -111,11 +111,11 @@ export function RoleSelect({ currentRoleId = null }: { currentRoleId?: string | 
       await api.setRole(selectedRole)
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
       if (reducedMotion) {
-        router.push("/home")
+        router.push("/app/home")
         router.refresh()
       } else {
         setCelebrating(true)
-        window.setTimeout(() => { router.push("/home"); router.refresh() }, 1650)
+        window.setTimeout(() => { router.push("/app/home"); router.refresh() }, 1650)
       }
     } catch {
       setError("خطایی رخ داد. لطفاً دوباره تلاش کنید.")

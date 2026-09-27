@@ -1,9 +1,13 @@
 import type { Metadata } from "next"
-import { Vazirmatn } from "next/font/google"
+import localFont from "next/font/local"
 import { MonitoringProvider } from "@/components/monitoring-provider"
 import "./globals.css"
 
-const vazirmatn = Vazirmatn({ subsets: ["arabic", "latin"] })
+const vazirmatn = localFont({
+  src: "../public/fonts/vazirmatn.woff2",
+  weight: "100 900",
+  display: "swap",
+})
 
 export async function generateMetadata(): Promise<Metadata> {
   return {

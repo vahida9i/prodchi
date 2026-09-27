@@ -7,7 +7,7 @@ import { cookies } from 'next/headers'
  * that resolves from wherever that server runs. In Docker the container's own
  * localhost is not the API: NEXT_PUBLIC_API_URL is the browser-facing address
  * (http://localhost:4000), and pointing the in-container fetch at it makes every
- * gated layout bounce to /login. SERVER_API_URL carries the internal address
+ * gated layout bounce to /app/login. SERVER_API_URL carries the internal address
  * (http://api:4000/api/v1 under Compose); NEXT_PUBLIC_API_URL stays the fallback,
  * so nothing changes outside a container.
  */
@@ -41,7 +41,7 @@ export async function getServerSessionUser(): Promise<SessionUser | null> {
       headers: { cookie: cookieHeader },
       cache: 'no-store',
       // A down API must not hang every layout gate; fall through to null
-      // (which routes the visitor to /login) after 3s.
+      // (which routes the visitor to /app/login) after 3s.
       signal: AbortSignal.timeout(3000)
     })
 

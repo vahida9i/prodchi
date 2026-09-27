@@ -318,7 +318,7 @@ The candidate's real-world capability profile — what they are good at in their
 - Each decision is credited to the skill of the stage on the move the candidate **chose** — not the ideal one — weighted best = 1, reasonable = 0.5, poor = 0 (`packages/shared-types/skills.ts`). Stages are per-role at import: a PM challenge may only use PM stages, a PD challenge only PD stages (`FRAME` is shared).
 - **Proficiency bands** reuse the run-feedback thresholds: `strong` ≥ 75%, `emerging` ≤ 50%, else `developing`. A skill also needs **≥ 3 observed decisions** (`MIN_SKILL_EVIDENCE`) before it may read strong — a thin perfect record stays `developing` and is flagged `thinEvidence` ("needs more evidence"), so one lucky answer cannot claim mastery. Skills with no decisions read `unproven` ("not yet observed") — no fake zeros.
 - **Aggregated on read, no profile table**: `GET /api/v1/progress/skills` walks the caller's completed sessions and their challenges' stored graphs with the same pure `buildSkillProfile` used by the unit tests, so the profile can never contradict a finished run's own report. Challenge-local rubric criteria are deliberately **not** part of the profile — they stay in the end-of-run report.
-- **Web**: `/profile` — header stats (strong-call rate, decisions, scenarios), an SVG radar of the role's skills, Strengths and "Where you lose ground" cards (growth ones surface the authored remediation note), and the full skill breakdown.
+- **Web**: `/app/profile` — header stats (strong-call rate, decisions, scenarios), an SVG radar of the role's skills, Strengths and "Where you lose ground" cards (growth ones surface the authored remediation note), and the full skill breakdown.
 
 ## API Endpoints
 
@@ -367,12 +367,15 @@ The candidate's real-world capability profile — what they are good at in their
 
 ## Web Routes
 
-- `/` `/login` `/signup` — entry and auth
-- `/onboarding` `/role` — role selection: first run, and the revisitable role-select page behind the header's role chip (both render the shared selector; success lands on `/home`, the selected track's path)
-- `/home` — the level path map (play/replay levels, each node showing the challenge's business brief; locked levels unlock in order)
-- `/sessions/[id]` — guided session player (reveal waits for Continue; level result card on completion)
-- `/sessions/[id]/summary` — session recap + score
-- `/progress` — XP, player level, streak, industries, weekly leaderboard, badges
+- `/` — public Persian landing page; `/app` opens the user's app entry
+- `/app/login` `/app/signup` — authentication
+- `/app/onboarding` `/app/role` — role selection: first run and later role switching; success lands on `/app/home`
+- `/app/home` — the level path map (play/replay levels, each node showing the challenge's business brief; locked levels unlock in order)
+- `/app/sessions/[id]` — guided session player (reveal waits for Continue; level result card on completion)
+- `/app/sessions/[id]/summary` — session recap + score
+- `/app/skills` `/app/progress` `/app/profile` `/app/badges` `/app/daily` — skill and progress screens
+- `/app/p/[token]` — shareable public profile
+- Former user-facing URLs redirect to the matching `/app` URL so existing links keep working.
 - `/admin/challenges` — import + library management (retire/restore/delete)
 - `/admin/challenges/[id]` — internal view + **Update content** (edit the JSON and save; re-imports in place)
 - `/admin/levels` — level path management (assign/retire/delete, industries)

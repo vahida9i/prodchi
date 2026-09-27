@@ -112,7 +112,7 @@ export default function AdminLevelsPage() {
     } catch {
       // Cookie clearing is best-effort; always land on the login screen.
     }
-    router.push("/login")
+    router.push("/app/login")
   }
 
   if (loading) {

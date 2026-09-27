@@ -6,7 +6,7 @@ import { api } from "@/lib/api-client"
 import { Briefcase, ChevronLeft, AlertCircle } from "lucide-react"
 
 /**
- * Header chip showing the account's CURRENT role track, linking to /role (the
+ * Header chip showing the account's CURRENT role track, linking to /app/role (the
  * revisitable role-select page). Kept in sync with the session by re-reading
  * /auth/me on mount — after a switch the page refreshes, so this re-renders
  * with the new track.
@@ -56,7 +56,7 @@ export function RoleChip() {
   if (status === 'error' || !roleName) {
     return (
       <Link
-        href="/role"
+        href="/app/role"
         className="inline-flex items-center gap-2 rounded-full border border-destructive/40 px-3 py-1.5 text-sm hover:bg-muted transition-colors"
         title="بارگذاری نقش ناموفق بود؛ دوباره انتخاب کنید"
       >
@@ -69,7 +69,7 @@ export function RoleChip() {
 
   return (
     <Link
-      href="/role"
+      href="/app/role"
       className="touch-target inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-sm transition-colors hover:bg-muted"
       title={"تغییر نقش"}
     >

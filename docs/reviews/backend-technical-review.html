@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>بررسی فنی بک‌اند پرودچی</title>
+  <style>
+    :root { font-family: Tahoma, "Segoe UI", sans-serif; color: #17251f; background: #f6f7f4; line-height: 1.9; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; }
+    a { color: #176d50; text-underline-offset: 4px; }
+    a:hover { color: #0b4e38; }
+    a:focus-visible, button:focus-visible { outline: 3px solid #289e72; outline-offset: 3px; }
+    .shell { max-width: 1180px; margin: auto; display: grid; grid-template-columns: minmax(0,1fr) 225px; gap: 38px; padding: 36px 28px 90px; }
+    main { min-width: 0; }
+    aside { position: sticky; top: 28px; align-self: start; border-right: 1px solid #dce4dc; padding-right: 22px; }
+    aside strong { display: block; font-size: 13px; margin-bottom: 10px; color: #526359; }
+    aside a { display: block; padding: 5px 0; color: #46584d; text-decoration: none; font-size: 13px; }
+    aside a:hover { color: #176d50; text-decoration: underline; }
+    .eyebrow { color: #176d50; font-weight: 800; font-size: 13px; letter-spacing: .01em; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-size: clamp(27px, 4vw, 38px); line-height: 1.5; margin-bottom: 10px; }
+    h2 { font-size: 22px; line-height: 1.55; margin: 0 0 16px; }
+    h3 { font-size: 17px; line-height: 1.7; margin: 0 0 7px; }
+    p { margin-bottom: 12px; }
+    .lead { font-size: 16px; color: #405148; max-width: 78ch; }
+    .meta { color: #647369; font-size: 13px; margin-bottom: 27px; }
+    .topbar { display: flex; align-items: start; justify-content: space-between; gap: 18px; }
+    .print { border: 1px solid #cddacf; background: white; color: #176d50; font: inherit; font-size: 13px; font-weight: 800; border-radius: 10px; padding: 8px 15px; cursor: pointer; white-space: nowrap; }
+    .print:hover { background: #ebf5ee; }
+    section { scroll-margin-top: 24px; margin-top: 38px; }
+    .verdict { background: #e7f1e9; border: 1px solid #cde4d3; border-radius: 17px; padding: 21px 25px; margin-top: 24px; }
+    .verdict strong { color: #145c43; }
+    .facts { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; margin-top: 16px; }
+    .fact { background: white; border: 1px solid #dce3da; border-radius: 13px; padding: 13px 16px; }
+    .fact b { display: block; font-size: 20px; line-height: 1.35; }
+    .fact span { color: #647369; font-size: 12px; }
+    .arch { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 15px 0 20px; }
+    .arch span { background: white; border: 1px solid #dce3da; border-radius: 10px; padding: 7px 13px; font-size: 13px; font-weight: 700; }
+    .arch em { color: #7d9185; font-style: normal; }
+    ul { margin-top: 6px; padding-right: 21px; }
+    li { margin-bottom: 7px; }
+    .finding { border-top: 1px solid #d9e1d8; padding: 21px 0 17px; }
+    .finding-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+    .finding-head h3 { margin: 0; }
+    .tag { display: inline-block; border-radius: 7px; padding: 2px 9px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+    .tag.urgent { background: #fce9e4; color: #9b3829; }
+    .tag.high { background: #fff0d7; color: #8a5714; }
+    .tag.medium { background: #e8eef1; color: #456474; }
+    .finding p { max-width: 85ch; }
+    .fix { color: #244e3b; background: #eef5ef; border-radius: 9px; padding: 8px 12px; }
+    .evidence { color: #68786d; font-size: 12px; line-height: 1.9; margin-top: 10px; }
+    code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; direction: ltr; unicode-bidi: isolate; background: #e9eeea; border-radius: 4px; padding: 1px 5px; font-size: .9em; }
+    .evidence code { overflow-wrap: anywhere; }
+    .roadmap { counter-reset: step; list-style: none; padding: 0; margin: 0; }
+    .roadmap li { counter-increment: step; display: grid; grid-template-columns: 32px minmax(0,1fr); gap: 10px; margin-bottom: 12px; }
+    .roadmap li::before { content: counter(step); width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: #176d50; color: white; font-size: 12px; font-weight: 800; margin-top: 5px; }
+    .note { border-right: 3px solid #829b89; padding: 6px 14px; color: #53665a; font-size: 13px; }
+    footer { color: #75857a; font-size: 12px; padding-top: 30px; }
+    @media (max-width: 800px) { .shell { display: flex; flex-direction: column; padding: 22px 17px 65px; } aside { order: -1; position: static; border: 0; padding: 0; margin-bottom: 4px; display: flex; gap: 8px 16px; flex-wrap: wrap; } aside strong { width: 100%; margin: 0; } aside a { padding: 0; } .facts { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+    @media (max-width: 520px) { .topbar { display: block; } .print { margin-bottom: 17px; } .facts { grid-template-columns: 1fr; } .fact { display: flex; justify-content: space-between; align-items: center; } .verdict { padding: 17px; } }
+    @media print { :root { background: white; } .shell { display: block; padding: 0; max-width: none; } aside, .print { display: none; } section { break-inside: avoid; } .finding { break-inside: avoid; } a { color: inherit; text-decoration: none; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <main id="top">
+      <header>
+        <div class="topbar">
+          <div>
+            <div class="eyebrow">پرودچی / گزارش فنی</div>
+            <h1>وضعیت تکنیکال بک‌اند</h1>
+          </div>
+          <button class="print" type="button" onclick="window.print()">چاپ یا ذخیرهٔ PDF</button>
+        </div>
+        <p class="lead">بررسی کیفیت کد و معماری با تمرکز بر نگه‌داری، توسعهٔ نقش‌ها و سناریوها، درستی دادهٔ کاربران و آماده‌بودن برای رشد.</p>
+        <p class="meta">۲۷ سپتامبر ۲۰۲۶ · بررسی ایستای نسخهٔ فعلی مخزن · بدون تغییر در کد بک‌اند</p>
+      </header>
+
+      <div class="verdict" id="summary">
+        <strong>جمع‌بندی</strong>
+        <p>بک‌اند برای مرحلهٔ فعلی محصول ساختار قابل فهمی دارد و بازنویسی کامل لازم نیست. ریسک اصلی در مرز عملیات چندمرحله‌ای است: تکمیل سناریو، ثبت پاداش، ارزیابی AI و تفسیر دوبارهٔ اجراهای قدیمی پس از تغییر محتوا. پیش از رشد تعداد کاربران، تضمین این مرزها از افزودن لایه‌های معماری جدید مهم‌تر است.</p>
+        <div class="facts" aria-label="خلاصهٔ یافته‌ها">
+          <div class="fact"><b>۲</b><span>مورد فوری</span></div>
+          <div class="fact"><b>۳</b><span>مورد مهم</span></div>
+          <div class="fact"><b>۲</b><span>مورد با اولویت میانی</span></div>
+        </div>
+      </div>
+
+      <section id="architecture">
+        <h2>کیفیت کد و معماری</h2>
+        <div class="arch" aria-label="ساختار فعلی بک‌اند"><span>Fastify routes</span><em>←</em><span>services</span><em>←</em><span>shared-types و Prisma</span></div>
+        <p>تفکیک مسیرها، سرویس‌ها و منطق خالص مشترک شروع خوبی برای یک بک‌اند یکپارچه است. ورودی‌های اصلی با Zod بررسی می‌شوند، نقش و مالکیت نشست در سمت سرور کنترل می‌شوند، سؤال قبل از ارسال به کاربر پاک‌سازی می‌شود و امتیاز و گزارشِ پایان اجرا ذخیره می‌شوند. ایندکس یکتای نشست باز و کنترل هم‌زمانی پاسخ نیز تصمیم‌های درست‌اند.</p>
+        <p>هزینهٔ نگه‌داری در چند فایل متمرکز شده است: <code>sessions.ts</code> حدود ۴۸۰ خط و <code>progress.ts</code> حدود ۳۰۰ خط، هم‌زمان کوئری، منطق دامنه و شکل پاسخ API را اداره می‌کنند. برای توسعهٔ بعدی، جداکردن تدریجی جریان‌های «شروع، پاسخ، تکمیل، گزارش» و «مهارت، پروفایل، رتبه» مفید است. این کار باید پس از تثبیت تضمین‌های داده انجام شود.</p>
+      </section>
+
+      <section id="findings">
+        <h2>یافته‌ها و اقدام پیشنهادی</h2>
+
+        <article class="finding" id="f1">
+          <div class="finding-head"><span class="tag urgent">فوری</span><h3>راز نشست در نبود تنظیمات، مقدار ثابت دارد</h3></div>
+          <p>اگر <code>SESSION_SECRET</code> تنظیم نشده باشد، برنامه از مقدار ثابت موجود در کد استفاده می‌کند؛ فایل Compose هم همان مقدار را به‌عنوان پیش‌فرض دارد. در محیطی که با این پیش‌فرض بالا بیاید، اعتبار نشست‌ها به رازی وابسته است که محرمانه نیست.</p>
+          <p class="fix"><b>اقدام:</b> راز نشست را برای اجرا اجباری کنید، حداقل طول/کیفیت آن را هنگام شروع بسنجید و پیش‌فرض Compose را حذف کنید.</p>
+          <p class="evidence">شاهد: <code>apps/api/src/middleware/requireAuth.ts:8</code> · <code>apps/api/src/server.ts:48</code> · <code>docker-compose.yml:48</code></p>
+        </article>
+
+        <article class="finding" id="f2">
+          <div class="finding-head"><span class="tag urgent">فوری</span><h3>تکمیل سناریو و ثبت پاداش یک عملیات اتمیک نیست</h3></div>
+          <p>ابتدا نشست به <code>completed</code> تغییر می‌کند، بعد XP مرحله و پاداش روزانه ثبت می‌شوند. اگر ثبت پاداش یا کارهای بعدی خطا بدهد، نشست کامل می‌ماند اما پاداش ممکن است ناقص باشد؛ درخواست دوبارهٔ پاسخ هم با وضعیت ۴۰۹ رد می‌شود. تراکنش داخل سرویس پیشرفت، خودِ تغییر وضعیت نشست را پوشش نمی‌دهد.</p>
+          <p class="fix"><b>اقدام:</b> تغییر وضعیت نشست و اعتبار اصلی را در یک تراکنش قرار دهید. محاسبهٔ مدال/تداوم فعالیت را تکرارپذیر و قابل بازیابی کنید و تست شکست در هر گام بنویسید.</p>
+          <p class="evidence">شاهد: <code>apps/api/src/routes/sessions.ts:258–276</code> · <code>apps/api/src/services/gamification.ts:270–324</code></p>
+        </article>
+
+        <article class="finding" id="f3">
+          <div class="finding-head"><span class="tag high">مهم</span><h3>ویرایش محتوا می‌تواند امتیاز مهارتِ اجراهای قدیمی را عوض کند</h3></div>
+          <p>واردکردن مجدد یک سناریو، گراف سؤال و پاسخ‌نامهٔ همان رکورد را جایگزین می‌کند. صفحهٔ مهارت و پروفایل عمومی، مسیر تصمیم‌های گذشته را با گراف فعلی دوباره می‌سنجند. در نتیجه تغییر گزینهٔ برتر، مرحلهٔ مهارت یا حذف سؤال می‌تواند پروفایل کاربر را بدون اجرای تازه تغییر دهد؛ این در حالی است که امتیاز پایان سناریو به‌درستی snapshot شده است.</p>
+          <p class="fix"><b>اقدام:</b> نسخهٔ سناریو را به نشست وصل کنید یا شواهد امتیازدهی هر تصمیم را هنگام ثبت ذخیره کنید؛ سپس پروفایل را از همان شواهد تاریخی بسازید.</p>
+          <p class="evidence">شاهد: <code>apps/api/src/routes/admin/challenges.ts:78–82</code> · <code>apps/api/src/routes/progress.ts:112–150</code> · <code>packages/shared-types/skills.ts:303–315</code></p>
+        </article>
+
+        <article class="finding" id="f4">
+          <div class="finding-head"><span class="tag high">مهم</span><h3>درخواست‌های هم‌زمان می‌توانند AI را چند بار فراخوانی کنند</h3></div>
+          <p>برای ارزیابی نهایی، دو درخواست می‌توانند پیش از ذخیره‌شدن نتیجه هر دو وضعیت «هنوز ارزیابی نشده» را ببینند و هر دو مدل را صدا بزنند. در پاسخ تشریحی هم فراخوانی مدل پیش از قفل ثبت پاسخ انجام می‌شود. پیامد آن هزینهٔ اضافه و مصرف ظرفیت است.</p>
+          <p class="fix"><b>اقدام:</b> برای هر ارزیابی وضعیت یکتای <code>pending / ready / failed</code> و قفل یا صف کار تعریف کنید؛ سپس محدودیت تعداد درخواست و سقف مصرف هر کاربر اضافه کنید.</p>
+          <p class="evidence">شاهد: <code>apps/api/src/routes/sessions.ts:202–239</code> · <code>apps/api/src/routes/sessions.ts:422–472</code></p>
+        </article>
+
+        <article class="finding" id="f5">
+          <div class="finding-head"><span class="tag high">مهم</span><h3>تست‌های API در مسیر پیش‌فرض تست اجرا نمی‌شوند</h3></div>
+          <p>سه فایل تست واحد در API وجود دارد، اما بستهٔ <code>apps/api</code> اسکریپت <code>test</code> ندارد. بنابراین فرمان تست ریشه، این تست‌ها را به‌طور خودکار اجرا نمی‌کند. برای مسیرهای حساسِ نشست، پاداش و احراز هویت هم تست شکست میانی و رقابت درخواست‌ها کم است.</p>
+          <p class="fix"><b>اقدام:</b> تست‌های API را به اسکریپت بسته و CI وصل کنید؛ سپس تست‌های دیتابیسی برای اتمیک‌بودن، تکرار درخواست و تغییر نسخهٔ سناریو اضافه کنید.</p>
+          <p class="evidence">شاهد: <code>apps/api/package.json:7–14</code> · <code>package.json:7</code> · <code>apps/api/src/services/*.test.ts</code></p>
+        </article>
+
+        <article class="finding" id="f6">
+          <div class="finding-head"><span class="tag medium">میانی</span><h3>محاسبهٔ مهارت با تعداد اجراها بزرگ می‌شود</h3></div>
+          <p>درخواست‌های مهارت، درخت مهارت و پروفایل عمومی تمام نشست‌های کامل کاربر و گراف سؤال‌های مربوط را می‌خوانند و در حافظه تجمیع می‌کنند. برای کاربری با تاریخچهٔ طولانی، زمان پاسخ و حجم دادهٔ خوانده‌شده رشد می‌کند.</p>
+          <p class="fix"><b>اقدام:</b> پس از درست‌شدن نسخه‌بندی تاریخچه، تجمیع افزایشی یا snapshot قابل بازسازی برای مهارت‌ها بسازید و برای داده‌های ریز صفحه‌بندی بگذارید.</p>
+          <p class="evidence">شاهد: <code>apps/api/src/routes/progress.ts:112–150</code> · <code>apps/api/src/routes/profile.ts:65–69</code></p>
+        </article>
+
+        <article class="finding" id="f7">
+          <div class="finding-head"><span class="tag medium">میانی</span><h3>مسیر سلامت، آماده‌بودن دیتابیس را نشان نمی‌دهد</h3></div>
+          <p><code>/health</code> همیشه <code>ok</code> برمی‌گرداند و بررسی سلامت کانتینر نیز همین مسیر را می‌خواند. پس در قطع اتصال PostgreSQL، API ممکن است سالم گزارش شود ولی درخواست‌های واقعی خطا بدهند.</p>
+          <p class="fix"><b>اقدام:</b> liveness و readiness را جدا کنید و در readiness یک بررسی سبک اتصال دیتابیس انجام دهید.</p>
+          <p class="evidence">شاهد: <code>apps/api/src/server.ts:52–53</code> · <code>docker-compose.yml:65–71</code></p>
+        </article>
+      </section>
+
+      <section id="roadmap">
+        <h2>ترتیب پیشنهادی اصلاحات</h2>
+        <ol class="roadmap">
+          <li><span><b>بستن تنظیمات حساس اجرا.</b> راز نشست اجباری، بررسی محیط هنگام راه‌اندازی، سپس readiness واقعی.</span></li>
+          <li><span><b>درست‌کردن پایان چالش.</b> تراکنش یا سازوکار جبران، همراه با تست خطای میانی و درخواست هم‌زمان.</span></li>
+          <li><span><b>پایدارکردن تاریخچه.</b> نسخه‌بندی سناریو و شواهد مهارت پیش از توسعهٔ محتوای زنده.</span></li>
+          <li><span><b>کنترل AI.</b> کار یکتا برای هر ارزیابی، محدودیت مصرف، سپس جداسازی فرآیندهای طولانی در صورت نیاز.</span></li>
+          <li><span><b>تقویت چرخهٔ توسعه.</b> اتصال تست‌های API به فرمان اصلی و CI، بعد بهینه‌سازی تجمیع و کوچک‌کردن فایل‌های بزرگ.</span></li>
+        </ol>
+      </section>
+
+      <section id="verification">
+        <h2>دامنه و شواهد بررسی</h2>
+        <p>نوع‌سنجی API با <code>tsc --noEmit</code> موفق بود. ۴ فایل تست بستهٔ shared-types و ۳ فایل تست واحد API با اجرای مستقیم Node موفق بودند. ساختار مسیرها، سرویس‌ها، مدل Prisma، مهاجرت‌ها، Compose و فرمان‌های پروژه بررسی شدند.</p>
+        <p class="note">این گزارش بازبینی ایستای کد است. تست‌های سرتاسری اجرا نشدند چون دادهٔ پایگاه موجود را تغییر می‌دهند. رفتار زیر بار واقعی و وضعیت عملیاتی محیط استقرار در این ارزیابی اندازه‌گیری نشده است.</p>
+      </section>
+      <footer>پرودچی · گزارش بررسی فنی بک‌اند · ۲۷ سپتامبر ۲۰۲۶</footer>
+    </main>
+    <aside aria-label="فهرست گزارش">
+      <strong>در این گزارش</strong>
+      <a href="#summary">جمع‌بندی</a>
+      <a href="#architecture">کیفیت معماری</a>
+      <a href="#findings">یافته‌ها</a>
+      <a href="#roadmap">ترتیب اصلاحات</a>
+      <a href="#verification">دامنهٔ بررسی</a>
+    </aside>
+  </div>
+</body>
+</html>

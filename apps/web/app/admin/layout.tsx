@@ -9,11 +9,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const user = await getServerSessionUser()
 
   if (!user) {
-    redirect('/login')
+    redirect('/app/login')
   }
 
   if (user.role !== 'admin') {
-    redirect('/home')
+    redirect('/app/home')
   }
 
   return <>{children}</>
