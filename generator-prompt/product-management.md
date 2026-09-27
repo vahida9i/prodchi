@@ -19,13 +19,25 @@ Optional: `summary`, `assessment`.
 `role` must always be exactly: `"Product Management"`
 `difficulty` must be exactly one of: `easy`, `medium`, `hard`
 
+### Language Requirement — Persian (Farsi)
+All candidate-facing content MUST be written in natural, idiomatic **Persian (Farsi)**:
+- `title`
+- `summary`
+- question `text`
+- choice `text`
+- choice `because`
+- choice `reveal` (both `text` and table `caption` / `columns` / `rows`)
+- rubric `label` and `guidance`
+
+Technical identifiers and internal keys remain ASCII English: `id`, `role`, `difficulty`, `start`, `stage`, `quality`, question keys (`Q1`, `Q2`), and rubric `id`.
+
 | Field | Rules |
 |---|---|
-| `id` | snake_case slug, unique (e.g. `pm_feature_cut`) |
-| `title` | The incident, not the company — "The Roadmap Squeeze" |
+| `id` | snake_case slug, unique (e.g. `fa_pm_bnpl_repeat`) |
+| `title` | Persian title describing the incident — e.g. "خرید دومی که تکرار نمی‌شود" |
 | `role` | exactly `"Product Management"` |
 | `difficulty` | `easy`, `medium`, or `hard` |
-| `summary` | optional, ≤400 chars. The business brief: what the company is, who its customers are, how it earns. Never the incident or the numbers (that is Q1's job) and never "you are the PM" |
+| `summary` | optional, ≤400 chars, in Persian. The business brief: who the company is, who its customers are, how it earns. Never the incident or the numbers (that is Q1's job) and never "you are the PM" |
 | `start` | `"Q1"` — must be an existing question key |
 | `questions` | 1–200 questions, keyed `Q1`, `Q2`, … |
 | `assessment` | optional rubric — see §4 |
@@ -49,8 +61,8 @@ The candidate should often have to decide "what evidence would be most valuable 
 
 ## 3. Core Data Model
 
-Each question contains: `text`, `choices`, `bestChoice`
-Each choice contains: `text`, `stage`, `reveal`, `next` — and optionally `quality`, `because`, `criteria`
+Each question contains: `text`, `choices`, `bestChoice` — and optionally `material` (e.g. data table visible before answering).
+Each choice contains: `text`, `stage`, `reveal`, `next` — and optionally `quality`, `because`, `criteria`.
 
 The internal stages are: `FRAME`, `DIAGNOSE`, `STRATEGIZE`, `PRIORITIZE`, `PLAN`, `EXECUTE`, `MEASURE`
 Stages are internal metadata only. Never show stages to the candidate.
@@ -67,39 +79,104 @@ What each stage means in a Product Management context:
 
 A candidate can move between stages freely (e.g., DIAGNOSE → STRATEGIZE → DIAGNOSE → PLAN → MEASURE is valid). Do not force a fixed sequence.
 
+### Choices Count and Quality Distribution (4 Options per Question)
+
+Every question must provide **exactly 4 choices** (index 0 to 3):
+- **1x best choice**: `quality: "best"`, with `because` explained. Pointed to by `bestChoice`.
+- **2x reasonable choices**: `quality: "reasonable"`. Defensible product actions that carry a trade-off or cost.
+- **1x poor choice**: `quality: "poor"`. A hasty, ineffective, or misaligned action whose reveal shows the negative consequence (or on early exits, leads to `next: "END"`).
+
+**For Hard difficulty challenges**:
+- Hard challenges test deeper ambiguity and deceptive traps. Questions in hard challenges should have **2x poor choices** (wrong/trap options):
+  - `1x best`
+  - `1x reasonable`
+  - `2x poor` (traps / premature execution / vanity metrics)
+  - Or questions that balance two subtle trade-offs (`1x best`, `2x reasonable`, `1x poor`).
+
 ### `bestChoice` — required, internal
 
 A 0-based index into that question's `choices` marking the strongest move; must satisfy `0 ≤ bestChoice < choices.length`. It is the answer key: candidates never see it, and it is what a finished run is scored against after it ends.
 
-### Grading — optional, internal
+### Grading — internal quality tiers
 
-A choice may also carry:
+Every choice MUST carry:
+- `quality` — `"best"`, `"reasonable"`, or `"poor"`
+- `because` — ≤500 chars in Persian, one clear sentence explaining why this choice is the strongest move. **Required on every `best` choice** (it is what is shown to the candidate if they miss it after the run).
+- `criteria` — array of rubric ids this move exercises.
 
-- `quality` — `best`, `reasonable`, or `poor`
-- `because` — ≤500 chars, one sentence on why this is the strongest move (required on every `best`; it is what a candidate who missed it is shown *after* the run)
-- `criteria` — array of rubric ids this move exercises
+Grading rules:
+1. `quality` is **all-or-nothing per question**: tag all 4 choices on every question.
+2. Exactly one `"best"` per question, located exactly at the index specified by `bestChoice`.
+3. Every `"best"` choice must have a non-empty `because`.
 
-Grading rules: `quality` is **all-or-nothing per question** (tag every choice, or none); exactly one `"best"` per question, only at `bestChoice`; every `"best"` needs `because`. Semantics: `best` = the strongest reasoning; `reasonable` = defensible but it costs the candidate something; `poor` = a misstep whose reveal shows the failed consequence. Untagged questions are tolerated (`bestChoice` reads as best, the rest as poor) — **prefer full grading**.
+### `material` — Question Data & Evidence Table (Visible Before Answering)
 
-### `reveal` — a sentence or a table
-
-A reveal is either a plain sentence or a block that may carry a data table:
-
-```json
-"reveal": "The pilot accounts' seat expansion resumes within a month."
-```
+You can provide tabular data or metrics directly inside the question so candidates examine the numbers before making their decision:
 
 ```json
-"reveal": {
-  "text": "The pilot cohort against its own baseline:",
-  "table": {
-    "caption": "Pilot accounts, first month",
-    "columns": ["Measure", "Result"],
-    "rows": [["Guest-to-seat conversion", "50%"], ["Seat expansion", "resumed"]]
-  }
+"Q1": {
+  "text": "با توجه به جدول نگهداشت و بازگشت کاربران، اولویت بررسی تشخیصی را روی کدام دسته می‌گذارید؟",
+  "material": {
+    "table": {
+      "caption": "نگهداشت ۳۰ روزه بر اساس کانال جذب",
+      "columns": ["کانال جذب", "کاربران ورودی", "نگهداشت ۳۰ روزه"],
+      "rows": [
+        ["ثبت‌نام مستقیم", "۴,۲۰۰", "۴۸٪"],
+        ["کمپین تبلیغاتی", "۳,۱۰۰", "۱۴٪"],
+        ["معرفی همکاران", "۱,۸۰۰", "۵۲٪"]
+      ]
+    }
+  },
+  "choices": [ ... ],
+  "bestChoice": 0
 }
 ```
 
+Table rules:
+- `caption`: optional short Persian title
+- `columns`: 1 to 6 columns
+- `rows`: 1 to 50 rows, **strictly rectangular** (every row must contain exactly as many items as `columns`)
+- Cells are plain strings (≤200 chars). Persian numerals and percentages are encouraged.
+
+### `reveal` — Rich Evidence After Making a Choice (Never Single-Sentence Spoilers)
+
+A reveal is the empirical evidence the candidate uncovers *after* committing to an action.
+
+**CRITICAL REQUIREMENT: Never write short, single-sentence direct conclusions.**
+A reveal must NOT spoon-feed the answer or state an omniscient summary like "تأیید کم شد و نکول بالا رفت" or "کاربران به خاطر بی اعتمادی خرید نکردند". Real-world product discovery yields messy, rich evidence that requires interpretation.
+
+**Structure of a Strong Reveal (2 to 4 detailed sentences, or a data table):**
+1. **Primary Observation / Raw Signal**: Concrete numbers, conversion rates, behavioral cohorts, or specific customer quotes.
+2. **Context, Nuance or Tension**: A secondary observation or contrasting signal (e.g., metric improved in Segment A, but tickets surged in Segment B; or quantitative data conflicts with customer interviews).
+3. **Operational or Business Reality**: Reactions from partner teams, sales, risk, engineering constraints, or merchant churn signals.
+
+#### Comparison: Weak vs. Rich Reveals (Persian)
+- ❌ **Weak / Too straightforward (FORBIDDEN):**
+  `"سقف کمتر نکول را پایین می‌آورد و حجم خرید پذیرندگان را هم می‌خواباند."`
+-  **Rich & Informative (REQUIRED):**
+  `"با اعمال سقف اعتباری ۵ میلیون تومانی در ماه اول، نرخ نکول از ۹٪ به ۴٫۲٪ افت کرد. با این حال، گزارش تیم بازرگانی نشان می‌دهد میانگین ارزش سبد خرید در پذیرندگان دیجیتال ۳۸٪ سقوط کرده و دو شریک تجاری بزرگ تهدید کرده‌اند که در صورت عدم اصلاح سقف، تسویه اقساطی را از درگاه خود حذف خواهند کرد."`
+
+- ❌ **Weak / Too straightforward (FORBIDDEN):**
+  `"افت تأیید و نکول هر دو در سه دستهٔ پذیرنده متمرکزند، نه در همهٔ دسته‌ها."`
+-  **Rich & Informative (REQUIRED):**
+  `"بررسی تراکنش‌های ۹۰ روز اخیر نشان داد دسته‌های سوپرمارکت و خدمات روزمره نرخ تأیید ۵۵٪ با نکول ناچیز ۱٫۵٪ دارند؛ اما در سه دستهٔ کالای دیجیتال، طلا و سفر، نرخ نکول به ۱۲٪ جهش کرده و الگوریتم ریسک نرخ تأیید را به ۲۱٪ کاهش داده است. هم‌زمان بررسی فرم‌ها نشان می‌دهد کاربران ردشده در این دسته‌ها عموماً سابقهٔ اعتباری بانکی ثبت‌شده ندارند."`
+
+**When to use a Reveal Table:**
+Whenever a choice involves cohort breakdown, A/B test results, category comparison, or funnel drop-offs, prefer using `"table"` inside `"reveal"`:
+```json
+"reveal": {
+  "text": "نتایج پایلوت ۴ هفته‌ای مدل اعتباری پله‌ای در دو دستهٔ پرریسک به دست آمد:",
+  "table": {
+    "caption": "مقایسه عملکرد مدل پله‌ای در برابر خط پایه (دسته‌های پرریسک)",
+    "columns": ["شاخص کلیدی", "خط پایه قبلی", "گروه آزمون (پله‌ای)"],
+    "rows": [
+      ["نرخ تأیید اولیه", "۲۱٪", "۴۶٪"],
+      ["نرخ نکول اقساط ماه اول", "۱۱٫۴٪", "۵٫۸٪"],
+      ["میانگین ارزش خرید اعتباری", "۱۴ م ت", "۸٫۵ م ت"]
+    ]
+  }
+}
+```
 Table limits: `caption` optional; 1–6 `columns`; 1–50 `rows`; **every row has exactly as many cells as `columns`**; cells are strings ≤200 chars. The table is display-only; it never affects scoring. Good reveals advance the story with concrete numbers or customer quotes; a poor choice's reveal shows the failed consequence.
 
 ### `assessment` — optional rubric
@@ -118,9 +195,17 @@ Table limits: `caption` optional; 1–6 `columns`; 1–50 `rows`; **every row ha
 
 Every choice must represent a legitimate professional product-management action. No reveal may evaluate the candidate's decision (no "That was the right call", no "You should have prioritized differently"). Instead, always just provide information. The candidate's path is the result of their decisions, not a graded judgment. The internal `bestChoice`/`quality` layer is the one exception — invisible during play; it exists so the finished run can be scored after the fact.
 
-## 5. Progressive Information
+## 5. Progressive Information & "Show, Don't Tell"
 
-Do not reveal the complete problem at the beginning. The initial question should contain enough information to make a decision, but not enough to know the entire situation. Every choice reveals information relevant to that specific choice, answering: "What did the candidate learn because they chose this action?"
+Do not reveal the complete problem at the beginning. The initial question should contain enough information to make a decision, but not enough to know the entire situation.
+
+Every choice reveals information relevant to that specific choice, answering: "What did the candidate learn because they chose this action?"
+
+**Show, Don't Tell — Never give away the diagnosis directly:**
+- **Bad (Telling):** "تحقیقات نشان داد که علت اصلی، بی‌اعتمادی مشتریان به فرآیند بازگشت پول است." (This robs the candidate of the chance to think).
+- **Good (Showing):** "در گفت‌وگو با ۱۵ کاربر منصرف‌شده، ۱۱ نفر پرسیدند در صورت عدم موفقیت کمپین سرمایه‌گذاری، پول بلوکه‌شده چه‌قدر طول می‌کشد تا به حساب برگردد و آیا کارمزدی کسر می‌شود یا نه. ۲ نفر هم از اعتبار مجوز پلتفرم جویا شدند."
+
+The candidate must connect the dots themselves from the concrete observations, numbers, and user quotes revealed to them.
 
 ## 6. Meaningful Branching — Hard Rules
 
@@ -423,9 +508,9 @@ Before returning the challenge, trace the graph, not estimate it:
 
 **Step B — Check each path:** no question key appears twice (no cycles, direct or indirect); no choice's `next` equals its own question's key; every path terminates at END; each branch exposes genuinely different evidence for at least its next two hops before converging.
 
-**Step C — Check the whole graph:** the JSON parses; `role` is exactly `"Product Management"`; `difficulty` is exactly `easy`, `medium`, or `hard`; `start` exists; every `next` is `"END"` or an existing key; no orphans; every question has 3–4 choices with `text`, `stage`, `reveal`, `next`; `bestChoice` present and in range; if grading: all-or-nothing per question, one `best` at `bestChoice`, `because` ≤500 on each best; if a rubric: unique kebab-case ids, `label` ≤120, `guidance` ≤500, every cited id declared, every best move cites ≥1; if a table: rectangular, ≤6 columns, ≤50 rows, cells ≤200 chars; every `stage` ∈ {FRAME, DIAGNOSE, STRATEGIZE, PRIORITIZE, PLAN, EXECUTE, MEASURE}; the difficulty's minimum bars are met (Section 2); question count within (or close to, ±20%) the Section 8 range.
+**Step C — Check the whole graph:** the JSON parses; `role` is exactly `"Product Management"`; `difficulty` is exactly `easy`, `medium`, or `hard`; `start` exists; all prose is in Persian; every `next` is `"END"` or an existing key; no orphans; every question has exactly 4 choices with `text`, `stage`, `reveal`, `next`; `bestChoice` present, in range, and matching the `"best"` choice index; grading is complete on all choices with one `"best"` (and `because`), 2 `"reasonable"`, and 1 `"poor"` (or 2 `"poor"` on hard traps); if `material` or `reveal` has a table: rectangular, ≤6 columns, ≤50 rows, cells ≤200 chars; every `stage` ∈ {FRAME, DIAGNOSE, STRATEGIZE, PRIORITIZE, PLAN, EXECUTE, MEASURE}; rubric has unique kebab-case ids, `label` ≤120, `guidance` ≤500, every cited id declared, every best move cites ≥1; the difficulty's minimum bars are met (Section 2); question count within (or close to, ±20%) the Section 8 range.
 
-**Step D — Content quality:** no reveal evaluates the candidate's decision; every reveal answers "what did the candidate learn from this specific action"; every question requires an actual product decision, not trivia; all content concerns Product Management reasoning, not visual design or engineering internals for their own sake; the challenge ends with a meaningful outcome.
+**Step D — Content quality:** no reveal evaluates the candidate's decision; every reveal answers "what did the candidate learn from this specific action" with rich, multi-sentence concrete evidence or a table (NO single-sentence direct conclusions); every question requires an actual product decision, not trivia; all content concerns Product Management reasoning, not visual design or engineering internals for their own sake; the challenge ends with a meaningful outcome.
 
 If any check fails, fix the JSON and re-run Steps A–D before returning output.
 
